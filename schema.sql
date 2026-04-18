@@ -37,6 +37,7 @@ create table if not exists public.winners (
   sort_order int not null default 0,
   nick text not null,
   month text default '무료음료',
+  period text,
   created_at timestamptz default now()
 );
 
@@ -165,3 +166,4 @@ ALTER TABLE settings ADD COLUMN IF NOT EXISTS kakao_lng DOUBLE PRECISION DEFAULT
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS hours_weekday TEXT DEFAULT '08:00-22:00';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS hours_weekend TEXT DEFAULT '10:00-23:00';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS holiday_notice TEXT;
+ALTER TABLE winners ADD COLUMN IF NOT EXISTS period TEXT;

@@ -1,5 +1,11 @@
 import { supabase, refreshTable } from './app.js';
 
+// ─── 날짜 헬퍼 ──────────────────────────────
+function autoToday() {
+  const d = new Date();
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+}
+
 // ─── 테이블 스키마 ──────────────────────────
 // noun: UI에서 부를 자연스러운 이름 (예: "공지" → "+ 공지 추가")
 const SCHEMAS = {
@@ -11,24 +17,39 @@ const SCHEMAS = {
     fields: [
       { col: 'tag',       label: '분류',         type: 'select', options: ['EVENT','NEW','HOURS','NOTICE'], placeholder: 'NOTICE' },
       { col: 'title',     label: '제목 (한글)',  type: 'text',   required: true },
-      { col: 'title_en',  label: '제목 (영문)',  type: 'text' },
+      { col: 'title_en',  label: '제목 (영문)',  type: 'text',   placeholder: '비워두면 영문 표시 안 됨' },
       { col: 'body',      label: '본문',         type: 'textarea' },
-      { col: 'date',      label: '날짜',         type: 'date' },
+      { col: 'date',      autoDate: true },
     ],
   },
-  pick: {
-    label: '오늘의 추천',
-    noun: '추천',
-    mode: 'list',
+  pick_big: {
+    label: '큰 사장 pick',
+    noun: '큰 사장 pick',
+    mode: 'single',
     views: ['pick'],
+    table: 'pick',
+    filter: { barista: '큰 사장' },
     fields: [
-      { col: 'photo',     label: '사진',         type: 'photo' },
-      { col: 'name',      label: '메뉴명 (한글)', type: 'text', required: true },
-      { col: 'name_en',   label: '메뉴명 (영문)', type: 'text' },
-      { col: 'price',     label: '가격',         type: 'text', placeholder: '6,500' },
-      { col: 'barista',   label: '추천자',       type: 'text', placeholder: '큰 사장 pick' },
-      { col: 'note',      label: '한줄 설명',    type: 'textarea' },
-      { col: 'date',      label: '날짜',         type: 'date' },
+      { col: 'photo',   label: '사진',           type: 'photo' },
+      { col: 'name',    label: '메뉴명 (한글)',  type: 'text',     required: true },
+      { col: 'name_en', label: '메뉴명 (영문)',  type: 'text',     placeholder: '비워두면 영문 표시 안 됨' },
+      { col: 'price',   label: '가격',           type: 'text',     placeholder: '6,500', required: true },
+      { col: 'note',    label: '한줄 설명',      type: 'textarea' },
+    ],
+  },
+  pick_small: {
+    label: '작은 사장 pick',
+    noun: '작은 사장 pick',
+    mode: 'single',
+    views: ['pick'],
+    table: 'pick',
+    filter: { barista: '작은 사장' },
+    fields: [
+      { col: 'photo',   label: '사진',           type: 'photo' },
+      { col: 'name',    label: '메뉴명 (한글)',  type: 'text',     required: true },
+      { col: 'name_en', label: '메뉴명 (영문)',  type: 'text',     placeholder: '비워두면 영문 표시 안 됨' },
+      { col: 'price',   label: '가격',           type: 'text',     placeholder: '6,500', required: true },
+      { col: 'note',    label: '한줄 설명',      type: 'textarea' },
     ],
   },
   winners: {
@@ -37,8 +58,9 @@ const SCHEMAS = {
     mode: 'list',
     views: ['event'],
     fields: [
-      { col: 'nick',      label: '닉네임',       type: 'text', required: true },
-      { col: 'month',     label: '혜택',         type: 'text', placeholder: '5월 무료음료' },
+      { col: 'nick',    label: '닉네임',                   type: 'text', required: true },
+      { col: 'month',   label: '혜택',                     type: 'text', placeholder: '5월 무료음료' },
+      { col: 'period',  label: '이벤트 기간 (선택)',       type: 'text', placeholder: '2026.04.01 ~ 2026.04.30' },
     ],
   },
   greeting: {
@@ -218,6 +240,8 @@ function renderPageActions() {
 
 // ─── 입력 필드 빌더 (공용) ──────────────────
 function buildField(f, row) {
+  if (f.autoDate) return document.createDocumentFragment();
+
   const wrap = document.createElement('label');
   wrap.className = 'tuz-field';
 
@@ -365,9 +389,14 @@ async function openEditor(key, { addNew = false } = {}) {
   // fetch current rows
   let rows = [];
   if (schema.mode === 'single') {
-    const { data, error } = await supabase.from(tableName).select('*').maybeSingle();
+    let q = supabase.from(tableName).select('*');
+    if (schema.filter) {
+      Object.entries(schema.filter).forEach(([k, v]) => { q = q.eq(k, v); });
+    }
+    const { data, error } = await q.maybeSingle();
     if (error) { toast(`불러오기 실패: ${error.message}`, { error: true }); return; }
-    rows = [data ? { ...data } : (tableName === 'settings' ? { id: 1 } : { id: 1 })];
+    const base = schema.filter ? { ...schema.filter } : (tableName === 'settings' ? { id: 1 } : {});
+    rows = [data ? { ...data } : base];
   } else {
     const { data, error } = await supabase.from(tableName).select('*').order('sort_order', { ascending: true });
     if (error) { toast(`불러오기 실패: ${error.message}`, { error: true }); return; }
@@ -474,10 +503,15 @@ async function openEditor(key, { addNew = false } = {}) {
 async function saveRows(tableName, schema, rows, removedIds) {
   if (schema.mode === 'single') {
     const r = rows[0] || {};
-    const payload = { id: 1 };
-    schema.fields.forEach((f) => { payload[f.col] = r[f.col] ?? null; });
-    const req = schema.fields.find((f) => f.required);
-    if (req && !payload[req.col]) throw new Error(`${req.label}은(는) 필수입니다`);
+    const payload = r.id ? { id: r.id } : {};
+    schema.fields.forEach((f) => {
+      if (f.autoDate) { payload[f.col] = r[f.col] ?? autoToday(); return; }
+      payload[f.col] = r[f.col] ?? null;
+    });
+    if (schema.filter) Object.assign(payload, schema.filter);
+    for (const f of schema.fields) {
+      if (f.required && !payload[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
+    }
     const { error } = await supabase.from(tableName).upsert(payload);
     if (error) throw error;
     return;
@@ -490,10 +524,16 @@ async function saveRows(tableName, schema, rows, removedIds) {
 
   const payload = rows.map((r, i) => {
     const out = { sort_order: i };
-    schema.fields.forEach((f) => { out[f.col] = r[f.col] ?? null; });
+    schema.fields.forEach((f) => {
+      if (f.autoDate) { out[f.col] = r[f.col] ?? autoToday(); return; }
+      out[f.col] = r[f.col] ?? null;
+    });
     if (r.id) out.id = r.id;
-    const req = schema.fields.find((f) => f.required);
-    if (req && !out[req.col]) return null; // skip empty draft rows
+    const firstReq = schema.fields.find((f) => f.required);
+    if (firstReq && !out[firstReq.col]) return null; // skip empty draft rows
+    for (const f of schema.fields) {
+      if (f.required && !out[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
+    }
     return out;
   }).filter(Boolean);
 
@@ -579,10 +619,13 @@ async function openItemEditor(tableName, itemId) {
           const btn = ctx.overlay.querySelector('.tuz-sheet__foot .is-primary');
           if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; btn.setAttribute('aria-busy', 'true'); }
           try {
-            const req = schema.fields.find((f) => f.required);
-            if (req && !row[req.col]) throw new Error(`${req.label}은(는) 필수입니다`);
+            for (const f of schema.fields) {
+              if (f.required && !row[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
+            }
             const payload = { id: itemId };
-            schema.fields.forEach((f) => { payload[f.col] = row[f.col] ?? null; });
+            schema.fields.forEach((f) => {
+              if (!f.autoDate) payload[f.col] = row[f.col] ?? null;
+            });
             const { error: upErr } = await supabase.from(tableName).upsert(payload);
             if (upErr) throw upErr;
             toast('저장되었습니다');
@@ -618,7 +661,7 @@ function scheduleItemActions() {
 }
 
 function observeContentMutations() {
-  const targets = ['newsList', 'pickList', 'winnerList', 'menuCategories'];
+  const targets = ['newsList', 'pickBig', 'pickSmall', 'winnerList', 'menuCategories'];
   const observer = new MutationObserver(scheduleItemActions);
   targets.forEach((id) => {
     const el = document.getElementById(id);

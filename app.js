@@ -198,35 +198,40 @@ function todayStr() {
 }
 
 // ─── 렌더러 ──────────────────────────────────
+function renderPickCard(p) {
+  const photoUrl = imgUrl(p.photo);
+  const photoHtml = photoUrl
+    ? `<div class="photo-block"><img src="${esc(photoUrl)}" alt="${esc(p.name || 'pick')}"></div>`
+    : `<div class="photo-block is-empty"></div>`;
+  const priceStr = p.price ? '₩' + Number(String(p.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
+  return `
+    <article class="card"${p.id ? ` data-item-id="${esc(p.id)}"` : ''}>
+      <div style="margin-bottom:12px">${photoHtml}</div>
+      <div class="pick__meta">
+        <span class="chip">${esc(p.barista || '사장 pick')}</span>
+        <time>${esc(p.date || todayStr())}</time>
+      </div>
+      <div class="display display--md">${esc(p.name || '')}</div>
+      ${p.nameEn ? `<div class="pick__en">${esc(p.nameEn)}</div>` : ''}
+      ${p.note ? `<p class="pick__note">${esc(p.note)}</p>` : ''}
+      <div class="pick__price">
+        <span class="eyebrow">TODAY'S PRICE</span>
+        <span class="display display--sm">${esc(priceStr || p.price || '')}</span>
+      </div>
+    </article>
+  `;
+}
+
 function renderPicks(picks) {
-  const list = document.getElementById('pickList');
-  if (!list) return;
-  if (!picks || !picks.length) { renderEmpty('pickList', 'pick'); return; }
-  const valid = picks.filter((p) => p.name);
-  if (!valid.length) { renderEmpty('pickList', 'pick'); return; }
-  list.innerHTML = valid.map((p) => {
-    const photoUrl = imgUrl(p.photo);
-    const photoHtml = photoUrl
-      ? `<div class="photo-block"><img src="${esc(photoUrl)}" alt="${esc(p.name || 'pick')}"></div>`
-      : `<div class="photo-block is-empty"></div>`;
-    const priceStr = p.price ? '₩' + Number(String(p.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
-    return `
-      <article class="card"${p.id ? ` data-item-id="${esc(p.id)}"` : ''}>
-        <div style="margin-bottom:12px">${photoHtml}</div>
-        <div class="pick__meta">
-          <span class="chip">${esc(p.barista || '사장 pick')}</span>
-          <time>${esc(p.date || todayStr())}</time>
-        </div>
-        <div class="display display--md">${esc(p.name || '')}</div>
-        ${p.nameEn ? `<div class="pick__en">${esc(p.nameEn)}</div>` : ''}
-        ${p.note ? `<p class="pick__note">${esc(p.note)}</p>` : ''}
-        <div class="pick__price">
-          <span class="eyebrow">TODAY'S PRICE</span>
-          <span class="display display--sm">${esc(priceStr || p.price || '')}</span>
-        </div>
-      </article>
-    `;
-  }).join('');
+  const bigEl = document.getElementById('pickBig');
+  const smallEl = document.getElementById('pickSmall');
+  if (!bigEl && !smallEl) return;
+
+  const big = (picks || []).find((p) => p.barista === '큰 사장' && p.name);
+  const small = (picks || []).find((p) => p.barista === '작은 사장' && p.name);
+
+  if (bigEl) bigEl.innerHTML = big ? renderPickCard(big) : '';
+  if (smallEl) smallEl.innerHTML = small ? renderPickCard(small) : '';
 }
 
 function renderNews(items) {
@@ -275,6 +280,7 @@ function renderWinners(items) {
       <span class="winner__num">${i + 1}</span>
       <span class="winner__nick">${esc(w.nick || '')}</span>
       <span class="chip">${esc(w.month || '무료음료')}</span>
+      ${w.period ? `<span class="winner__period">${esc(w.period)}</span>` : ''}
     </div>
   `).join('');
 }
@@ -527,4 +533,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=4').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=5').catch((e) => console.warn('[tuz] admin module not loaded:', e));
