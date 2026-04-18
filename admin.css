@@ -1,0 +1,394 @@
+/* TUZ admin overlay — 관리자 전용 UI */
+
+/* ─── Floating access button ───────────────── */
+#tuz-admin-fab {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--paper, #fff);
+  color: var(--ink-3, #6e6356);
+  box-shadow: 0 4px 14px rgba(26, 22, 18, 0.12), 0 0 0 1px rgba(26, 22, 18, 0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+#tuz-admin-fab:hover { opacity: 1; transform: scale(1.05); }
+#tuz-admin-fab:active { transform: scale(0.95); }
+
+/* ─── Overlay + bottom sheet ──────────────── */
+.tuz-ovl {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 22, 18, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 400;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  animation: tuz-ovl-in 0.18s ease;
+}
+@keyframes tuz-ovl-in { from { opacity: 0; } to { opacity: 1; } }
+
+.tuz-sheet {
+  background: var(--paper, #fff);
+  color: var(--ink, #1a1612);
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  border-radius: 22px 22px 0 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  animation: tuz-sheet-in 0.2s cubic-bezier(0.22, 0.9, 0.36, 1);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+@keyframes tuz-sheet-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@media (min-width: 640px) {
+  .tuz-ovl { align-items: center; padding: 20px; }
+  .tuz-sheet { border-radius: 22px; max-height: 86vh; }
+}
+
+.tuz-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+}
+.tuz-sheet__head h2 {
+  margin: 0;
+  font-family: var(--font-display, Fraunces, serif);
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.tuz-sheet__close {
+  border: none;
+  background: transparent;
+  color: var(--ink-3, #6e6356);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tuz-sheet__close:hover { background: rgba(0, 0, 0, 0.04); }
+
+.tuz-sheet__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.tuz-sheet__foot {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  background: var(--paper, #fff);
+}
+.tuz-sheet__foot[hidden] { display: none; }
+
+/* ─── Buttons ─────────────────────────────── */
+.tuz-btn2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+  letter-spacing: -0.01em;
+}
+.tuz-btn2:active { transform: scale(0.97); }
+.tuz-btn2.is-primary {
+  background: var(--tuz-red, #a52a1a);
+  color: #fff7ee;
+}
+.tuz-btn2.is-ghost {
+  background: transparent;
+  color: var(--ink, #1a1612);
+  border: 1px solid var(--line-2, rgba(0, 0, 0, 0.16));
+}
+
+/* ─── Form ────────────────────────────────── */
+.tuz-form { display: flex; flex-direction: column; gap: 14px; }
+.tuz-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3, #6e6356);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tuz-form input,
+.tuz-form textarea,
+.tuz-form select {
+  font: inherit;
+  color: var(--ink, #1a1612);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line-2, rgba(0, 0, 0, 0.16));
+  background: #fff;
+  font-size: 15px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tuz-form input:focus,
+.tuz-form textarea:focus,
+.tuz-form select:focus {
+  outline: 2px solid var(--tuz-red, #a52a1a);
+  outline-offset: 1px;
+}
+.tuz-form__hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-3, #6e6356);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* ─── Dashboard list ──────────────────────── */
+.tuz-dash { display: flex; flex-direction: column; gap: 8px; }
+.tuz-dash__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--ivory-2, #f4ecda);
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink, #1a1612);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.tuz-dash__row:hover { background: var(--ivory, #f4ecda); }
+.tuz-dash__row:active { transform: scale(0.98); }
+.tuz-dash__row svg { color: var(--ink-3, #6e6356); }
+
+.tuz-dash__user {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--ink-3, #6e6356);
+}
+
+/* ─── Editor ──────────────────────────────── */
+.tuz-editor { display: flex; flex-direction: column; gap: 14px; }
+.tuz-editor__list { display: flex; flex-direction: column; gap: 14px; }
+.tuz-editor__add {
+  align-self: stretch;
+  padding: 12px;
+  border-style: dashed !important;
+}
+
+.tuz-row-card {
+  border: 1px solid var(--line-2, rgba(0, 0, 0, 0.12));
+  border-radius: 14px;
+  padding: 12px;
+  background: #fafaf7;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tuz-row-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tuz-row-card__num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--tuz-red, #a52a1a);
+  color: #fff7ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, serif);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tuz-row-card__actions { display: flex; gap: 4px; }
+.tuz-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--line-2, rgba(0, 0, 0, 0.12));
+  background: #fff;
+  color: var(--ink-2, #3d342b);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tuz-icon-btn:hover { background: var(--ivory-2, #f4ecda); }
+.tuz-icon-btn.is-danger { color: var(--tuz-red, #a52a1a); }
+
+/* ─── Field ────────────────────────────────── */
+.tuz-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tuz-field__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3, #6e6356);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tuz-field input,
+.tuz-field textarea,
+.tuz-field select {
+  font: inherit;
+  color: var(--ink, #1a1612);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-2, rgba(0, 0, 0, 0.14));
+  background: #fff;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+.tuz-field textarea { min-height: 60px; resize: vertical; font-family: inherit; }
+.tuz-field input:focus,
+.tuz-field textarea:focus,
+.tuz-field select:focus {
+  outline: 2px solid var(--tuz-red, #a52a1a);
+  outline-offset: 1px;
+}
+
+/* ─── Photo field ──────────────────────────── */
+.tuz-photo-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.tuz-photo-preview {
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+  background: var(--ivory-2, #f4ecda);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+.tuz-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tuz-photo-empty {
+  font-size: 11px;
+  color: var(--ink-3, #6e6356);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.tuz-photo-clear {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 6px;
+  border: none;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 10px;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tuz-photo-upload {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2, rgba(0, 0, 0, 0.16));
+  background: #fff;
+  color: var(--ink, #1a1612);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tuz-photo-upload:hover { background: var(--ivory-2, #f4ecda); }
+
+/* ─── Toast ────────────────────────────────── */
+.tuz-admin-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%);
+  background: var(--ink, #1a1612);
+  color: var(--ivory, #f4ecda);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 600;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  animation: tuz-toast-in 0.2s ease;
+}
+.tuz-admin-toast.is-error {
+  background: var(--tuz-red, #a52a1a);
+  color: #fff7ee;
+}
+.tuz-admin-toast.is-leaving { animation: tuz-toast-out 0.6s ease forwards; }
+@keyframes tuz-toast-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes tuz-toast-out { to { opacity: 0; transform: translate(-50%, -8px); } }
+
+/* ─── Inline edit pencil (shown when logged in) ─── */
+[data-admin-edit] {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  z-index: 30;
+  letter-spacing: 0.04em;
+}
+[data-admin-edit]:hover { background: rgba(0, 0, 0, 0.9); }

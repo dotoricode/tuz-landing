@@ -1,0 +1,13 @@
+# Local tooling / IDE
+.claude/
+.omc/
+.vscode/
+.idea/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Original design bundle (handoff reference, not part of the shipped site)
+_design_source/
