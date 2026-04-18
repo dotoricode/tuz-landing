@@ -1,11 +1,13 @@
 import { supabase, refreshTable } from './app.js';
 
 // ─── 테이블 스키마 ──────────────────────────
-// 각 테이블의 "편집 가능한 컬럼 정의". Supabase 컬럼명은 snake_case 유지.
+// noun: UI에서 부를 자연스러운 이름 (예: "공지" → "+ 공지 추가")
 const SCHEMAS = {
   news: {
     label: '공지 · 이벤트',
+    noun: '공지',
     mode: 'list',
+    views: ['news'],
     fields: [
       { col: 'tag',       label: '분류',         type: 'select', options: ['EVENT','NEW','HOURS','NOTICE'], placeholder: 'NOTICE' },
       { col: 'title',     label: '제목 (한글)',  type: 'text',   required: true },
@@ -16,7 +18,9 @@ const SCHEMAS = {
   },
   pick: {
     label: '오늘의 추천',
+    noun: '추천',
     mode: 'list',
+    views: ['pick'],
     fields: [
       { col: 'photo',     label: '사진',         type: 'photo' },
       { col: 'name',      label: '메뉴명 (한글)', type: 'text', required: true },
@@ -29,7 +33,9 @@ const SCHEMAS = {
   },
   winners: {
     label: '이달의 당첨자',
+    noun: '당첨자',
     mode: 'list',
+    views: ['event'],
     fields: [
       { col: 'nick',      label: '닉네임',       type: 'text', required: true },
       { col: 'month',     label: '혜택',         type: 'text', placeholder: '5월 무료음료' },
@@ -37,7 +43,9 @@ const SCHEMAS = {
   },
   greeting: {
     label: '사장님 인사말',
+    noun: '인사말',
     mode: 'single',
+    views: ['greeting'],
     fields: [
       { col: 'photo',     label: '사진',         type: 'photo' },
       { col: 'body',      label: '인사말 본문',  type: 'textarea', rows: 8 },
@@ -46,7 +54,9 @@ const SCHEMAS = {
   },
   menu: {
     label: '메뉴',
+    noun: '메뉴',
     mode: 'list',
+    views: ['menu'],
     fields: [
       { col: 'hero_photo', label: '대표 사진 (첫 행만)', type: 'photo' },
       { col: 'category',   label: '카테고리', type: 'text', required: true, placeholder: 'COFFEE · 커피' },
@@ -56,47 +66,35 @@ const SCHEMAS = {
       { col: 'tag',        label: '뱃지', type: 'text', placeholder: 'NEW' },
     ],
   },
+  settings: {
+    label: 'WiFi 정보',
+    noun: 'WiFi',
+    mode: 'single',
+    views: ['wifi'],
+    table: 'settings',
+    fields: [
+      { col: 'wifi_ssid',     label: '네트워크 이름 (SSID)', type: 'text', required: true, placeholder: 'TUZ_Guest' },
+      { col: 'wifi_password', label: '비밀번호',             type: 'text', required: true, placeholder: 'tuz12345' },
+    ],
+  },
 };
 
-// ─── 상태 ──────────────────────────────────
 let currentUser = null;
-let rootEl = null; // admin overlay root
 
 const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-// ─── 루트 / 플로팅 버튼 ──────────────────────
-function ensureRoot() {
-  if (rootEl) return rootEl;
-  rootEl = document.createElement('div');
-  rootEl.id = 'tuz-admin-root';
-  document.body.appendChild(rootEl);
-  return rootEl;
-}
-
-function renderFab() {
-  const existing = document.getElementById('tuz-admin-fab');
-  if (existing) existing.remove();
-
-  const fab = document.createElement('button');
-  fab.id = 'tuz-admin-fab';
-  fab.type = 'button';
-  fab.setAttribute('aria-label', currentUser ? '관리' : '관리자 로그인');
-  fab.innerHTML = currentUser
-    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></svg>`
-    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 118 0v4"/></svg>`;
-  fab.addEventListener('click', () => {
-    if (currentUser) openDashboard();
-    else openLogin();
-  });
-  document.body.appendChild(fab);
-}
-
 // ─── 모달 헬퍼 ──────────────────────────────
 function openModal({ title, body, actions = [], onClose }) {
-  const root = ensureRoot();
+  let root = document.getElementById('tuz-admin-root');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'tuz-admin-root';
+    document.body.appendChild(root);
+  }
   root.innerHTML = '';
+
   const overlay = document.createElement('div');
   overlay.className = 'tuz-ovl';
   overlay.innerHTML = `
@@ -131,7 +129,7 @@ function openModal({ title, body, actions = [], onClose }) {
   overlay.querySelector('.tuz-sheet__close').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
-  root.appendChild(overlay);
+  document.getElementById('tuz-admin-root').appendChild(overlay);
   return { close, overlay };
 }
 
@@ -142,6 +140,77 @@ function toast(msg, { error = false } = {}) {
   document.body.appendChild(t);
   setTimeout(() => t.classList.add('is-leaving'), 1800);
   setTimeout(() => t.remove(), 2400);
+}
+
+// ─── 로그인 / 로그아웃 FAB ──────────────────
+function renderFab() {
+  const existing = document.getElementById('tuz-admin-fab');
+  if (existing) existing.remove();
+
+  const fab = document.createElement('button');
+  fab.id = 'tuz-admin-fab';
+  fab.type = 'button';
+
+  if (currentUser) {
+    fab.className = 'is-logged-in';
+    fab.setAttribute('aria-label', '로그아웃');
+    fab.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+      <span>로그아웃</span>
+    `;
+    fab.addEventListener('click', async () => {
+      if (!confirm('로그아웃 하시겠어요?')) return;
+      await supabase.auth.signOut();
+      toast('로그아웃되었습니다');
+    });
+  } else {
+    fab.setAttribute('aria-label', '관리자 로그인');
+    fab.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 118 0v4"/></svg>
+    `;
+    fab.addEventListener('click', openLogin);
+  }
+  document.body.appendChild(fab);
+}
+
+// ─── 페이지별 관리 버튼 ─────────────────────
+function renderPageActions() {
+  document.querySelectorAll('[data-admin-actions]').forEach((el) => el.remove());
+  if (!currentUser) return;
+
+  Object.entries(SCHEMAS).forEach(([key, schema]) => {
+    schema.views.forEach((viewName) => {
+      const view = document.querySelector(`[data-view="${viewName}"]`);
+      if (!view) return;
+      const head = view.querySelector('.page-head');
+      if (!head) return;
+
+      const bar = document.createElement('div');
+      bar.className = 'tuz-admin-bar';
+      bar.setAttribute('data-admin-actions', key);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tuz-admin-action';
+      if (schema.mode === 'single') {
+        btn.classList.add('is-edit');
+        btn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          ${esc(schema.noun)} 수정
+        `;
+      } else {
+        btn.classList.add('is-add');
+        btn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          ${esc(schema.noun)} 추가
+        `;
+      }
+      btn.addEventListener('click', () => openEditor(key, { addNew: schema.mode === 'list' }));
+      bar.appendChild(btn);
+
+      head.insertAdjacentElement('afterend', bar);
+    });
+  });
 }
 
 // ─── 로그인 ────────────────────────────────
@@ -158,7 +227,7 @@ function openLogin() {
     <p class="tuz-form__hint">Supabase에 등록하신 관리자 계정으로 로그인하세요.</p>
   `;
 
-  const { close } = openModal({
+  openModal({
     title: '관리자 로그인',
     body: form,
     actions: [
@@ -178,58 +247,32 @@ function openLogin() {
     ],
   });
 
-  // submit on Enter
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     form.parentElement.parentElement.querySelector('.tuz-sheet__foot .is-primary').click();
   });
 }
 
-// ─── 관리자 대시보드 (5개 테이블 선택) ─────
-function openDashboard() {
-  const list = document.createElement('div');
-  list.className = 'tuz-dash';
-  list.innerHTML = Object.entries(SCHEMAS).map(([key, s]) => `
-    <button type="button" class="tuz-dash__row" data-key="${key}">
-      <span>${esc(s.label)}</span>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-    </button>
-  `).join('') + `
-    <div class="tuz-dash__user">
-      <span>${esc(currentUser?.email || '')}</span>
-      <button type="button" class="tuz-btn2 is-ghost" id="tuz-logout">로그아웃</button>
-    </div>
-  `;
-
-  const { close } = openModal({ title: '관리 메뉴', body: list });
-
-  list.querySelectorAll('.tuz-dash__row').forEach((b) => {
-    b.addEventListener('click', () => {
-      close();
-      openEditor(b.dataset.key);
-    });
-  });
-  list.querySelector('#tuz-logout').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    close();
-    toast('로그아웃되었습니다');
-  });
-}
-
 // ─── 에디터 ─────────────────────────────────
-async function openEditor(tableKey) {
-  const schema = SCHEMAS[tableKey];
+async function openEditor(key, { addNew = false } = {}) {
+  const schema = SCHEMAS[key];
   if (!schema) return;
+  const tableName = schema.table || key;
 
   // fetch current rows
-  const { data, error } = schema.mode === 'single'
-    ? await supabase.from(tableKey).select('*').maybeSingle().then((r) => ({ data: r.data ? [r.data] : [{ id: 1 }], error: r.error }))
-    : await supabase.from(tableKey).select('*').order('sort_order', { ascending: true });
+  let rows = [];
+  if (schema.mode === 'single') {
+    const { data, error } = await supabase.from(tableName).select('*').maybeSingle();
+    if (error) { toast(`불러오기 실패: ${error.message}`, { error: true }); return; }
+    rows = [data ? { ...data } : (tableName === 'settings' ? { id: 1 } : { id: 1 })];
+  } else {
+    const { data, error } = await supabase.from(tableName).select('*').order('sort_order', { ascending: true });
+    if (error) { toast(`불러오기 실패: ${error.message}`, { error: true }); return; }
+    rows = (data || []).map((r) => ({ ...r }));
+    if (addNew) rows.push({});
+  }
 
-  if (error) { toast(`불러오기 실패: ${error.message}`, { error: true }); return; }
-
-  const rows = Array.isArray(data) ? data.map((r) => ({ ...r })) : [];
-  const removedIds = []; // track deletes for batch save
+  const removedIds = [];
 
   const body = document.createElement('div');
   body.className = 'tuz-editor';
@@ -270,16 +313,14 @@ async function openEditor(tableKey) {
         rebuild();
       });
       head.querySelector('[data-act="del"]').addEventListener('click', () => {
-        if (!confirm('이 행을 삭제할까요?')) return;
+        if (!confirm('이 항목을 삭제할까요?')) return;
         if (row.id) removedIds.push(row.id);
         rows.splice(idx, 1);
         rebuild();
       });
     }
 
-    schema.fields.forEach((f) => {
-      card.appendChild(buildField(f, row));
-    });
+    schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
     return card;
   }
 
@@ -357,15 +398,18 @@ async function openEditor(tableKey) {
     return wrap;
   }
 
-  // bottom add button for list mode
+  // bottom add button for list mode — natural label
   if (schema.mode === 'list') {
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'tuz-btn2 is-ghost tuz-editor__add';
-    addBtn.textContent = '＋ 행 추가';
+    addBtn.textContent = `＋ ${schema.noun} 하나 더 추가`;
     addBtn.addEventListener('click', () => {
       rows.push({});
       rebuild();
+      // 새 카드로 스크롤
+      const last = listEl.lastElementChild;
+      if (last) last.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
     body.appendChild(addBtn);
   }
@@ -373,7 +417,7 @@ async function openEditor(tableKey) {
   rebuild();
 
   openModal({
-    title: `${schema.label} 편집`,
+    title: schema.mode === 'list' ? `${schema.label} 관리` : `${schema.label} 수정`,
     body,
     actions: [
       { label: '취소', onClick: ({ close }) => close() },
@@ -381,9 +425,9 @@ async function openEditor(tableKey) {
         label: '저장', primary: true,
         onClick: async ({ close }) => {
           try {
-            await saveRows(tableKey, schema, rows, removedIds);
+            await saveRows(tableName, schema, rows, removedIds);
             toast('저장되었습니다');
-            await refreshTable(tableKey);
+            await refreshTable(tableName);
             close();
           } catch (e) {
             toast(`저장 실패: ${e.message || e}`, { error: true });
@@ -395,19 +439,20 @@ async function openEditor(tableKey) {
 }
 
 // ─── 저장 로직 ──────────────────────────────
-async function saveRows(tableKey, schema, rows, removedIds) {
+async function saveRows(tableName, schema, rows, removedIds) {
   if (schema.mode === 'single') {
     const r = rows[0] || {};
     const payload = { id: 1 };
     schema.fields.forEach((f) => { payload[f.col] = r[f.col] ?? null; });
-    const { error } = await supabase.from(tableKey).upsert(payload);
+    const req = schema.fields.find((f) => f.required);
+    if (req && !payload[req.col]) throw new Error(`${req.label}은(는) 필수입니다`);
+    const { error } = await supabase.from(tableName).upsert(payload);
     if (error) throw error;
     return;
   }
 
-  // list mode: delete removed, upsert remaining with sort_order from index
   if (removedIds.length) {
-    const { error } = await supabase.from(tableKey).delete().in('id', removedIds);
+    const { error } = await supabase.from(tableName).delete().in('id', removedIds);
     if (error) throw error;
   }
 
@@ -415,14 +460,13 @@ async function saveRows(tableKey, schema, rows, removedIds) {
     const out = { sort_order: i };
     schema.fields.forEach((f) => { out[f.col] = r[f.col] ?? null; });
     if (r.id) out.id = r.id;
-    // drop empty required rows
     const req = schema.fields.find((f) => f.required);
-    if (req && !out[req.col]) return null;
+    if (req && !out[req.col]) return null; // skip empty draft rows
     return out;
   }).filter(Boolean);
 
   if (!payload.length) return;
-  const { error } = await supabase.from(tableKey).upsert(payload);
+  const { error } = await supabase.from(tableName).upsert(payload);
   if (error) throw error;
 }
 
@@ -439,15 +483,30 @@ async function uploadPhoto(file) {
 }
 
 // ─── 세션 부팅 ──────────────────────────────
+function applyAdminState() {
+  document.body.classList.toggle('is-admin', !!currentUser);
+  renderFab();
+  renderPageActions();
+}
+
 async function init() {
   const { data } = await supabase.auth.getSession();
   currentUser = data.session?.user || null;
-  renderFab();
+  applyAdminState();
 
   supabase.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
-    renderFab();
+    applyAdminState();
   });
+
+  // 라우트 바뀔 때마다 새 페이지에도 버튼이 보이도록 재주입
+  window.addEventListener('popstate', () => requestAnimationFrame(renderPageActions));
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-go], [data-back]')) {
+      // 뷰 전환 후 DOM 안정화 직후 버튼 재주입
+      requestAnimationFrame(renderPageActions);
+    }
+  }, true);
 }
 
 init();

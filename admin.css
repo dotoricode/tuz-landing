@@ -1,13 +1,10 @@
 /* TUZ admin overlay — 관리자 전용 UI */
 
-/* ─── Floating access button ───────────────── */
+/* ─── FAB: 로그인 아이콘 / 로그아웃 필 ─────── */
 #tuz-admin-fab {
   position: fixed;
   left: 18px;
   bottom: 18px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
   border: none;
   background: var(--paper, #fff);
   color: var(--ink-3, #6e6356);
@@ -17,11 +14,33 @@
   align-items: center;
   justify-content: center;
   z-index: 200;
-  opacity: 0.6;
   transition: opacity 0.15s ease, transform 0.15s ease;
+  /* 로그아웃 아닐 때 = 원형 아이콘 */
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  opacity: 0.55;
+  font-family: inherit;
 }
 #tuz-admin-fab:hover { opacity: 1; transform: scale(1.05); }
 #tuz-admin-fab:active { transform: scale(0.95); }
+
+/* 로그인됨 = 작은 pill 모양 "로그아웃" 버튼 */
+#tuz-admin-fab.is-logged-in {
+  width: auto;
+  height: auto;
+  border-radius: 999px;
+  padding: 8px 14px;
+  gap: 6px;
+  opacity: 1;
+  background: var(--ink, #1a1612);
+  color: var(--ivory, #f4ecda);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow: 0 4px 14px rgba(26, 22, 18, 0.22);
+}
+#tuz-admin-fab.is-logged-in svg { color: inherit; }
 
 /* ─── Overlay + bottom sheet ──────────────── */
 .tuz-ovl {
@@ -375,20 +394,35 @@
 @keyframes tuz-toast-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes tuz-toast-out { to { opacity: 0; transform: translate(-50%, -8px); } }
 
-/* ─── Inline edit pencil (shown when logged in) ─── */
-[data-admin-edit] {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  z-index: 30;
-  letter-spacing: 0.04em;
+/* ─── 페이지별 관리 액션 바 ─────────────────── */
+.tuz-admin-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 20px 2px;
 }
-[data-admin-edit]:hover { background: rgba(0, 0, 0, 0.9); }
+.tuz-admin-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  border: 1px dashed var(--tuz-red, #a52a1a);
+  background: var(--tuz-red-soft, rgba(165, 42, 26, 0.08));
+  color: var(--tuz-red, #a52a1a);
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.tuz-admin-action:hover {
+  background: var(--tuz-red, #a52a1a);
+  color: #fff7ee;
+}
+.tuz-admin-action:active { transform: scale(0.97); }
+
+.tuz-admin-action.is-edit {
+  border-style: solid;
+}
+.tuz-admin-action svg { flex-shrink: 0; }

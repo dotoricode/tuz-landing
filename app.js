@@ -7,7 +7,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true },
 });
 
-const WIFI_PW = 'tuz12345';
+let WIFI_PW = 'tuz12345';  // settings 테이블에서 덮어씀
 const ADDRESS = '울산광역시 중구 염포로22, 2층';
 const CACHE_MS = 2 * 60 * 1000;
 
@@ -216,6 +216,23 @@ function renderWinners(items) {
   `).join('');
 }
 
+function renderSettings(items) {
+  const s = items && items[0];
+  if (!s) return;
+  if (s.wifiSsid) {
+    const el = document.getElementById('wifiSsid');
+    if (el) el.textContent = s.wifiSsid;
+    // tile on home
+    const tile = document.querySelector('[data-wifi-ssid-tile]');
+    if (tile) tile.textContent = s.wifiSsid;
+  }
+  if (s.wifiPassword) {
+    WIFI_PW = s.wifiPassword;
+    const el = document.getElementById('pwText');
+    if (el) el.textContent = s.wifiPassword;
+  }
+}
+
 function renderGreeting(items) {
   const g = items && items[0];
   if (!g) return;
@@ -341,6 +358,7 @@ export const RENDERERS = {
   winners: renderWinners,
   greeting: renderGreeting,
   menu: renderMenu,
+  settings: renderSettings,
 };
 
 const LOADERS = {
@@ -349,13 +367,17 @@ const LOADERS = {
   event:    () => loadTable('winners',  renderWinners),
   greeting: () => loadTable('greeting', renderGreeting, { single: true }),
   menu:     () => loadTable('menu',     renderMenu),
+  wifi:     () => loadTable('settings', renderSettings, { single: true }),
 };
+
+// settings는 항상 먼저 로드 — 모든 페이지에서 WiFi 정보가 필요할 수 있음
+LOADERS.wifi();
 
 // 관리자가 저장한 후 현재 보이는 화면의 데이터를 강제 새로고침
 export async function refreshTable(table) {
   // invalidate cache and reload
   try { localStorage.removeItem(`tuz-cache-v4:${table}`); } catch (_) { /* ignore */ }
-  const viewMap = { news: 'news', pick: 'pick', winners: 'event', greeting: 'greeting', menu: 'menu' };
+  const viewMap = { news: 'news', pick: 'pick', winners: 'event', greeting: 'greeting', menu: 'menu', settings: 'wifi' };
   const loader = LOADERS[viewMap[table]];
   if (loader) await loader();
 }
@@ -365,4 +387,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=1').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=2').catch((e) => console.warn('[tuz] admin module not loaded:', e));
