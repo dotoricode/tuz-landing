@@ -11,6 +11,20 @@ let WIFI_PW = 'tuz12345';  // settings 테이블에서 덮어씀
 const ADDRESS = '울산광역시 중구 염포로22, 2층';
 const CACHE_MS = 2 * 60 * 1000;
 
+// ─── 연결 오류 토스트 ─────────────────────────
+let _connToastShown = false;
+function showConnectionToast() {
+  if (_connToastShown) return;
+  _connToastShown = true;
+  const el = document.createElement('div');
+  el.className = 'tuz-conn-toast';
+  el.setAttribute('role', 'alert');
+  el.setAttribute('aria-live', 'assertive');
+  el.innerHTML = `<span>네트워크 연결을 확인해주세요</span><button type="button" aria-label="닫기">×</button>`;
+  el.querySelector('button').addEventListener('click', () => el.remove());
+  document.body.appendChild(el);
+}
+
 const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -146,8 +160,34 @@ export function imgUrl(url) {
 function photoOrPh(url, placeholder, height = 140) {
   const u = imgUrl(url);
   return u
-    ? `<img class="photo" src="${esc(u)}" alt="${esc(placeholder)}" style="height:${height}px" loading="lazy">`
-    : `<div class="ph" style="height:${height}px" aria-hidden="true">${esc(placeholder)}</div>`;
+    ? `<div class="photo-block"><img src="${esc(u)}" alt="${esc(placeholder)}" loading="lazy"></div>`
+    : `<div class="photo-block is-empty"></div>`;
+}
+
+// ─── empty state ──────────────────────────────
+const EMPTY_COPY = {
+  news:    { title: '등록된 공지사항이 없습니다',         sub: '새 공지가 올라오면 이 자리에 표시됩니다' },
+  menu:    { title: '메뉴 등록 준비 중입니다',           sub: '매장 내 메뉴판을 참고해주세요' },
+  pick:    { title: '이번 주 추천 메뉴가 등록되지 않았습니다', sub: null },
+  winners: { title: '이번 달 이벤트 발표 전입니다',       sub: '매달 1일 발표됩니다' },
+};
+function renderEmpty(containerId, key) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const { title, sub } = EMPTY_COPY[key] || { title: '준비 중입니다', sub: null };
+  el.innerHTML = `<div class="card empty-state"><p class="empty-state__title">${esc(title)}</p>${sub ? `<p class="empty-state__sub">${esc(sub)}</p>` : ''}</div>`;
+}
+
+function renderSkeleton(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="sk-card">
+      <div class="sk sk--photo"></div>
+      <div class="sk sk--line"></div>
+      <div class="sk sk--line is-short"></div>
+    </div>
+  `;
 }
 
 function todayStr() {
@@ -160,14 +200,19 @@ function todayStr() {
 // ─── 렌더러 ──────────────────────────────────
 function renderPicks(picks) {
   const list = document.getElementById('pickList');
-  if (!list || !picks || !picks.length) return;
+  if (!list) return;
+  if (!picks || !picks.length) { renderEmpty('pickList', 'pick'); return; }
   const valid = picks.filter((p) => p.name);
-  if (!valid.length) return;
+  if (!valid.length) { renderEmpty('pickList', 'pick'); return; }
   list.innerHTML = valid.map((p) => {
-    const photo = photoOrPh(p.photo, `${(p.nameEn || 'pick').toLowerCase()} photo`, 140);
+    const photoUrl = imgUrl(p.photo);
+    const photoHtml = photoUrl
+      ? `<div class="photo-block"><img src="${esc(photoUrl)}" alt="${esc(p.name || 'pick')}"></div>`
+      : `<div class="photo-block is-empty"></div>`;
+    const priceStr = p.price ? '₩' + Number(String(p.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
     return `
       <article class="card"${p.id ? ` data-item-id="${esc(p.id)}"` : ''}>
-        <div style="margin-bottom:12px">${photo}</div>
+        <div style="margin-bottom:12px">${photoHtml}</div>
         <div class="pick__meta">
           <span class="chip">${esc(p.barista || '사장 pick')}</span>
           <time>${esc(p.date || todayStr())}</time>
@@ -177,7 +222,7 @@ function renderPicks(picks) {
         ${p.note ? `<p class="pick__note">${esc(p.note)}</p>` : ''}
         <div class="pick__price">
           <span class="eyebrow">TODAY'S PRICE</span>
-          <span class="display display--sm">${esc(p.price || '')}</span>
+          <span class="display display--sm">${esc(priceStr || p.price || '')}</span>
         </div>
       </article>
     `;
@@ -186,9 +231,20 @@ function renderPicks(picks) {
 
 function renderNews(items) {
   const list = document.getElementById('newsList');
-  if (!list || !items || !items.length) return;
+  if (!list) return;
+  if (!items || !items.length) {
+    renderEmpty('newsList', 'news');
+    const newsBadge = document.querySelector('[data-go="news"] .tile__e');
+    if (newsBadge) newsBadge.hidden = true;
+    return;
+  }
   const valid = items.filter((n) => n.title);
-  if (!valid.length) return;
+  if (!valid.length) {
+    renderEmpty('newsList', 'news');
+    const newsBadge = document.querySelector('[data-go="news"] .tile__e');
+    if (newsBadge) newsBadge.hidden = true;
+    return;
+  }
   list.innerHTML = valid.map((n, i) => `
     <article class="notice${i === 0 ? '' : ' notice--soft'}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
       <header class="notice__head">
@@ -200,13 +256,20 @@ function renderNews(items) {
       ${n.body ? `<p>${esc(n.body)}</p>` : ''}
     </article>
   `).join('');
+  // 뱃지 업데이트
+  const newsBadge = document.querySelector('[data-go="news"] .tile__e');
+  if (newsBadge) {
+    newsBadge.textContent = valid.length + ' NEW';
+    newsBadge.hidden = false;
+  }
 }
 
 function renderWinners(items) {
   const list = document.getElementById('winnerList');
-  if (!list || !items || !items.length) return;
+  if (!list) return;
+  if (!items || !items.length) { renderEmpty('winnerList', 'winners'); return; }
   const valid = items.filter((w) => w.nick);
-  if (!valid.length) return;
+  if (!valid.length) { renderEmpty('winnerList', 'winners'); return; }
   list.innerHTML = valid.map((w, i) => `
     <div class="winner"${w.id ? ` data-item-id="${esc(w.id)}"` : ''}>
       <span class="winner__num">${i + 1}</span>
@@ -214,6 +277,42 @@ function renderWinners(items) {
       <span class="chip">${esc(w.month || '무료음료')}</span>
     </div>
   `).join('');
+}
+
+function updateStatusBar(settings) {
+  const bar = document.querySelector('.status-bar');
+  const textEl = bar && bar.querySelector('.status-text');
+  if (!bar || !textEl) return;
+
+  const now = new Date();
+  const day = now.getDay(); // 0=일, 6=토
+  const hhmm = now.getHours() * 60 + now.getMinutes();
+
+  if (settings.holidayNotice) {
+    bar.className = 'status-bar is-closed';
+    textEl.textContent = settings.holidayNotice;
+    return;
+  }
+
+  const hoursStr = (day === 0 || day === 6)
+    ? (settings.hoursWeekend || '10:00-23:00')
+    : (settings.hoursWeekday || '08:00-22:00');
+
+  const [openStr, closeStr] = hoursStr.split('-');
+  const toMin = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + (m || 0); };
+  const open = toMin(openStr);
+  const close = toMin(closeStr);
+
+  if (hhmm >= open && hhmm < close) {
+    bar.className = 'status-bar';
+    textEl.textContent = `지금 영업 중 · ${hoursStr.replace('-', ' – ')}`;
+  } else if (hhmm < open) {
+    bar.className = 'status-bar is-soon';
+    textEl.textContent = `곧 오픈 · ${openStr}부터`;
+  } else {
+    bar.className = 'status-bar is-closed';
+    textEl.textContent = `오늘 영업 종료 · 내일 다시 오세요`;
+  }
 }
 
 function renderSettings(items) {
@@ -231,22 +330,24 @@ function renderSettings(items) {
     const el = document.getElementById('pwText');
     if (el) el.textContent = s.wifiPassword;
   }
+  updateStatusBar(s);
 }
 
 function renderGreeting(items) {
   const g = items && items[0];
   if (!g) return;
   if (!g.body && !g.photo && !g.sign) return;
-  const photo = document.getElementById('greetPhoto');
-  if (photo && g.photo) {
-    const u = imgUrl(g.photo);
-    if (u) {
-      const img = document.createElement('img');
-      img.className = 'photo';
-      img.src = u; img.alt = 'owner portrait';
-      img.loading = 'lazy'; img.style.height = '140px'; img.id = 'greetPhoto';
-      photo.replaceWith(img);
+  const photoEl = document.getElementById('greetPhoto');
+  if (photoEl) {
+    const photoUrl = imgUrl(g.photo);
+    if (photoUrl) {
+      const block = document.createElement('div');
+      block.className = 'photo-block';
+      block.id = 'greetPhoto';
+      block.innerHTML = `<img src="${esc(photoUrl)}" alt="owner portrait">`;
+      photoEl.replaceWith(block);
     }
+    // if no photo, leave existing .photo-block.is-empty
   }
   if (g.body) {
     const body = document.getElementById('greetBody');
@@ -259,19 +360,20 @@ function renderGreeting(items) {
 }
 
 function renderMenu(items) {
-  if (!items || !items.length) return;
+  if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
 
   const heroRow = items.find((r) => r.heroPhoto);
-  if (heroRow) {
-    const hero = document.getElementById('menuHero');
-    const u = imgUrl(heroRow.heroPhoto);
-    if (hero && u) {
-      const img = document.createElement('img');
-      img.className = 'photo';
-      img.src = u; img.alt = 'menu hero';
-      img.loading = 'lazy'; img.style.height = '140px'; img.id = 'menuHero';
-      hero.replaceWith(img);
+  const heroEl = document.getElementById('menuHero');
+  if (heroEl) {
+    const heroUrl = imgUrl(heroRow?.heroPhoto);
+    if (heroUrl) {
+      const block = document.createElement('div');
+      block.className = 'photo-block';
+      block.id = 'menuHero';
+      block.innerHTML = `<img src="${esc(heroUrl)}" alt="menu hero">`;
+      heroEl.replaceWith(block);
     }
+    // if no hero photo, leave existing .photo-block.is-empty
   }
 
   const order = [];
@@ -282,23 +384,26 @@ function renderMenu(items) {
     if (!groups.has(cat)) { groups.set(cat, []); order.push(cat); }
     groups.get(cat).push(r);
   }
-  if (!order.length) return;
+  if (!order.length) { renderEmpty('menuCategories', 'menu'); return; }
 
   const container = document.getElementById('menuCategories');
   if (!container) return;
   container.innerHTML = order.map((cat, idx) => `
     <div class="card"${idx > 0 ? ' style="margin-top:14px"' : ''}>
       <div class="eyebrow">${esc(cat)}</div>
-      ${groups.get(cat).map((m) => `
+      ${groups.get(cat).map((m) => {
+        const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
+        return `
         <div class="menu-row"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
           <div class="menu-row__l">
-            <div class="name">${esc(m.name)}${m.tag ? ` <span class="chip chip--sm">${esc(m.tag)}</span>` : ''}</div>
+            <div class="name">${esc(m.name)}${m.isSignature ? ` <span class="chip chip--sm">시그니처</span>` : ''}${m.tag ? ` <span class="chip chip--sm">${esc(m.tag)}</span>` : ''}</div>
             ${m.nameEn ? `<div class="name-en">${esc(m.nameEn)}</div>` : ''}
           </div>
           <div class="dots"></div>
-          <div class="price">${esc(m.price || '')}</div>
+          <div class="price">${esc(priceStr || m.price || '')}</div>
         </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
   `).join('');
 }
@@ -347,9 +452,43 @@ async function loadTable(table, renderer, { single = false, order = 'sort_order'
     }
   } catch (e) {
     console.warn(`[tuz] ${table} load failed:`, e.message || e);
+    showConnectionToast();
   } finally {
     loadingFlags[table] = false;
   }
+}
+
+// ─── Kakao Maps 초기화 ───────────────────────
+let _kakaoMapInit = false;
+function initKakaoMap() {
+  if (_kakaoMapInit) return;
+  _kakaoMapInit = true;
+  const mapEl = document.getElementById('map');
+  if (!mapEl || !window.KAKAO_APP_KEY) {
+    if (mapEl) {
+      mapEl.classList.add('is-empty');
+      mapEl.title = 'Kakao Maps API 키를 설정하세요';
+    }
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${window.KAKAO_APP_KEY}&autoload=false`;
+  script.onload = () => {
+    window.kakao.maps.load(() => {
+      const LAT = 35.5492;
+      const LNG = 129.3148;
+      const map = new window.kakao.maps.Map(mapEl, {
+        center: new window.kakao.maps.LatLng(LAT, LNG),
+        level: 3,
+      });
+      new window.kakao.maps.Marker({
+        map,
+        position: new window.kakao.maps.LatLng(LAT, LNG),
+        title: 'TUZ',
+      });
+    });
+  };
+  document.head.appendChild(script);
 }
 
 export const RENDERERS = {
@@ -368,6 +507,7 @@ const LOADERS = {
   greeting: () => loadTable('greeting', renderGreeting, { single: true }),
   menu:     () => loadTable('menu',     renderMenu),
   wifi:     () => loadTable('settings', renderSettings, { single: true }),
+  location: () => initKakaoMap(),
 };
 
 // settings는 항상 먼저 로드 — 모든 페이지에서 WiFi 정보가 필요할 수 있음
@@ -387,4 +527,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=3').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=4').catch((e) => console.warn('[tuz] admin module not loaded:', e));

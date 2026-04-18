@@ -156,3 +156,12 @@ create trigger trg_menu_updated     before update on public.menu     for each ro
 create trigger trg_settings_updated before update on public.settings for each row execute function public.tz_touch_updated_at();
 
 -- 끝. 오류 없이 끝났다면 설정 완료.
+
+-- ─── 2026-04 디자인 개선: 신규 컬럼 ─────────
+ALTER TABLE menu ADD COLUMN IF NOT EXISTS is_signature BOOLEAN DEFAULT false;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS kakao_app_key TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS kakao_lat DOUBLE PRECISION DEFAULT 35.5492;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS kakao_lng DOUBLE PRECISION DEFAULT 129.3148;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS hours_weekday TEXT DEFAULT '08:00-22:00';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS hours_weekend TEXT DEFAULT '10:00-23:00';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS holiday_notice TEXT;

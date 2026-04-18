@@ -16,8 +16,8 @@
   z-index: 200;
   transition: opacity 0.15s ease, transform 0.15s ease;
   /* 로그아웃 아닐 때 = 원형 아이콘 */
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   opacity: 0.55;
   font-family: inherit;
@@ -436,6 +436,8 @@
   gap: 4px;
   z-index: 10;
   opacity: 0.92;
+  padding: 6px;
+  margin: -6px;
 }
 .tuz-item-btn {
   width: 28px;

@@ -9,6 +9,10 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a52a1a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Georgia,serif' font-size='28' font-weight='600' fill='%23f4ecda'%3ETUZ%3C/text%3E%3C/svg%3E"/>
 <link rel="stylesheet" href="styles.css"/>
 <link rel="stylesheet" href="admin.css"/>
+<!-- Kakao Maps SDK — API 키는 settings.kakao_app_key 또는 app.js 상수로 교체 필요 -->
+<script>
+  window.KAKAO_APP_KEY = ''; // 사용자가 https://developers.kakao.com 에서 발급 후 입력
+</script>
 </head>
 <body data-density="normal">
 
@@ -26,9 +30,9 @@
     <div class="section">
       <button class="status-bar" data-go="hours" type="button" aria-label="영업시간 보기">
         <span class="status-bar__left">
-          <span class="dot-green" aria-hidden="true"></span>
+          <span class="dot" aria-hidden="true"></span>
           <span>
-            <span class="status-bar__title">지금 영업 중 · Open now</span>
+            <span class="status-bar__title"><span class="status-text">지금 영업 중 · Open now</span></span>
             <span class="status-bar__sub">평일 08:00 – 22:00 · 주말 10:00 – 23:00</span>
           </span>
         </span>
@@ -78,6 +82,7 @@
           </div>
         </button>
 
+        <!-- EVENT 타일 — 비활성화 (당첨자 발표 시 주석 해제)
         <button class="tile tile--ivory tile--accent" data-go="event" type="button">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v4a5 5 0 01-10 0V4z"/><path d="M7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3"/><path d="M9 17h6M10 21h4M12 13v4"/></svg>
           <div>
@@ -85,6 +90,7 @@
             <div class="tile__e">5명 발표</div>
           </div>
         </button>
+        -->
 
         <button class="tile" data-go="greeting" type="button">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>
@@ -103,16 +109,6 @@
       </div>
     </div>
 
-    <div class="section footer-ctas">
-      <a class="btn btn--ghost" href="https://www.instagram.com/" target="_blank" rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>
-        @tuzz2026
-      </a>
-      <a class="btn btn--ghost" href="https://www.youtube.com/" target="_blank" rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>
-        @뭔데이채널
-      </a>
-    </div>
 
     <div class="sig">TUZ · since 2026 · Ulsan</div>
   </section>
@@ -138,7 +134,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>
             복사
           </span>
-          <span class="toast" id="pwToast" hidden>비밀번호 복사됨 ✓</span>
+          <span class="toast" id="pwToast" hidden role="status" aria-live="polite">비밀번호 복사됨 ✓</span>
         </button>
       </div>
       <div class="card">
@@ -205,7 +201,7 @@
       <span class="page-head__en">MENU</span>
     </div>
     <div class="section stack">
-      <img id="menuHero" class="photo" src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&auto=format&fit=crop&q=80" alt="TUZ 메뉴" loading="lazy"/>
+      <div id="menuHero" class="photo-block is-empty"></div>
       <div id="menuCategories">
         <div class="card">
           <div class="eyebrow">COFFEE · 커피</div>
@@ -272,23 +268,7 @@
       <span class="page-head__en">LOCATION</span>
     </div>
     <div class="section stack">
-      <div class="map" aria-label="지도">
-        <svg class="map__grid" viewBox="0 0 300 180" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0 60 L300 80" stroke="#c4b896" stroke-width="6" fill="none"/>
-          <path d="M40 0 L80 180" stroke="#c4b896" stroke-width="6" fill="none"/>
-          <path d="M180 0 L220 180" stroke="#c4b896" stroke-width="4" fill="none"/>
-          <path d="M0 130 L300 150" stroke="#c4b896" stroke-width="4" fill="none"/>
-          <rect x="100" y="20" width="40" height="30" fill="#d6cba8" opacity="0.5"/>
-          <rect x="150" y="100" width="50" height="35" fill="#d6cba8" opacity="0.5"/>
-          <rect x="230" y="40" width="40" height="40" fill="#d6cba8" opacity="0.5"/>
-        </svg>
-        <div class="map__pin">
-          <span class="map__pin-label">TUZ</span>
-          <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden="true"><path d="M7 10 L0 0 L14 0 Z" fill="var(--tuz-red)"/></svg>
-          <span class="map__pin-shadow"></span>
-        </div>
-        <div class="map__attr">kakao maps · embed</div>
-      </div>
+      <div id="map" class="photo-block" style="height:220px; border-radius: var(--r-lg); overflow:hidden;"></div>
       <div class="card">
         <div class="eyebrow">주소 · ADDRESS</div>
         <div class="addr">울산광역시 중구 염포로22, 2층</div>
@@ -330,7 +310,7 @@
         <div class="winner"><span class="winner__num">5</span><span class="winner__nick">라떼요정</span><span class="chip">5월 무료음료</span></div>
       </div>
       <div class="card card--ivory">
-        <p class="tips">💡 <b>교환 방법</b> · 카운터에서 본인 닉네임 + 스탬프 카드 확인 후 교환<br/>💡 <b>유효 기간</b> · 2026년 5월 31일까지<br/>💡 <b>다음 달 추첨</b> · 5월 31일 당일 인스타 발표</p>
+        <p class="tips">• <b>교환 방법</b> · 카운터에서 본인 닉네임 + 스탬프 카드 확인 후 교환<br/>• <b>유효 기간</b> · 2026년 5월 31일까지<br/>• <b>다음 달 추첨</b> · 5월 31일 당일 인스타 발표</p>
       </div>
       <p class="fineprint">나도 도전하기 → 음료 1잔에 도장 1개 · 카운터에 카드 신청</p>
     </div>
@@ -349,7 +329,7 @@
     <div class="section stack">
       <div id="pickList" data-pick-list>
         <article class="card">
-          <img class="photo" src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=1200&auto=format&fit=crop&q=80" alt="아이스 아메리카노 + 크로플 세트" loading="lazy" style="margin-bottom:12px"/>
+          <div class="photo-block is-empty" style="margin-bottom:12px"></div>
           <div class="pick__meta"><span class="chip">큰 사장 pick</span><time>2026.04.19</time></div>
           <div class="display display--md">아이스 아메리카노 + 크로플 세트</div>
           <div class="pick__en">Iced Americano + Croffle</div>
@@ -357,7 +337,7 @@
           <div class="pick__price"><span class="eyebrow">TODAY'S PRICE</span><span class="display display--sm">8,500</span></div>
         </article>
         <article class="card">
-          <img class="photo" src="https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=1200&auto=format&fit=crop&q=80" alt="미나리에이드" loading="lazy" style="margin-bottom:12px"/>
+          <div class="photo-block is-empty" style="margin-bottom:12px"></div>
           <div class="pick__meta"><span class="chip">작은 사장 pick</span><time>2026.04.19</time></div>
           <div class="display display--md">미나리에이드</div>
           <div class="pick__en">Minari-ade</div>
@@ -380,7 +360,7 @@
       <span class="page-head__en">HELLO</span>
     </div>
     <div class="section stack">
-      <img id="greetPhoto" class="photo" src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&auto=format&fit=crop&q=80" alt="TUZ 카페 내부" loading="lazy"/>
+      <div id="greetPhoto" class="photo-block is-empty"></div>
       <div class="card">
         <p class="greet" id="greetBody">안녕하세요, TUZ 사장 혜원입니다.
 
@@ -392,11 +372,11 @@
       <div class="card card--ivory greet__sns">
         <div class="greet__sns-label">함께 소통해요</div>
         <div class="btn-row">
-          <a class="btn btn--ghost" href="https://www.instagram.com/" target="_blank" rel="noopener">
+          <a class="btn btn--ghost" href="https://www.instagram.com/tuzz2026/" target="_blank" rel="noopener">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>
             @tuzz2026
           </a>
-          <a class="btn btn--ghost" href="https://www.youtube.com/" target="_blank" rel="noopener">
+          <a class="btn btn--ghost" href="https://www.youtube.com/@tuzz2026" target="_blank" rel="noopener">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>
             @뭔데이채널
           </a>

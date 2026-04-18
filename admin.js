@@ -58,12 +58,13 @@ const SCHEMAS = {
     mode: 'list',
     views: ['menu'],
     fields: [
-      { col: 'hero_photo', label: '대표 사진 (첫 행만)', type: 'photo' },
-      { col: 'category',   label: '카테고리', type: 'text', required: true, placeholder: 'COFFEE · 커피' },
-      { col: 'name',       label: '메뉴명 (한글)', type: 'text', required: true },
-      { col: 'name_en',    label: '메뉴명 (영문)', type: 'text' },
-      { col: 'price',      label: '가격', type: 'text', placeholder: '4,500' },
-      { col: 'tag',        label: '뱃지', type: 'text', placeholder: 'NEW' },
+      { col: 'hero_photo',   label: '대표 사진 (첫 행만)', type: 'photo' },
+      { col: 'category',     label: '카테고리', type: 'text', required: true, placeholder: 'COFFEE · 커피' },
+      { col: 'name',         label: '메뉴명 (한글)', type: 'text', required: true },
+      { col: 'name_en',      label: '메뉴명 (영문)', type: 'text' },
+      { col: 'price',        label: '가격', type: 'text', placeholder: '4,500' },
+      { col: 'tag',          label: '뱃지', type: 'text', placeholder: 'NEW' },
+      { col: 'is_signature', label: '시그니처 메뉴', type: 'checkbox' },
     ],
   },
   settings: {
@@ -113,19 +114,21 @@ function openModal({ title, body, actions = [], onClose }) {
 
   const footEl = overlay.querySelector('.tuz-sheet__foot');
   if (actions.length === 0) footEl.hidden = true;
-  actions.forEach((a) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = `tuz-btn2 ${a.primary ? 'is-primary' : 'is-ghost'}`;
-    btn.textContent = a.label;
-    btn.addEventListener('click', () => a.onClick && a.onClick({ close }));
-    footEl.appendChild(btn);
-  });
 
   function close() {
     overlay.remove();
     if (onClose) onClose();
   }
+
+  actions.forEach((a) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `tuz-btn2 ${a.primary ? 'is-primary' : 'is-ghost'}`;
+    btn.textContent = a.label;
+    btn.addEventListener('click', () => a.onClick && a.onClick({ close, overlay }));
+    footEl.appendChild(btn);
+  });
+
   overlay.querySelector('.tuz-sheet__close').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
@@ -262,6 +265,19 @@ function buildField(f, row) {
     container.appendChild(preview);
     container.appendChild(fileBtn);
     wrap.appendChild(container);
+    return wrap;
+  }
+
+  if (f.type === 'checkbox') {
+    const checkRow = document.createElement('div');
+    checkRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.id = `field-${f.col}`;
+    input.checked = !!row[f.col];
+    input.addEventListener('change', () => { row[f.col] = input.checked; });
+    checkRow.appendChild(input);
+    wrap.appendChild(checkRow);
     return wrap;
   }
 
@@ -436,14 +452,17 @@ async function openEditor(key, { addNew = false } = {}) {
       { label: '취소', onClick: ({ close }) => close() },
       {
         label: '저장', primary: true,
-        onClick: async ({ close }) => {
+        onClick: async (ctx) => {
+          const btn = ctx.overlay.querySelector('.tuz-sheet__foot .is-primary');
+          if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; btn.setAttribute('aria-busy', 'true'); }
           try {
             await saveRows(tableName, schema, rows, removedIds);
             toast('저장되었습니다');
             await refreshTable(tableName);
-            close();
+            ctx.close();
           } catch (e) {
             toast(`저장 실패: ${e.message || e}`, { error: true });
+            if (btn) { btn.disabled = false; btn.textContent = '저장'; btn.removeAttribute('aria-busy'); }
           }
         },
       },
@@ -556,7 +575,9 @@ async function openItemEditor(tableName, itemId) {
       { label: '취소', onClick: ({ close }) => close() },
       {
         label: '저장', primary: true,
-        onClick: async ({ close }) => {
+        onClick: async (ctx) => {
+          const btn = ctx.overlay.querySelector('.tuz-sheet__foot .is-primary');
+          if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; btn.setAttribute('aria-busy', 'true'); }
           try {
             const req = schema.fields.find((f) => f.required);
             if (req && !row[req.col]) throw new Error(`${req.label}은(는) 필수입니다`);
@@ -566,9 +587,10 @@ async function openItemEditor(tableName, itemId) {
             if (upErr) throw upErr;
             toast('저장되었습니다');
             await refreshTable(tableName);
-            close();
+            ctx.close();
           } catch (e) {
             toast(`저장 실패: ${e.message || e}`, { error: true });
+            if (btn) { btn.disabled = false; btn.textContent = '저장'; btn.removeAttribute('aria-busy'); }
           }
         },
       },
