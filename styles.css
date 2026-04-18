@@ -921,9 +921,9 @@ body {
 .status-bar.is-closed .dot { background: var(--tuz-red); }
 .status-bar.is-soon .dot { background: var(--ink-4); }
 
-/* ─── prefers-color-scheme dark ─── */
+/* ─── prefers-color-scheme dark — 수동 토글 시에만 적용 ─── */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root[data-theme="dark"] {
     --ivory: #1a1612;
     --ivory-2: #221c16;
     --paper: #25201a;
