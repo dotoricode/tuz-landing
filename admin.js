@@ -213,6 +213,93 @@ function renderPageActions() {
   });
 }
 
+// ─── 입력 필드 빌더 (공용) ──────────────────
+function buildField(f, row) {
+  const wrap = document.createElement('label');
+  wrap.className = 'tuz-field';
+
+  const lbl = document.createElement('span');
+  lbl.className = 'tuz-field__label';
+  lbl.textContent = f.label + (f.required ? ' *' : '');
+  wrap.appendChild(lbl);
+
+  if (f.type === 'photo') {
+    const container = document.createElement('div');
+    container.className = 'tuz-photo-field';
+    const preview = document.createElement('div');
+    preview.className = 'tuz-photo-preview';
+
+    const renderPreview = (url) => {
+      preview.innerHTML = url
+        ? `<img src="${esc(url)}" alt=""/><button type="button" class="tuz-photo-clear">삭제</button>`
+        : `<span class="tuz-photo-empty">사진 없음</span>`;
+      const clear = preview.querySelector('.tuz-photo-clear');
+      if (clear) clear.addEventListener('click', () => { row[f.col] = null; renderPreview(''); });
+    };
+    renderPreview(row[f.col] || '');
+
+    const fileBtn = document.createElement('label');
+    fileBtn.className = 'tuz-photo-upload';
+    fileBtn.innerHTML = `<span>사진 업로드</span><input type="file" accept="image/*" hidden>`;
+    const fileInput = fileBtn.querySelector('input');
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      try {
+        lbl.textContent = f.label + ' · 업로드 중…';
+        const url = await uploadPhoto(file);
+        row[f.col] = url;
+        renderPreview(url);
+        toast('사진 업로드 완료');
+      } catch (e) {
+        toast(`업로드 실패: ${e.message || e}`, { error: true });
+      } finally {
+        lbl.textContent = f.label + (f.required ? ' *' : '');
+        fileInput.value = '';
+      }
+    });
+
+    container.appendChild(preview);
+    container.appendChild(fileBtn);
+    wrap.appendChild(container);
+    return wrap;
+  }
+
+  let input;
+  if (f.type === 'textarea') {
+    input = document.createElement('textarea');
+    input.rows = f.rows || 3;
+  } else if (f.type === 'select') {
+    input = document.createElement('select');
+    (f.options || []).forEach((o) => {
+      const opt = document.createElement('option');
+      opt.value = o; opt.textContent = o;
+      input.appendChild(opt);
+    });
+  } else {
+    input = document.createElement('input');
+    input.type = f.type || 'text';
+  }
+  if (f.placeholder) input.placeholder = f.placeholder;
+  input.value = row[f.col] == null ? '' : row[f.col];
+  input.addEventListener('input', () => { row[f.col] = input.value || null; });
+  input.addEventListener('change', () => { row[f.col] = input.value || null; });
+  wrap.appendChild(input);
+  return wrap;
+}
+
+// ─── 사진 업로드 (공용) ──────────────────────
+async function uploadPhoto(file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext || 'jpg'}`;
+  const { error } = await supabase.storage.from('photos').upload(path, file, {
+    cacheControl: '3600', upsert: false,
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from('photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 // ─── 로그인 ────────────────────────────────
 function openLogin() {
   const form = document.createElement('form');
@@ -324,80 +411,6 @@ async function openEditor(key, { addNew = false } = {}) {
     return card;
   }
 
-  function buildField(f, row) {
-    const wrap = document.createElement('label');
-    wrap.className = 'tuz-field';
-
-    const lbl = document.createElement('span');
-    lbl.className = 'tuz-field__label';
-    lbl.textContent = f.label + (f.required ? ' *' : '');
-    wrap.appendChild(lbl);
-
-    if (f.type === 'photo') {
-      const container = document.createElement('div');
-      container.className = 'tuz-photo-field';
-      const preview = document.createElement('div');
-      preview.className = 'tuz-photo-preview';
-
-      const renderPreview = (url) => {
-        preview.innerHTML = url
-          ? `<img src="${esc(url)}" alt=""/><button type="button" class="tuz-photo-clear">삭제</button>`
-          : `<span class="tuz-photo-empty">사진 없음</span>`;
-        const clear = preview.querySelector('.tuz-photo-clear');
-        if (clear) clear.addEventListener('click', () => { row[f.col] = null; renderPreview(''); });
-      };
-      renderPreview(row[f.col] || '');
-
-      const fileBtn = document.createElement('label');
-      fileBtn.className = 'tuz-photo-upload';
-      fileBtn.innerHTML = `<span>사진 업로드</span><input type="file" accept="image/*" hidden>`;
-      const fileInput = fileBtn.querySelector('input');
-      fileInput.addEventListener('change', async () => {
-        const file = fileInput.files?.[0];
-        if (!file) return;
-        try {
-          lbl.textContent = f.label + ' · 업로드 중…';
-          const url = await uploadPhoto(file);
-          row[f.col] = url;
-          renderPreview(url);
-          toast('사진 업로드 완료');
-        } catch (e) {
-          toast(`업로드 실패: ${e.message || e}`, { error: true });
-        } finally {
-          lbl.textContent = f.label + (f.required ? ' *' : '');
-          fileInput.value = '';
-        }
-      });
-
-      container.appendChild(preview);
-      container.appendChild(fileBtn);
-      wrap.appendChild(container);
-      return wrap;
-    }
-
-    let input;
-    if (f.type === 'textarea') {
-      input = document.createElement('textarea');
-      input.rows = f.rows || 3;
-    } else if (f.type === 'select') {
-      input = document.createElement('select');
-      (f.options || []).forEach((o) => {
-        const opt = document.createElement('option');
-        opt.value = o; opt.textContent = o;
-        input.appendChild(opt);
-      });
-    } else {
-      input = document.createElement('input');
-      input.type = f.type || 'text';
-    }
-    if (f.placeholder) input.placeholder = f.placeholder;
-    input.value = row[f.col] == null ? '' : row[f.col];
-    input.addEventListener('input', () => { row[f.col] = input.value || null; });
-    input.addEventListener('change', () => { row[f.col] = input.value || null; });
-    wrap.appendChild(input);
-    return wrap;
-  }
-
   // bottom add button for list mode — natural label
   if (schema.mode === 'list') {
     const addBtn = document.createElement('button');
@@ -470,16 +483,97 @@ async function saveRows(tableName, schema, rows, removedIds) {
   if (error) throw error;
 }
 
-// ─── 사진 업로드 ────────────────────────────
-async function uploadPhoto(file) {
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext || 'jpg'}`;
-  const { error } = await supabase.storage.from('photos').upload(path, file, {
-    cacheControl: '3600', upsert: false,
+// ─── 항목별 수정/삭제 오버레이 ──────────────
+const VIEW_TO_TABLE = { news: 'news', pick: 'pick', event: 'winners', menu: 'menu' };
+
+function findSchemaByTable(tableName) {
+  return Object.values(SCHEMAS).find((s, i, arr) => {
+    const key = Object.keys(SCHEMAS)[i];
+    return (s.table || key) === tableName;
   });
-  if (error) throw error;
-  const { data } = supabase.storage.from('photos').getPublicUrl(path);
-  return data.publicUrl;
+}
+
+function renderItemActions() {
+  document.querySelectorAll('.tuz-item-actions').forEach((el) => el.remove());
+  if (!currentUser) return;
+
+  document.querySelectorAll('[data-item-id]').forEach((item) => {
+    const view = item.closest('[data-view]');
+    const tableName = VIEW_TO_TABLE[view?.dataset.view];
+    const id = item.dataset.itemId;
+    if (!tableName || !id) return;
+
+    if (getComputedStyle(item).position === 'static') {
+      item.style.position = 'relative';
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'tuz-item-actions';
+    actions.innerHTML = `
+      <button type="button" class="tuz-item-btn" data-act="edit" aria-label="수정">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+      <button type="button" class="tuz-item-btn is-danger" data-act="del" aria-label="삭제">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+      </button>
+    `;
+    actions.querySelector('[data-act="edit"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openItemEditor(tableName, id);
+    });
+    actions.querySelector('[data-act="del"]').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('이 항목을 삭제할까요? 되돌릴 수 없습니다.')) return;
+      const { error } = await supabase.from(tableName).delete().eq('id', id);
+      if (error) { toast(`삭제 실패: ${error.message}`, { error: true }); return; }
+      toast('삭제되었습니다');
+      await refreshTable(tableName);
+    });
+    item.appendChild(actions);
+  });
+}
+
+async function openItemEditor(tableName, itemId) {
+  const schema = findSchemaByTable(tableName);
+  if (!schema) return;
+
+  const { data, error } = await supabase.from(tableName).select('*').eq('id', itemId).maybeSingle();
+  if (error || !data) { toast(`불러오기 실패: ${error?.message || '항목 없음'}`, { error: true }); return; }
+
+  const row = { ...data };
+
+  const body = document.createElement('div');
+  body.className = 'tuz-editor';
+  const card = document.createElement('div');
+  card.className = 'tuz-row-card';
+  schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
+  body.appendChild(card);
+
+  openModal({
+    title: `${schema.label} · 수정`,
+    body,
+    actions: [
+      { label: '취소', onClick: ({ close }) => close() },
+      {
+        label: '저장', primary: true,
+        onClick: async ({ close }) => {
+          try {
+            const req = schema.fields.find((f) => f.required);
+            if (req && !row[req.col]) throw new Error(`${req.label}은(는) 필수입니다`);
+            const payload = { id: itemId };
+            schema.fields.forEach((f) => { payload[f.col] = row[f.col] ?? null; });
+            const { error: upErr } = await supabase.from(tableName).upsert(payload);
+            if (upErr) throw upErr;
+            toast('저장되었습니다');
+            await refreshTable(tableName);
+            close();
+          } catch (e) {
+            toast(`저장 실패: ${e.message || e}`, { error: true });
+          }
+        },
+      },
+    ],
+  });
 }
 
 // ─── 세션 부팅 ──────────────────────────────
@@ -487,24 +581,46 @@ function applyAdminState() {
   document.body.classList.toggle('is-admin', !!currentUser);
   renderFab();
   renderPageActions();
+  renderItemActions();
+}
+
+// 컨텐츠 컨테이너가 바뀔 때마다 (새 데이터 렌더링 등) 아이템 액션 재주입
+let itemActionsPending = false;
+function scheduleItemActions() {
+  if (itemActionsPending) return;
+  itemActionsPending = true;
+  requestAnimationFrame(() => {
+    itemActionsPending = false;
+    renderItemActions();
+  });
+}
+
+function observeContentMutations() {
+  const targets = ['newsList', 'pickList', 'winnerList', 'menuCategories'];
+  const observer = new MutationObserver(scheduleItemActions);
+  targets.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el, { childList: true, subtree: false });
+  });
 }
 
 async function init() {
   const { data } = await supabase.auth.getSession();
   currentUser = data.session?.user || null;
   applyAdminState();
+  observeContentMutations();
 
   supabase.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
     applyAdminState();
   });
 
-  // 라우트 바뀔 때마다 새 페이지에도 버튼이 보이도록 재주입
-  window.addEventListener('popstate', () => requestAnimationFrame(renderPageActions));
+  window.addEventListener('popstate', () => {
+    requestAnimationFrame(() => { renderPageActions(); renderItemActions(); });
+  });
   document.addEventListener('click', (e) => {
     if (e.target.closest('[data-go], [data-back]')) {
-      // 뷰 전환 후 DOM 안정화 직후 버튼 재주입
-      requestAnimationFrame(renderPageActions);
+      requestAnimationFrame(() => { renderPageActions(); renderItemActions(); });
     }
   }, true);
 }

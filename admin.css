@@ -426,3 +426,59 @@
   border-style: solid;
 }
 .tuz-admin-action svg { flex-shrink: 0; }
+
+/* ─── 항목별 수정/삭제 오버레이 ─────────────── */
+.tuz-item-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+  opacity: 0.92;
+}
+.tuz-item-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--ink-2, #3d342b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s ease, background 0.15s ease, color 0.15s ease;
+}
+.tuz-item-btn:hover {
+  background: var(--tuz-red, #a52a1a);
+  color: #fff7ee;
+  border-color: var(--tuz-red, #a52a1a);
+}
+.tuz-item-btn:active { transform: scale(0.9); }
+.tuz-item-btn.is-danger:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+/* 좁은 행(winner/menu-row)은 내용이 겹치지 않도록 오른쪽 여백 확보 */
+body.is-admin .winner[data-item-id],
+body.is-admin .menu-row[data-item-id] {
+  padding-right: 72px;
+}
+body.is-admin .winner[data-item-id] .tuz-item-actions,
+body.is-admin .menu-row[data-item-id] .tuz-item-actions {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 큰 카드(notice/pick card)는 상단 오른쪽 고정 */
+body.is-admin .notice[data-item-id] .tuz-item-actions,
+body.is-admin .card[data-item-id] .tuz-item-actions {
+  top: 12px;
+  right: 12px;
+}

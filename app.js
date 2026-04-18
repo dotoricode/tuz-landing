@@ -166,7 +166,7 @@ function renderPicks(picks) {
   list.innerHTML = valid.map((p) => {
     const photo = photoOrPh(p.photo, `${(p.nameEn || 'pick').toLowerCase()} photo`, 140);
     return `
-      <article class="card">
+      <article class="card"${p.id ? ` data-item-id="${esc(p.id)}"` : ''}>
         <div style="margin-bottom:12px">${photo}</div>
         <div class="pick__meta">
           <span class="chip">${esc(p.barista || '사장 pick')}</span>
@@ -190,7 +190,7 @@ function renderNews(items) {
   const valid = items.filter((n) => n.title);
   if (!valid.length) return;
   list.innerHTML = valid.map((n, i) => `
-    <article class="notice${i === 0 ? '' : ' notice--soft'}">
+    <article class="notice${i === 0 ? '' : ' notice--soft'}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
       <header class="notice__head">
         <span class="chip${i === 0 ? '' : ' chip--ink'}">${esc(n.tag || 'NOTICE')}</span>
         <time>${esc(n.date || todayStr())}</time>
@@ -208,7 +208,7 @@ function renderWinners(items) {
   const valid = items.filter((w) => w.nick);
   if (!valid.length) return;
   list.innerHTML = valid.map((w, i) => `
-    <div class="winner">
+    <div class="winner"${w.id ? ` data-item-id="${esc(w.id)}"` : ''}>
       <span class="winner__num">${i + 1}</span>
       <span class="winner__nick">${esc(w.nick || '')}</span>
       <span class="chip">${esc(w.month || '무료음료')}</span>
@@ -290,7 +290,7 @@ function renderMenu(items) {
     <div class="card"${idx > 0 ? ' style="margin-top:14px"' : ''}>
       <div class="eyebrow">${esc(cat)}</div>
       ${groups.get(cat).map((m) => `
-        <div class="menu-row">
+        <div class="menu-row"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
           <div class="menu-row__l">
             <div class="name">${esc(m.name)}${m.tag ? ` <span class="chip chip--sm">${esc(m.tag)}</span>` : ''}</div>
             ${m.nameEn ? `<div class="name-en">${esc(m.nameEn)}</div>` : ''}
@@ -387,4 +387,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=2').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=3').catch((e) => console.warn('[tuz] admin module not loaded:', e));
