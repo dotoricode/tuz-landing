@@ -224,8 +224,19 @@ function renderFab() {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
       <span>로그아웃</span>
     `;
+    let logoutPending = false;
+    let logoutTimer = null;
     fab.addEventListener('click', async () => {
-      if (!confirm('로그아웃 하시겠어요?')) return;
+      if (!logoutPending) {
+        logoutPending = true;
+        fab.querySelector('span').textContent = '한 번 더 탭';
+        logoutTimer = setTimeout(() => {
+          logoutPending = false;
+          fab.querySelector('span').textContent = '로그아웃';
+        }, 3000);
+        return;
+      }
+      clearTimeout(logoutTimer);
       await supabase.auth.signOut();
       toast('로그아웃되었습니다');
     });
