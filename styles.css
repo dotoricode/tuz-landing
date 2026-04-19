@@ -134,7 +134,7 @@ body {
 
 /* ─── hero ─── */
 .hero {
-  padding: calc(env(safe-area-inset-top) + 48px) 22px 14px;
+  padding: calc(env(safe-area-inset-top) + 48px) 22px 48px;
   text-align: center;
 }
 .hero .mark {
