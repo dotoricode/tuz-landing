@@ -47,6 +47,9 @@ export function showView(name, { pushHistory = true } = {}) {
     ? 'Tuz · coffee & dessert'
     : `Tuz · ${titleOf(target)}`;
 
+  if (['news', 'menu', 'pick'].includes(target)) {
+    localStorage.setItem(`tuz_seen_${target}`, Date.now());
+  }
   const loader = LOADERS[target];
   if (loader) loader();
 }
@@ -259,7 +262,7 @@ function renderPicks(picks) {
   if (smallEl) smallEl.innerHTML = small ? renderPickCard(small) : '';
 
   // 최근 7일 이내 추가/수정된 pick이 있으면 타일에 점
-  const recent = (picks || []).some((p) => isRecent(p.createdAt) || isRecent(p.updatedAt));
+  const recent = (picks || []).some((p) => isNewSince(p.createdAt, 'pick') || isNewSince(p.updatedAt, 'pick'));
   markTileUpdate('pick', recent);
 }
 
@@ -288,14 +291,23 @@ function isRecent(isoTs, days = 7) {
   return (Date.now() - t.getTime()) <= days * 86400000;
 }
 
+function isNewSince(isoTs, viewName) {
+  if (!isoTs) return false;
+  const t = new Date(isoTs);
+  if (isNaN(t.getTime())) return false;
+  const seen = parseInt(localStorage.getItem(`tuz_seen_${viewName}`) || '0', 10);
+  return seen ? t.getTime() > seen : isRecent(isoTs);
+}
+
 function updateTodayNotice(items) {
   const ticker = document.getElementById('notice');
   const tickerMirror = document.getElementById('noticeMirror');
   const card = document.getElementById('todayNoticeCard');
   const pinned = (items || []).filter((n) => n.isToday && n.title);
   // 공지 타일 업데이트 표시 — 핀된 공지가 있거나 7일 이내 새 공지가 있으면
-  const hasRecent = (items || []).some((n) => isRecent(n.createdAt) || isRecent(n.updatedAt));
-  markTileUpdate('news', pinned.length > 0 || hasRecent);
+  const hasRecent = (items || []).some((n) => isNewSince(n.createdAt, 'news') || isNewSince(n.updatedAt, 'news'));
+  const hasPinnedNew = pinned.some((n) => isNewSince(n.createdAt, 'news') || isNewSince(n.updatedAt, 'news'));
+  markTileUpdate('news', hasPinnedNew || hasRecent);
   if (!card) return;
   if (!pinned.length) {
     card.hidden = true;
@@ -566,7 +578,7 @@ function renderMenu(items) {
   if (CURRENT_SETTINGS) updateMenuHero(CURRENT_SETTINGS);
 
   // 최근 7일 이내 추가/수정된 메뉴가 있으면 타일에 점
-  const recent = (items || []).some((m) => isRecent(m.createdAt) || isRecent(m.updatedAt));
+  const recent = (items || []).some((m) => isNewSince(m.createdAt, 'menu') || isNewSince(m.updatedAt, 'menu'));
   markTileUpdate('menu', recent);
 
   if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
