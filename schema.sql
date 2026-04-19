@@ -177,3 +177,32 @@ ALTER TABLE news ADD COLUMN IF NOT EXISTS is_today BOOLEAN DEFAULT false;
 
 -- ─── 2026-04-19 추가: 공지 사진 ─────────
 ALTER TABLE news ADD COLUMN IF NOT EXISTS photo TEXT;
+
+-- ─── 2026-04-20 Phase 1: 스탬프 + 시그니처 spotlight ──
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS stamp_max INT DEFAULT 10;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS stamp_fill INT DEFAULT 0;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS stamp_note TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS spotlight_pick_id UUID REFERENCES public.pick(id) ON DELETE SET NULL;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS spotlight_label TEXT DEFAULT '이번 주의 한 잔';
+
+-- ─── 2026-04-20 Phase 1: FAQ 테이블 ────────────────
+create table if not exists public.faq (
+  id uuid primary key default gen_random_uuid(),
+  sort_order int not null default 0,
+  question_kr text not null,
+  question_en text,
+  answer_kr text not null,
+  answer_en text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.faq enable row level security;
+
+drop policy if exists "public_read_faq" on public.faq;
+drop policy if exists "auth_write_faq"  on public.faq;
+create policy "public_read_faq" on public.faq for select using (true);
+create policy "auth_write_faq"  on public.faq for all to authenticated using (true) with check (true);
+
+drop trigger if exists trg_faq_updated on public.faq;
+create trigger trg_faq_updated before update on public.faq for each row execute function public.tz_touch_updated_at();

@@ -13,8 +13,8 @@
 <meta name="twitter:title" content="Tuz · coffee &amp; dessert"/>
 <meta name="twitter:description" content="Tuz · coffee & dessert"/>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a52a1a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Georgia,serif' font-size='28' font-weight='600' fill='%23f4ecda'%3ETUZ%3C/text%3E%3C/svg%3E"/>
-<link rel="stylesheet" href="styles.css?v=30"/>
-<link rel="stylesheet" href="admin.css?v=30"/>
+<link rel="stylesheet" href="styles.css?v=31"/>
+<link rel="stylesheet" href="admin.css?v=31"/>
 <!-- Kakao Maps SDK — API 키는 settings.kakao_app_key 또는 app.js 상수로 교체 필요 -->
 <script>
   window.KAKAO_APP_KEY = '6bed886efad74c5a3e40969b07d35cc8'; // 사용자가 https://developers.kakao.com 에서 발급 후 입력
@@ -50,6 +50,17 @@
         </span>
         <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
       </button>
+    </div>
+
+    <div class="section">
+      <article class="stamp-card" id="stampCard" hidden>
+        <header class="stamp-card__head">
+          <span class="eyebrow">STAMP</span>
+          <strong class="stamp-card__count"><b id="stampFill">0</b> / <span id="stampMax">10</span></strong>
+        </header>
+        <div class="stamp-card__dots" id="stampDots" aria-hidden="true"></div>
+        <p class="stamp-card__note" id="stampNote">한 잔 더 모으면 음료 한 잔</p>
+      </article>
     </div>
 
     <div class="section">
@@ -111,8 +122,37 @@
             <div class="tile__e">GREETING</div>
           </div>
         </button>
+
+        <button class="tile" data-go="faq" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-2 1.8-2.5 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div>
+            <div class="tile__k">자주 묻는 질문</div>
+            <div class="tile__e">FAQ</div>
+          </div>
+        </button>
       </div>
     </div>
+
+    <div class="section">
+      <button class="spotlight" id="spotlightCard" data-go="menu" type="button" hidden>
+        <div class="spotlight__photo" id="spotlightPhoto"></div>
+        <div class="spotlight__body">
+          <span class="eyebrow" id="spotlightLabel">이번 주의 한 잔</span>
+          <div class="spotlight__title" id="spotlightTitle"></div>
+          <div class="spotlight__en" id="spotlightEn"></div>
+          <p class="spotlight__note" id="spotlightNote"></p>
+          <span class="spotlight__cue">메뉴 보러 가기 →</span>
+        </div>
+      </button>
+    </div>
+
+    <section class="section section--bleed" id="menuPreviewSection" hidden>
+      <header class="menu-preview__head">
+        <span class="eyebrow">SIGNATURE</span>
+        <a class="menu-preview__more" data-go="menu">메뉴판 →</a>
+      </header>
+      <div class="menu-preview" id="menuPreview" role="region" aria-label="시그니처 메뉴"></div>
+    </section>
 
     <div class="card card--ivory greet__sns">
         <div class="greet__sns-label">Connect with us</div>
@@ -364,6 +404,19 @@
     </div>
   </section>
 
+  <!-- ─── FAQ ─── -->
+  <section class="view" data-view="faq" hidden>
+    <button class="back" data-back type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>
+      홈
+    </button>
+    <div class="page-head">
+      <h1>자주 묻는 질문</h1>
+      <span class="page-head__en">FAQ</span>
+    </div>
+    <div class="section stack" id="faqList"></div>
+  </section>
+
   <!-- ─── GREETING ─── -->
   <section class="view" data-view="greeting" hidden>
     <button class="back" data-back type="button">
@@ -390,7 +443,7 @@
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
 </button>
 
-<script type="module" src="app.js?v=30"></script>
+<script type="module" src="app.js?v=31"></script>
 <script>
   document.addEventListener('gesturestart',  function(e){ e.preventDefault(); }, { passive: false });
   document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, { passive: false });

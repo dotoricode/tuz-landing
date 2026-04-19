@@ -47,7 +47,7 @@ export function showView(name, { pushHistory = true } = {}) {
     ? 'Tuz · coffee & dessert'
     : `Tuz · ${titleOf(target)}`;
 
-  if (['news', 'menu', 'pick'].includes(target)) {
+  if (['news', 'menu', 'pick', 'faq'].includes(target)) {
     localStorage.setItem(`tuz_seen_${target}`, Date.now());
   }
   const loader = LOADERS[target];
@@ -58,6 +58,7 @@ function titleOf(view) {
   return {
     wifi: '와이파이', news: '공지 · 이벤트', menu: '메뉴', hours: '영업시간',
     location: '오시는 길', event: '이달의 당첨자', pick: '오늘의 추천', greeting: '사장님 인사말',
+    faq: '자주 묻는 질문',
   }[view] || '';
 }
 
@@ -251,9 +252,10 @@ function renderPickCard(p) {
 }
 
 function renderPicks(picks) {
+  LATEST_PICKS = picks || [];
+
   const bigEl = document.getElementById('pickBig');
   const smallEl = document.getElementById('pickSmall');
-  if (!bigEl && !smallEl) return;
 
   const big = (picks || []).find((p) => p.barista === '큰 사장' && p.name);
   const small = (picks || []).find((p) => p.barista === '작은 사장' && p.name);
@@ -264,6 +266,9 @@ function renderPicks(picks) {
   // 최근 7일 이내 추가/수정된 pick이 있으면 타일에 점
   const recent = (picks || []).some((p) => isNewSince(p.createdAt, 'pick') || isNewSince(p.updatedAt, 'pick'));
   markTileUpdate('pick', recent);
+
+  // 홈 spotlight도 picks 변경 시 재계산
+  renderSpotlight();
 }
 
 // 타일에 "업데이트 있음" 표시 — 빨간 점 + 딥레드 테두리 (.has-update 클래스)
@@ -477,6 +482,9 @@ function updateHoursPage(settings) {
   }
 }
 
+// 최신 picks 캐시 — settings(spotlight_pick_id) 또는 picks가 갱신되면 spotlight 재계산
+let LATEST_PICKS = null;
+
 function renderSettings(items) {
   const s = items && items[0];
   if (!s) return;
@@ -495,6 +503,161 @@ function renderSettings(items) {
   updateStatusBar(s);
   updateHoursPage(s);
   updateMenuHero(s);
+  renderStampCard(s);
+  renderSpotlight();
+}
+
+function renderStampCard(s) {
+  const card = document.getElementById('stampCard');
+  if (!card) return;
+  const rawMax = parseInt(s?.stampMax, 10);
+  // 컬럼 자체가 없는 환경(마이그레이션 미실행) → 숨김. 0 으로 명시 설정해도 숨김.
+  if (!Number.isFinite(rawMax) || rawMax <= 0) {
+    card.hidden = true;
+    return;
+  }
+  const max = Math.min(20, rawMax);
+  const fill = Math.max(0, Math.min(max, parseInt(s?.stampFill, 10) || 0));
+  card.hidden = false;
+
+  const fillEl = document.getElementById('stampFill');
+  const maxEl = document.getElementById('stampMax');
+  if (fillEl) fillEl.textContent = String(fill);
+  if (maxEl) maxEl.textContent = String(max);
+
+  const dotsEl = document.getElementById('stampDots');
+  if (dotsEl) {
+    dotsEl.style.gridTemplateColumns = `repeat(${max}, 1fr)`;
+    const dots = [];
+    for (let i = 0; i < max; i++) {
+      dots.push(`<span class="stamp-card__dot${i < fill ? ' is-filled' : ''}"></span>`);
+    }
+    dotsEl.innerHTML = dots.join('');
+  }
+
+  const noteEl = document.getElementById('stampNote');
+  if (noteEl) {
+    const remaining = max - fill;
+    const defaultNote = remaining > 0
+      ? `${remaining}잔 더 모으면 음료 한 잔`
+      : '교환 가능 · 카운터로 와주세요';
+    noteEl.textContent = s?.stampNote || defaultNote;
+  }
+}
+
+function renderSpotlight() {
+  const card = document.getElementById('spotlightCard');
+  if (!card) return;
+  const picks = LATEST_PICKS || [];
+  const settings = CURRENT_SETTINGS || {};
+
+  // 1) settings.spotlightPickId 우선
+  let target = null;
+  if (settings.spotlightPickId) {
+    target = picks.find((p) => p.id === settings.spotlightPickId);
+  }
+  // 2) 비어있으면 큰 사장 최신 행 (barista 값이 '큰 사장' 또는 '큰 사장 pick' 모두 매칭)
+  if (!target) {
+    target = picks
+      .filter((p) => p.name && /큰\s*사장/.test(String(p.barista || '')))
+      .sort((a, b) => {
+        const da = String(a.date || a.createdAt || '');
+        const db = String(b.date || b.createdAt || '');
+        return db.localeCompare(da);
+      })[0];
+  }
+  if (!target) {
+    card.hidden = true;
+    return;
+  }
+
+  card.hidden = false;
+  const labelEl = document.getElementById('spotlightLabel');
+  if (labelEl) labelEl.textContent = settings.spotlightLabel || '이번 주의 한 잔';
+
+  const titleEl = document.getElementById('spotlightTitle');
+  if (titleEl) titleEl.textContent = target.name || '';
+
+  const enEl = document.getElementById('spotlightEn');
+  if (enEl) {
+    enEl.textContent = target.nameEn || '';
+    enEl.style.display = target.nameEn ? '' : 'none';
+  }
+
+  const noteEl = document.getElementById('spotlightNote');
+  if (noteEl) {
+    noteEl.textContent = target.note || '';
+    noteEl.style.display = target.note ? '' : 'none';
+  }
+
+  const photoEl = document.getElementById('spotlightPhoto');
+  if (photoEl) {
+    const u = imgUrl(target.photo);
+    photoEl.innerHTML = u
+      ? `<img src="${esc(u)}" alt="${esc(target.name || '')}" loading="lazy">`
+      : '';
+    photoEl.style.display = u ? '' : 'none';
+  }
+}
+
+function renderMenuPreview(items) {
+  const sec = document.getElementById('menuPreviewSection');
+  const list = document.getElementById('menuPreview');
+  if (!sec || !list) return;
+
+  const sigs = (items || [])
+    .filter((m) => m.name && (m.isSignature === true || /SIGNATURE/i.test(String(m.tag || ''))))
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    .slice(0, 8);
+
+  if (!sigs.length) {
+    sec.hidden = true;
+    list.innerHTML = '';
+    return;
+  }
+  sec.hidden = false;
+  list.innerHTML = sigs.map((m) => {
+    const u = imgUrl(m.photo);
+    const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
+    const art = u
+      ? `<img src="${esc(u)}" alt="${esc(m.name)}" loading="lazy">`
+      : `<span class="menu-preview__art-mono" aria-hidden="true">T</span>`;
+    return `
+      <article class="menu-preview__card" data-go="menu">
+        <div class="menu-preview__art">${art}</div>
+        <div class="menu-preview__name">${esc(m.name)}</div>
+        ${m.nameEn ? `<div class="menu-preview__name-en">${esc(m.nameEn)}</div>` : ''}
+        ${priceStr ? `<div class="menu-preview__price">${esc(priceStr)}</div>` : ''}
+      </article>
+    `;
+  }).join('');
+}
+
+function renderFaq(items) {
+  const list = document.getElementById('faqList');
+  if (!list) return;
+  const valid = (items || []).filter((f) => f.questionKr && f.answerKr);
+
+  // FAQ 타일 업데이트 표시 — 7일 이내 추가/수정 항목 있을 때만
+  const recent = (items || []).some((f) => isNewSince(f.createdAt, 'faq') || isNewSince(f.updatedAt, 'faq'));
+  markTileUpdate('faq', recent);
+
+  if (!valid.length) {
+    list.innerHTML = `<div class="card empty-state"><p class="empty-state__title">등록된 질문이 없습니다</p></div>`;
+    return;
+  }
+  list.innerHTML = valid.map((f) => `
+    <details class="faq-item"${f.id ? ` data-item-id="${esc(f.id)}"` : ''}>
+      <summary>
+        <span class="faq-item__q">${esc(f.questionKr)}</span>
+        <svg class="faq-item__chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <div class="faq-item__a">
+        <p>${esc(f.answerKr)}</p>
+        ${f.answerEn ? `<p class="faq-item__a-en">${esc(f.answerEn)}</p>` : ''}
+      </div>
+    </details>
+  `).join('');
 }
 
 function updateMenuHero(settings) {
@@ -580,6 +743,9 @@ function renderMenu(items) {
   // 최근 7일 이내 추가/수정된 메뉴가 있으면 타일에 점
   const recent = (items || []).some((m) => isNewSince(m.createdAt, 'menu') || isNewSince(m.updatedAt, 'menu'));
   markTileUpdate('menu', recent);
+
+  // 홈 시그니처 미리보기 — 메뉴 데이터 동시 사용
+  renderMenuPreview(items);
 
   if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
 
@@ -857,6 +1023,7 @@ export const RENDERERS = {
   greeting: renderGreeting,
   menu: renderMenu,
   settings: renderSettings,
+  faq: renderFaq,
 };
 
 const LOADERS = {
@@ -868,12 +1035,17 @@ const LOADERS = {
   wifi:     () => loadTable('settings', renderSettings, { single: true }),
   hours:    () => loadTable('settings', renderSettings, { single: true }),
   location: () => initKakaoMap(),
+  faq:      () => loadTable('faq',      renderFaq),
 };
 
 // settings는 항상 먼저 로드 — 모든 페이지에서 WiFi 정보가 필요할 수 있음
 LOADERS.wifi();
 // news도 먼저 로드 — 홈의 "오늘의 공지"가 필요
 LOADERS.news();
+// 홈에서 spotlight + 시그니처 메뉴 미리보기를 보여주기 위해 picks/menu도 부팅 시 로드
+LOADERS.pick();
+LOADERS.menu();
+// FAQ는 뷰 진입 시 로드 (boot 시 로드하면 마이그레이션 전 환경에서 토스트가 뜸)
 
 // 관리자가 저장한 후 현재 보이는 화면의 데이터를 강제 새로고침
 export async function refreshTable(table) {
@@ -885,7 +1057,8 @@ export async function refreshTable(table) {
     winners: ['event'],
     greeting: ['greeting'],
     menu: ['menu'],
-    settings: ['wifi'], // settings 재로드 → wifi/hours/menuHero 모두 갱신됨
+    settings: ['wifi'], // settings 재로드 → wifi/hours/menuHero/stamp/spotlight 모두 갱신됨
+    faq: ['faq'],
   };
   const keys = loaderKeys[table] || [];
   for (const k of keys) {
@@ -899,4 +1072,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=30').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=31').catch((e) => console.warn('[tuz] admin module not loaded:', e));

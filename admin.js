@@ -1,4 +1,4 @@
-import { supabase, refreshTable } from './app.js?v=30';
+import { supabase, refreshTable } from './app.js?v=31';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -141,6 +141,64 @@ const SCHEMAS = {
       { col: 'wifi_password', label: '비밀번호',             type: 'text', required: true, placeholder: 'tuz12345' },
     ],
   },
+  settings_stamp: {
+    label: '스탬프 카드',
+    noun: '스탬프',
+    mode: 'single',
+    views: ['home'],
+    table: 'settings',
+    attachSelector: '#stampCard',
+    fields: [
+      { col: 'stamp_max',  label: '총 칸 수', type: 'number', placeholder: '10',
+        hint: '0 으로 두면 홈에서 스탬프 카드를 숨깁니다.' },
+      { col: 'stamp_fill', label: '현재 채운 칸 수', type: 'number', placeholder: '0' },
+      { col: 'stamp_note', label: '한 줄 안내 (선택)', type: 'text',
+        placeholder: '비워두면 자동 안내 ("N잔 더 모으면 …")',
+        hint: '예) 음료 1잔당 도장 1개 · 카운터에서 받아주세요' },
+    ],
+  },
+  settings_spotlight: {
+    label: '시그니처 Spotlight',
+    noun: 'Spotlight',
+    mode: 'single',
+    views: ['home'],
+    table: 'settings',
+    attachSelector: '#spotlightCard',
+    fields: [
+      { col: 'spotlight_label', label: '라벨', type: 'text',
+        placeholder: '이번 주의 한 잔',
+        hint: '비워두면 "이번 주의 한 잔" 으로 표시됩니다.' },
+      { col: 'spotlight_pick_id', label: '추천 메뉴 지정', type: 'select',
+        hint: '비워두면 큰 사장 pick 가장 최근 항목이 자동으로 표시됩니다.',
+        optionsLoader: async () => {
+          const { data, error } = await supabase
+            .from('pick')
+            .select('id,name,barista,date')
+            .order('date', { ascending: false });
+          if (error) throw error;
+          return [
+            { value: '', label: '— 자동 (큰 사장 최신) —' },
+            ...(data || []).map((p) => ({
+              value: p.id,
+              label: `${p.barista || ''} · ${p.name || '(이름 없음)'}${p.date ? ' · ' + p.date : ''}`.replace(/^ · /, ''),
+            })),
+          ];
+        },
+      },
+    ],
+  },
+  faq: {
+    label: '자주 묻는 질문',
+    noun: '질문',
+    mode: 'list',
+    views: ['faq'],
+    fields: [
+      { col: 'question_kr', label: '질문 (한글)', type: 'text', required: true },
+      { col: 'question_en', label: '질문 (영문, 선택)', type: 'text' },
+      { col: 'answer_kr',   label: '답변 (한글)', type: 'textarea', rows: 4, required: true },
+      { col: 'answer_en',   label: '답변 (영문, 선택)', type: 'textarea', rows: 3 },
+    ],
+  },
 };
 
 let currentUser = null;
@@ -259,8 +317,12 @@ function renderPageActions() {
     schema.views.forEach((viewName) => {
       const view = document.querySelector(`[data-view="${viewName}"]`);
       if (!view) return;
-      const head = view.querySelector('.page-head');
-      if (!head) return;
+      // attachSelector 우선 (홈처럼 page-head가 없는 뷰에서 특정 요소 위에 부착)
+      // 그 외엔 .page-head 뒤에 부착
+      const anchor = schema.attachSelector
+        ? view.querySelector(schema.attachSelector)
+        : view.querySelector('.page-head');
+      if (!anchor) return;
 
       const bar = document.createElement('div');
       bar.className = 'tuz-admin-bar';
@@ -299,7 +361,12 @@ function renderPageActions() {
         bar.appendChild(editBtn);
       }
 
-      head.insertAdjacentElement('afterend', bar);
+      // attachSelector가 있으면 해당 요소 앞에, 없으면 page-head 뒤에 삽입
+      if (schema.attachSelector) {
+        anchor.insertAdjacentElement('beforebegin', bar);
+      } else {
+        anchor.insertAdjacentElement('afterend', bar);
+      }
     });
   });
 }
@@ -422,16 +489,34 @@ function buildField(f, row) {
     input.rows = f.rows || 3;
   } else if (f.type === 'select') {
     input = document.createElement('select');
-    const options = (f.options || []).slice();
     const current = row[f.col];
-    if (current != null && current !== '' && !options.includes(current)) {
-      options.push(current); // 기존 값 보존
+
+    const valueOf = (o) => (o && typeof o === 'object' ? o.value : o);
+    const labelOf = (o) => (o && typeof o === 'object' ? (o.label ?? o.value ?? '') : o);
+    const populate = (opts) => {
+      input.innerHTML = '';
+      const arr = (opts || []).slice();
+      // 기존 값이 옵션에 없으면 보존 (옛날 데이터 유지)
+      if (current != null && current !== '' && !arr.some((o) => valueOf(o) === current)) {
+        arr.push({ value: current, label: `(현재: ${current})` });
+      }
+      arr.forEach((o) => {
+        const opt = document.createElement('option');
+        opt.value = String(valueOf(o) ?? '');
+        opt.textContent = String(labelOf(o));
+        input.appendChild(opt);
+      });
+      input.value = current == null ? '' : String(current);
+    };
+
+    if (typeof f.optionsLoader === 'function') {
+      populate([{ value: current ?? '', label: '불러오는 중…' }]);
+      Promise.resolve(f.optionsLoader())
+        .then(populate)
+        .catch(() => populate([{ value: '', label: '(목록을 불러오지 못했어요)' }]));
+    } else {
+      populate(f.options || []);
     }
-    options.forEach((o) => {
-      const opt = document.createElement('option');
-      opt.value = o; opt.textContent = o;
-      input.appendChild(opt);
-    });
   } else {
     input = document.createElement('input');
     input.type = f.type || 'text';
