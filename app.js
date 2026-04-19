@@ -58,7 +58,7 @@ function titleOf(view) {
   return {
     wifi: '와이파이', news: '공지 · 이벤트', menu: '메뉴', hours: '영업시간',
     location: '오시는 길', event: '이달의 당첨자', pick: '오늘의 추천', greeting: '사장님 인사말',
-    faq: '자주 묻는 질문',
+    faq: '자주 묻는 질문', stamp: '내 스탬프', staff: '스태프 코드', privacy: '개인정보 처리방침',
   }[view] || '';
 }
 
@@ -517,7 +517,9 @@ function renderStampCard(s) {
     return;
   }
   const max = Math.min(20, rawMax);
-  const fill = Math.max(0, Math.min(max, parseInt(s?.stampFill, 10) || 0));
+  // Phase 2: 로그인 시 fill = user 활성 카운트 (views.js가 처리)
+  // 로그아웃 시 fill = 0 (admin demo 값 무시 — Phase 1 의 stamp_fill 은 이제 사용하지 않음)
+  const fill = 0;
   card.hidden = false;
 
   const fillEl = document.getElementById('stampFill');
@@ -543,6 +545,8 @@ function renderStampCard(s) {
       : '교환 가능 · 카운터로 와주세요';
     noteEl.textContent = s?.stampNote || defaultNote;
   }
+  // 로그인 상태에 따라 카운트/CTA 갱신 (views.js가 등록되어 있으면)
+  if (window.tuzStamp?.refreshHomeCard) window.tuzStamp.refreshHomeCard();
 }
 
 function renderSpotlight() {
@@ -1036,6 +1040,9 @@ const LOADERS = {
   hours:    () => loadTable('settings', renderSettings, { single: true }),
   location: () => initKakaoMap(),
   faq:      () => loadTable('faq',      renderFaq),
+  stamp:    () => window.tuzStamp?.renderView?.(),
+  staff:    () => window.tuzStaff?.renderView?.(),
+  privacy:  () => {},
 };
 
 // settings는 항상 먼저 로드 — 모든 페이지에서 WiFi 정보가 필요할 수 있음
@@ -1073,3 +1080,6 @@ showView(initial, { pushHistory: false });
 
 // admin module boot
 import('./admin.js?v=31').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+
+// auth + per-user 스탬프 뷰 모듈 boot (Phase 2)
+import('./lib/views.js?v=31').catch((e) => console.warn('[tuz] views module not loaded:', e));

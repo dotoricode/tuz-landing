@@ -206,3 +206,107 @@ create policy "auth_write_faq"  on public.faq for all to authenticated using (tr
 
 drop trigger if exists trg_faq_updated on public.faq;
 create trigger trg_faq_updated before update on public.faq for each row execute function public.tz_touch_updated_at();
+
+-- ─── 2026-04-20 Phase 2: 카카오 로그인 + 스탬프 적립 ──
+-- profiles: auth.users 1:1 확장 (닉네임/프로필사진 + 동의 플래그)
+create table if not exists public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  nickname text,
+  avatar_url text,
+  consent_personal_info_at timestamptz,
+  consent_overseas_transfer_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- stamps: 1 row = 1 스탬프, redeemed_at 으로 보상 교환 시 소비 처리
+create table if not exists public.stamps (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  code text,
+  issued_by uuid references auth.users(id) on delete set null,
+  note text,
+  redeemed_at timestamptz,
+  created_at timestamptz default now()
+);
+create index if not exists stamps_user_active_idx on public.stamps(user_id) where redeemed_at is null;
+create index if not exists stamps_user_created_idx on public.stamps(user_id, created_at desc);
+
+-- rewards: 10개 채워서 교환 기록
+create table if not exists public.rewards (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  reward_type text default 'free_drink_month',
+  redeemed_at timestamptz default now()
+);
+
+-- store_codes: 매장 회전 코드 (스태프가 카운터에서 발급)
+create table if not exists public.store_codes (
+  code text primary key,
+  valid_until timestamptz not null,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz default now()
+);
+create index if not exists store_codes_valid_idx on public.store_codes(valid_until desc);
+
+-- RLS
+alter table public.profiles    enable row level security;
+alter table public.stamps      enable row level security;
+alter table public.rewards     enable row level security;
+alter table public.store_codes enable row level security;
+
+-- profiles: 본인만 select/update, insert는 트리거가 처리
+drop policy if exists "self_read_profile"   on public.profiles;
+drop policy if exists "self_update_profile" on public.profiles;
+create policy "self_read_profile"   on public.profiles for select using (auth.uid() = user_id);
+create policy "self_update_profile" on public.profiles for update using (auth.uid() = user_id);
+
+-- stamps/rewards: 본인만 select. insert는 Edge Function의 service role 만 (RLS bypass)
+drop policy if exists "self_read_stamps"  on public.stamps;
+drop policy if exists "self_read_rewards" on public.rewards;
+create policy "self_read_stamps"  on public.stamps  for select using (auth.uid() = user_id);
+create policy "self_read_rewards" on public.rewards for select using (auth.uid() = user_id);
+
+-- store_codes: 스태프 역할(JWT app_metadata.role='staff')만 select/insert
+-- (Supabase: auth.admin.updateUserById(id, {app_metadata: {role: 'staff'}})로 설정)
+drop policy if exists "staff_read_codes"   on public.store_codes;
+drop policy if exists "staff_insert_codes" on public.store_codes;
+create policy "staff_read_codes" on public.store_codes for select
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'staff');
+create policy "staff_insert_codes" on public.store_codes for insert
+  with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'staff');
+
+-- updated_at 트리거 (profiles)
+drop trigger if exists trg_profiles_updated on public.profiles;
+create trigger trg_profiles_updated before update on public.profiles
+  for each row execute function public.tz_touch_updated_at();
+
+-- 신규 가입 시 profile 자동 생성 (닉네임은 카카오 메타에서 best-effort)
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (user_id, nickname, avatar_url)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'nickname',
+             new.raw_user_meta_data ->> 'name',
+             new.raw_user_meta_data -> 'kakao_account' -> 'profile' ->> 'nickname'),
+    coalesce(new.raw_user_meta_data ->> 'avatar_url',
+             new.raw_user_meta_data ->> 'picture',
+             new.raw_user_meta_data -> 'kakao_account' -> 'profile' ->> 'profile_image_url')
+  )
+  on conflict (user_id) do nothing;
+  return new;
+end; $$;
+
+drop trigger if exists trg_auth_user_created on auth.users;
+create trigger trg_auth_user_created after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Phase 2 RPC: 본인의 활성 스탬프 카운트 (redeemed_at IS NULL) — 클라에서 빠르게 조회용
+create or replace function public.my_active_stamp_count()
+returns int language sql stable security definer set search_path = public as $$
+  select coalesce(count(*), 0)::int from public.stamps
+   where user_id = auth.uid() and redeemed_at is null;
+$$;
+grant execute on function public.my_active_stamp_count() to authenticated;

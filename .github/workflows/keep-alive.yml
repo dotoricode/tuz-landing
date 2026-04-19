@@ -1,0 +1,25 @@
+name: Keep Supabase Alive
+# 매일 오전 9시(KST) Supabase 무료 티어 자동 일시정지 방지용 핑
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 00:00 UTC = 09:00 KST
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping settings table
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL / SUPABASE_ANON_KEY secrets 누락"
+            exit 1
+          fi
+          curl -fsS -o /dev/null -w "HTTP %{http_code}\n" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/settings?select=id&limit=1"
