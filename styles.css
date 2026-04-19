@@ -646,6 +646,8 @@ body {
   color: var(--ink-2);
   margin: 8px 0 0;
   line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* 카테고리 칩 컬러 변형 */
