@@ -15,7 +15,7 @@ const SCHEMAS = {
     mode: 'list',
     views: ['news'],
     fields: [
-      { col: 'tag',       label: '분류',         type: 'select', options: ['EVENT','NEW','HOURS','NOTICE'], placeholder: 'NOTICE' },
+      { col: 'tag',       label: '분류',         type: 'select', options: ['','EVENT'], placeholder: '' },
       { col: 'title',     label: '제목 (한글)',  type: 'text',   required: true },
       { col: 'title_en',  label: '제목 (영문)',  type: 'text',   placeholder: '비워두면 영문 표시 안 됨' },
       { col: 'body',      label: '본문',         type: 'textarea' },
@@ -89,8 +89,22 @@ const SCHEMAS = {
       { col: 'is_signature', label: '시그니처 메뉴', type: 'checkbox' },
     ],
   },
-  settings: {
-    label: 'WiFi 정보',
+  settings_hours: {
+    label: '영업시간',
+    noun: '영업시간',
+    mode: 'single',
+    views: ['hours'],
+    table: 'settings',
+    fields: [
+      { col: 'hours_weekday',  label: '평일 영업시간',        type: 'text', placeholder: '08:00-22:00' },
+      { col: 'hours_weekend',  label: '주말 영업시간',        type: 'text', placeholder: '10:00-23:00' },
+      { col: 'holiday_notice', label: '임시휴무 안내 (선택)', type: 'text',
+        placeholder: '예) 5/5 어린이날 10:00-18:00 단축운영',
+        hint: '예시 · 5/5 어린이날 10:00-18:00 단축운영 · 설 연휴(2/9-2/11) 휴무 · 내부 공사로 3/15-3/17 임시휴무 · 비워두면 정상 영업으로 표시됩니다' },
+    ],
+  },
+  settings_wifi: {
+    label: 'WiFi',
     noun: 'WiFi',
     mode: 'single',
     views: ['wifi'],
@@ -325,6 +339,12 @@ function buildField(f, row) {
   input.addEventListener('input', () => { row[f.col] = input.value || null; });
   input.addEventListener('change', () => { row[f.col] = input.value || null; });
   wrap.appendChild(input);
+  if (f.hint) {
+    const hint = document.createElement('span');
+    hint.className = 'tuz-field__hint';
+    hint.textContent = f.hint;
+    wrap.appendChild(hint);
+  }
   return wrap;
 }
 

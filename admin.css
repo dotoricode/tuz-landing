@@ -289,6 +289,16 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+.tuz-field__hint {
+  font-size: 11px;
+  color: var(--ink-3, #6e6356);
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+  margin-top: 2px;
+  word-break: keep-all;
+}
 .tuz-field input,
 .tuz-field textarea,
 .tuz-field select {

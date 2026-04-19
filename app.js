@@ -250,17 +250,21 @@ function renderNews(items) {
     if (newsBadge) newsBadge.hidden = true;
     return;
   }
-  list.innerHTML = valid.map((n, i) => `
+  const today = todayStr();
+  list.innerHTML = valid.map((n, i) => {
+    const chipLabel = n.date === today ? 'NEW' : (n.tag === 'EVENT' ? 'EVENT' : '');
+    const chipHtml = chipLabel ? `<span class="chip${i === 0 ? '' : ' chip--ink'}">${chipLabel}</span>` : '';
+    return `
     <article class="notice${i === 0 ? '' : ' notice--soft'}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
       <header class="notice__head">
-        <span class="chip${i === 0 ? '' : ' chip--ink'}">${esc(n.tag || 'NOTICE')}</span>
-        <time>${esc(n.date || todayStr())}</time>
+        ${chipHtml}
+        <time>${esc(n.date || today)}</time>
       </header>
       <div class="notice__title">${esc(n.title || '')}</div>
       ${n.titleEn ? `<div class="notice__title-en">${esc(n.titleEn)}</div>` : ''}
       ${n.body ? `<p>${esc(n.body)}</p>` : ''}
     </article>
-  `).join('');
+  `; }).join('');
   // 뱃지 업데이트
   const newsBadge = document.querySelector('[data-go="news"] .tile__e');
   if (newsBadge) {
@@ -321,13 +325,47 @@ function updateStatusBar(settings) {
   }
 }
 
+function updateHoursPage(settings) {
+  const weekdayEl = document.getElementById('hoursWeekdayTime');
+  const weekendEl = document.getElementById('hoursWeekendTime');
+  if (weekdayEl && settings.hoursWeekday) weekdayEl.textContent = settings.hoursWeekday.replace('-', ' – ');
+  if (weekendEl && settings.hoursWeekend) weekendEl.textContent = settings.hoursWeekend.replace('-', ' – ');
+
+  const card = document.getElementById('hoursOpenNow');
+  if (!card) return;
+
+  const now = new Date();
+  const day = now.getDay();
+  const hhmm = now.getHours() * 60 + now.getMinutes();
+
+  if (settings.holidayNotice) {
+    card.innerHTML = `<span class="dot-red"></span><div><b>임시휴무</b> · ${esc(settings.holidayNotice)}</div>`;
+    return;
+  }
+
+  const hoursStr = (day === 0 || day === 6)
+    ? (settings.hoursWeekend || '10:00-23:00')
+    : (settings.hoursWeekday || '08:00-22:00');
+  const [openStr, closeStr] = hoursStr.split('-');
+  const toMin = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + (m || 0); };
+  const openMin = toMin(openStr);
+  const closeMin = toMin(closeStr);
+
+  if (hhmm >= openMin && hhmm < closeMin) {
+    card.innerHTML = `<span class="dot-green"></span><div><b>지금 영업 중</b> · ${esc(closeStr)}에 마감합니다</div>`;
+  } else if (hhmm < openMin) {
+    card.innerHTML = `<span class="dot-yellow"></span><div><b>영업 준비 중</b> · ${esc(openStr)}에 오픈합니다</div>`;
+  } else {
+    card.innerHTML = `<span class="dot-red"></span><div><b>오늘 영업 종료</b> · 내일 다시 오세요</div>`;
+  }
+}
+
 function renderSettings(items) {
   const s = items && items[0];
   if (!s) return;
   if (s.wifiSsid) {
     const el = document.getElementById('wifiSsid');
     if (el) el.textContent = s.wifiSsid;
-    // tile on home
     const tile = document.querySelector('[data-wifi-ssid-tile]');
     if (tile) tile.textContent = s.wifiSsid;
   }
@@ -337,6 +375,7 @@ function renderSettings(items) {
     if (el) el.textContent = s.wifiPassword;
   }
   updateStatusBar(s);
+  updateHoursPage(s);
 }
 
 function renderGreeting(items) {
@@ -513,6 +552,7 @@ const LOADERS = {
   greeting: () => loadTable('greeting', renderGreeting, { single: true }),
   menu:     () => loadTable('menu',     renderMenu),
   wifi:     () => loadTable('settings', renderSettings, { single: true }),
+  hours:    () => loadTable('settings', renderSettings, { single: true }),
   location: () => initKakaoMap(),
 };
 
@@ -533,4 +573,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=5').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=6').catch((e) => console.warn('[tuz] admin module not loaded:', e));

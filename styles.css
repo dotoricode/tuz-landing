@@ -212,13 +212,17 @@ body {
 .status-bar__sub { display: block; font-size: 11px; color: var(--ink-3); margin-top: 1px; }
 .status-bar .chev { color: var(--ink-3); flex-shrink: 0; }
 
-.dot-green {
+.dot-green, .dot-yellow, .dot-red {
   width: 8px; height: 8px; border-radius: 50%;
-  background: #1f7a32;
   display: inline-block;
   flex-shrink: 0;
 }
-[data-theme='dark'] .dot-green { background: #6dd285; }
+.dot-green  { background: #1f7a32; }
+.dot-yellow { background: #b07d00; }
+.dot-red    { background: #b03030; }
+[data-theme='dark'] .dot-green  { background: #6dd285; }
+[data-theme='dark'] .dot-yellow { background: #f0c040; }
+[data-theme='dark'] .dot-red    { background: #f08080; }
 
 /* ─── tile grid ─── */
 .tile-grid {
