@@ -479,19 +479,18 @@ function isToday(isoTs) {
     && d.getDate() === now.getDate();
 }
 
-// 뱃지 CSV → 배열, 자동 NEW 포함
+// 뱃지 CSV → 배열 (선택 기반)
 function resolveBadges(m) {
   const raw = String(m.tag || '').split(',').map((s) => s.trim()).filter(Boolean);
   const set = new Set(raw.map((s) => s.toUpperCase()));
   if (m.isSignature) set.add('SIGNATURE'); // 구 데이터 호환
-  if (isToday(m.createdAt)) set.add('NEW');
   return [...set];
 }
 
 const BADGE_LABEL = {
   NEW: 'NEW',
   SEASON: 'SEASON',
-  SIGNATURE: '시그니처',
+  SIGNATURE: 'SIGNATURE',
 };
 const BADGE_CLASS = {
   NEW: 'chip--new',
@@ -746,4 +745,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=13').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=17').catch((e) => console.warn('[tuz] admin module not loaded:', e));

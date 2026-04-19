@@ -1,4 +1,4 @@
-import { supabase, refreshTable } from './app.js?v=13';
+import { supabase, refreshTable } from './app.js?v=17';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -81,6 +81,7 @@ const SCHEMAS = {
     noun: '메뉴',
     mode: 'list',
     views: ['menu'],
+    groupBy: 'category', // 편집 모드에서 카테고리 탭으로 분리
     fields: [
       { col: 'category',     label: '카테고리', type: 'select', required: true,
         options: ['COFFEE · 커피', 'BAKERY · 베이커리', 'DESSERT · 디저트'] },
@@ -91,9 +92,8 @@ const SCHEMAS = {
         hint: '업로드 시 메뉴명 왼쪽에 썸네일이 표시됩니다.' },
       { col: 'tag',          label: '뱃지', type: 'tags',
         options: ['NEW', 'SEASON', 'SIGNATURE'],
-        labels: { NEW: 'NEW', SEASON: 'SEASON', SIGNATURE: '시그니처' },
-        autoTags: ['NEW'],
-        hint: '오늘 등록한 메뉴는 NEW 뱃지가 자동 부여됩니다. SEASON · 시그니처는 눌러서 선택하세요.' },
+        labels: { NEW: 'NEW', SEASON: 'SEASON', SIGNATURE: 'SIGNATURE' },
+        hint: '원하는 뱃지를 눌러서 선택하세요. 여러 개 동시 선택 가능합니다.' },
     ],
   },
   settings_menu_hero: {
@@ -518,25 +518,130 @@ async function openEditor(key, { addOnly = false, manage = false } = {}) {
 
   const body = document.createElement('div');
   body.className = 'tuz-editor';
+
+  // 그룹 탭 (편집 모드에서 schema.groupBy 가 있을 때)
+  const useGroups = isListManage && !!schema.groupBy;
+  let activeTab = null;
+  let groupOptions = [];
+  if (useGroups) {
+    const groupField = schema.fields.find((f) => f.col === schema.groupBy);
+    const seen = new Set();
+    groupOptions = (groupField?.options || []).slice();
+    groupOptions.forEach((o) => seen.add(o));
+    // 스키마에 없는 카테고리도 포함 (legacy 데이터 보존)
+    rows.forEach((r) => {
+      const v = r[schema.groupBy];
+      if (v && !seen.has(v)) { groupOptions.push(v); seen.add(v); }
+    });
+    activeTab = groupOptions[0] || null;
+  }
+
+  const tabsEl = document.createElement('div');
+  tabsEl.className = 'tuz-tabs';
+  if (useGroups) body.appendChild(tabsEl);
+
   const listEl = document.createElement('div');
   listEl.className = 'tuz-editor__list';
   if (isListManage) listEl.classList.add('is-manage');
   body.appendChild(listEl);
 
+  function renderTabs() {
+    if (!useGroups) return;
+    tabsEl.innerHTML = '';
+    groupOptions.forEach((cat) => {
+      const count = rows.filter((r) => r[schema.groupBy] === cat).length;
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'tuz-tab';
+      if (cat === activeTab) tab.classList.add('is-active');
+      tab.innerHTML = `<span>${esc(cat)}</span><span class="tuz-tab__count">${count}</span>`;
+      tab.addEventListener('click', () => {
+        if (activeTab === cat) return;
+        activeTab = cat;
+        renderTabs();
+        rebuild();
+      });
+      tabsEl.appendChild(tab);
+    });
+  }
+
+  // 컨테이너 레벨 dragover — FLIP 애니메이션으로 부드럽게 재배치
+  if (isListManage) {
+    listEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const dragging = listEl.querySelector('.is-dragging');
+      if (!dragging) return;
+      const afterCard = getCardAfter(listEl, e.clientY);
+      if (afterCard === dragging) return;
+      if (afterCard && afterCard === dragging.nextSibling) return;
+
+      // FLIP: 이동 전 위치 기록
+      const cards = [...listEl.querySelectorAll('.tuz-row-card:not(.is-dragging)')];
+      const firstRects = new Map();
+      cards.forEach((c) => firstRects.set(c, c.getBoundingClientRect()));
+
+      if (afterCard == null) listEl.appendChild(dragging);
+      else listEl.insertBefore(dragging, afterCard);
+
+      // FLIP: 새 위치에서 역방향 transform 적용 후 해제 → 애니메이션
+      cards.forEach((c) => {
+        const first = firstRects.get(c);
+        const last = c.getBoundingClientRect();
+        const dy = first.top - last.top;
+        if (Math.abs(dy) < 0.5) return;
+        c.style.transition = 'none';
+        c.style.transform = `translateY(${dy}px)`;
+        void c.offsetHeight; // force reflow
+        c.style.transition = 'transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+        c.style.transform = '';
+      });
+    });
+    listEl.addEventListener('drop', (e) => e.preventDefault());
+  }
+
+  function getCardAfter(container, y) {
+    const cards = [...container.querySelectorAll('.tuz-row-card:not(.is-dragging)')];
+    for (const c of cards) {
+      const box = c.getBoundingClientRect();
+      // 카드 상단 30% 또는 최대 36px 이내 → BEFORE 삽입
+      // (펼쳐진 카드에서도 조금만 올려도 스왑되도록 캡 설정)
+      const threshold = box.top + Math.min(box.height * 0.3, 36);
+      if (y < threshold) return c;
+    }
+    return null;
+  }
+
   function rebuild() {
     listEl.innerHTML = '';
-    rows.forEach((row, idx) => listEl.appendChild(buildRowCard(row, idx)));
+    if (useGroups) {
+      let visibleIdx = 0;
+      rows.forEach((row) => {
+        if (row[schema.groupBy] !== activeTab) return;
+        listEl.appendChild(buildRowCard(row, visibleIdx));
+        visibleIdx++;
+      });
+      if (visibleIdx === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'tuz-editor__empty';
+        empty.textContent = `이 카테고리에 등록된 ${schema.noun}이(가) 없습니다.`;
+        listEl.appendChild(empty);
+      }
+      renderTabs();
+    } else {
+      rows.forEach((row, idx) => listEl.appendChild(buildRowCard(row, idx)));
+    }
   }
 
   function buildRowCard(row, idx) {
     const card = document.createElement('div');
     card.className = 'tuz-row-card';
+    card._row = row; // DOM → rows 동기화용
 
     if (isListManage) {
       // 편집 모드 — 드래그 핸들 + 삭제 + 인라인 필드 (축약)
       card.setAttribute('draggable', 'true');
       card.classList.add('is-draggable');
-      card.dataset.idx = String(idx);
       const head = document.createElement('div');
       head.className = 'tuz-row-card__head';
       const displayLabel = summarizeRow(schema, row);
@@ -563,35 +668,41 @@ async function openEditor(key, { addOnly = false, manage = false } = {}) {
       head.querySelector('[data-act="del"]').addEventListener('click', () => {
         if (!confirm('이 항목을 삭제할까요?')) return;
         if (row.id) removedIds.push(row.id);
-        rows.splice(idx, 1);
+        const i = rows.indexOf(row);
+        if (i >= 0) rows.splice(i, 1);
         rebuild();
       });
 
-      // Drag & drop
+      // Drag 시작/종료 (재배치는 컨테이너 dragover 가 처리)
       card.addEventListener('dragstart', (e) => {
-        card.classList.add('is-dragging');
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(idx));
+        try { e.dataTransfer.setData('text/plain', ''); } catch (_) { /* Safari */ }
+        // 드래그 고스트 이미지가 먼저 캡처되도록 한 프레임 뒤에 클래스 부여
+        requestAnimationFrame(() => card.classList.add('is-dragging'));
       });
       card.addEventListener('dragend', () => {
         card.classList.remove('is-dragging');
-        listEl.querySelectorAll('.is-drop-target').forEach((el) => el.classList.remove('is-drop-target'));
-      });
-      card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        card.classList.add('is-drop-target');
-      });
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('is-drop-target');
-      });
-      card.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
-        const to = idx;
-        if (isNaN(from) || from === to) return;
-        const [moved] = rows.splice(from, 1);
-        rows.splice(to, 0, moved);
+        // 잔여 transform / transition 정리
+        listEl.querySelectorAll('.tuz-row-card').forEach((c) => {
+          c.style.transition = '';
+          c.style.transform = '';
+        });
+        // 현재 DOM 순서 → rows 반영
+        const newVisible = [...listEl.querySelectorAll('.tuz-row-card')]
+          .map((c) => c._row)
+          .filter(Boolean);
+        if (useGroups) {
+          // 활성 카테고리만 재배치, 나머지 행은 제자리 유지
+          let vi = 0;
+          const merged = rows.map((r) =>
+            r[schema.groupBy] === activeTab ? newVisible[vi++] || r : r
+          );
+          rows.length = 0;
+          rows.push(...merged);
+        } else if (newVisible.length === rows.length) {
+          rows.length = 0;
+          rows.push(...newVisible);
+        }
         rebuild();
       });
     } else if (schema.mode === 'list') {

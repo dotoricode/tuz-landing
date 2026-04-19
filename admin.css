@@ -283,15 +283,13 @@
   gap: 0;
   cursor: grab;
   user-select: none;
+  will-change: transform;
 }
 .tuz-editor__list.is-manage .tuz-row-card.is-dragging {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: grabbing;
-}
-.tuz-editor__list.is-manage .tuz-row-card.is-drop-target {
-  border-color: var(--tuz-red, #a52a1a);
-  border-style: dashed;
-  background: rgba(165, 42, 26, 0.04);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transition: none !important;
 }
 .tuz-editor__list.is-manage .tuz-row-card__head {
   gap: 10px;
@@ -320,6 +318,66 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+/* [hidden] 속성이 display:flex를 확실히 덮어쓰도록 */
+.tuz-row-card__fields[hidden] { display: none; }
+
+/* ─── 카테고리 탭 (편집 모드) ─── */
+.tuz-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 2px 0 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tuz-tabs::-webkit-scrollbar { display: none; }
+.tuz-tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2, rgba(0,0,0,0.16));
+  background: transparent;
+  color: var(--ink-2, #3d342b);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tuz-tab:hover { border-color: var(--tuz-red, #a52a1a); color: var(--tuz-red, #a52a1a); }
+.tuz-tab.is-active {
+  background: var(--tuz-red, #a52a1a);
+  color: #fff7ee;
+  border-color: var(--tuz-red, #a52a1a);
+}
+.tuz-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.tuz-tab:not(.is-active) .tuz-tab__count {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--ink-3, #6e6356);
+}
+
+.tuz-editor__empty {
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3, #6e6356);
+  border: 1px dashed var(--line-2, rgba(0,0,0,0.16));
+  border-radius: 12px;
 }
 
 /* ─── Field ────────────────────────────────── */
