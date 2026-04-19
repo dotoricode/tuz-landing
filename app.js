@@ -331,6 +331,25 @@ function updateHoursPage(settings) {
   if (weekdayEl && settings.hoursWeekday) weekdayEl.textContent = settings.hoursWeekday.replace('-', ' – ');
   if (weekendEl && settings.hoursWeekend) weekendEl.textContent = settings.hoursWeekend.replace('-', ' – ');
 
+  // 정기휴무 행 — 비어있으면 숨김, 값 있으면 표시 + 텍스트 교체
+  const closureRow = document.getElementById('hoursRegularClosureRow');
+  const closureKrEl = document.getElementById('hoursRegularClosureKr');
+  const closureEnEl = document.getElementById('hoursRegularClosureEn');
+  if (closureRow) {
+    const kr = settings.regularClosureKr;
+    const en = settings.regularClosureEn;
+    // column이 없던(null) 경우엔 하드코딩 기본값 유지, 명시적 빈 문자열은 숨김
+    const hasKr = typeof kr === 'string';
+    const hasEn = typeof en === 'string';
+    if (hasKr && kr === '' && (!hasEn || en === '')) {
+      closureRow.hidden = true;
+    } else {
+      closureRow.hidden = false;
+      if (hasKr && closureKrEl) closureKrEl.textContent = kr || '';
+      if (hasEn && closureEnEl) closureEnEl.textContent = en || '';
+    }
+  }
+
   const card = document.getElementById('hoursOpenNow');
   if (!card) return;
 
@@ -573,4 +592,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=6').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=11').catch((e) => console.warn('[tuz] admin module not loaded:', e));
