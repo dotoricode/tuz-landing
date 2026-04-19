@@ -11,3 +11,4 @@ Thumbs.db
 
 # Original design bundle (handoff reference, not part of the shipped site)
 _design_source/
+.gstack/

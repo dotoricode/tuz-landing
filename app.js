@@ -516,10 +516,14 @@ function renderMenu(items) {
 
   const container = document.getElementById('menuCategories');
   if (!container) return;
-  container.innerHTML = order.map((cat, idx) => `
+  container.innerHTML = order.map((cat, idx) => {
+    const rows = groups.get(cat);
+    // 카테고리 내에 사진 있는 항목이 하나라도 있으면 모든 행에 썸네일 슬롯 예약
+    const categoryHasThumb = rows.some((m) => imgUrl(m.photo));
+    return `
     <div class="card"${idx > 0 ? ' style="margin-top:14px"' : ''}>
       <div class="eyebrow">${esc(cat)}</div>
-      ${groups.get(cat).map((m) => {
+      ${rows.map((m) => {
         const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
         const photoUrl = imgUrl(m.photo);
         const badges = resolveBadges(m);
@@ -530,9 +534,9 @@ function renderMenu(items) {
         }).join('');
         const thumbHtml = photoUrl
           ? `<button type="button" class="menu-thumb" data-menu-photo="${esc(photoUrl)}" data-menu-name="${esc(m.name)}" aria-label="${esc(m.name)} 사진 보기"><img src="${esc(photoUrl)}" alt="${esc(m.name)}" loading="lazy"/></button>`
-          : '';
+          : (categoryHasThumb ? `<span class="menu-thumb menu-thumb--empty" aria-hidden="true"></span>` : '');
         return `
-        <div class="menu-row${photoUrl ? ' has-thumb' : ''}"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
+        <div class="menu-row${categoryHasThumb ? ' has-thumb' : ''}"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
           ${thumbHtml}
           <div class="menu-row__l">
             <div class="name">${esc(m.name)}${badgesHtml}</div>
@@ -544,7 +548,8 @@ function renderMenu(items) {
         `;
       }).join('')}
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // ─── 메뉴 사진 라이트박스 ──────────────────
@@ -816,4 +821,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=19').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=20').catch((e) => console.warn('[tuz] admin module not loaded:', e));

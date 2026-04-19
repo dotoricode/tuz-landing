@@ -250,11 +250,12 @@ body {
 }
 .tile:active { transform: scale(0.97); }
 .tile--red {
-  background: var(--tuz-red);
-  color: #fff7ee;
-  border-color: var(--tuz-red-deep);
-  box-shadow: 0 6px 18px rgba(122, 29, 16, 0.18);
+  background: var(--tuz-red-soft);
+  color: var(--tuz-red);
+  border-color: var(--tuz-red);
+  box-shadow: var(--shadow-sm);
 }
+.tile--red .eyebrow--white { color: var(--tuz-red); opacity: 0.75; }
 .tile--ivory { background: var(--ivory-2); }
 .tile--wide {
   grid-column: 1 / span 3;
@@ -342,8 +343,8 @@ body {
 
 .sig {
   text-align: center;
-  font-size: 10px;
-  color: var(--ink-4);
+  font-size: 11px;
+  color: var(--ink-3);
   padding-bottom: 40px;
   letter-spacing: 0.06em;
   font-family: var(--font-display);
@@ -503,12 +504,12 @@ body {
 /* ─── notice cards ─── */
 .notice {
   background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 14px 16px;
   box-shadow: var(--shadow-sm);
-  border-left: 3px solid var(--tuz-red);
 }
-.notice--soft { border-left-color: var(--ink-4); }
+.notice--soft { background: var(--paper); }
 .notice__head {
   display: flex;
   gap: 8px;
@@ -570,6 +571,15 @@ body {
 }
 .menu-thumb:hover { border-color: var(--tuz-red); }
 .menu-thumb:active { transform: scale(0.94); }
+/* 썸네일 없는 행의 자리만 예약하는 빈 슬롯 */
+.menu-thumb--empty {
+  display: block;
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+.menu-thumb--empty:hover { border-color: transparent; }
 .dots {
   flex: 1;
   margin: 0 10px;
