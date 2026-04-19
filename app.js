@@ -629,8 +629,18 @@ async function loadTable(table, renderer, { single = false, order = 'sort_order'
   }
 }
 
-// ─── Kakao Maps 초기화 ───────────────────────
-function renderMapFallback(mapEl, reason) {
+// ─── 지도 초기화 (Kakao → Leaflet → 링크 카드 3단 폴백) ─
+const TUZ_LAT = 35.5492;
+const TUZ_LNG = 129.3148;
+
+function clearMapEl(mapEl) {
+  mapEl.innerHTML = '';
+  mapEl.classList.remove('is-empty');
+  mapEl.removeAttribute('title');
+}
+
+function renderLinkCardFallback(mapEl, reason) {
+  clearMapEl(mapEl);
   mapEl.classList.add('is-empty');
   const q = encodeURIComponent(ADDRESS);
   mapEl.innerHTML = `
@@ -643,57 +653,117 @@ function renderMapFallback(mapEl, reason) {
   if (reason) mapEl.title = reason;
 }
 
+// Leaflet + OpenStreetMap 폴백 — 어떤 도메인에서도 동작
+function renderLeafletMap(mapEl) {
+  if (mapEl.dataset.mapDrawn === 'leaflet') return;
+
+  const loadCss = () => new Promise((resolve) => {
+    if (document.querySelector('link[data-tuz-leaflet]')) return resolve();
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+    link.crossOrigin = '';
+    link.dataset.tuzLeaflet = '1';
+    link.onload = resolve;
+    link.onerror = resolve;
+    document.head.appendChild(link);
+  });
+
+  const loadJs = () => new Promise((resolve, reject) => {
+    if (window.L) return resolve();
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+    s.crossOrigin = '';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('leaflet js load failed'));
+    document.head.appendChild(s);
+  });
+
+  Promise.all([loadCss(), loadJs()]).then(() => {
+    clearMapEl(mapEl);
+    mapEl.dataset.mapDrawn = 'leaflet';
+    const map = window.L.map(mapEl, { zoomControl: true, attributionControl: true })
+      .setView([TUZ_LAT, TUZ_LNG], 16);
+    window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+    window.L.marker([TUZ_LAT, TUZ_LNG])
+      .addTo(map)
+      .bindPopup(`<b>Tuz</b><br>${esc(ADDRESS)}`)
+      .openPopup();
+  }).catch((e) => {
+    console.warn('[tuz] leaflet fallback failed:', e);
+    renderLinkCardFallback(mapEl, 'Leaflet 로드 실패 — 네트워크 확인');
+  });
+}
+
 function initKakaoMap() {
   const mapEl = document.getElementById('map');
   if (!mapEl) return;
-  // 이미 초기화됐거나 Kakao SDK 로딩 중이면 중복 실행 방지 (dual-module 방어)
+  // 중복 실행 방지 (dual-module 방어)
   if (mapEl.dataset.mapInit === '1') return;
   mapEl.dataset.mapInit = '1';
 
+  // 키가 없으면 바로 Leaflet로
   if (!window.KAKAO_APP_KEY) {
-    renderMapFallback(mapEl, 'Kakao Maps API 키를 설정하세요');
+    renderLeafletMap(mapEl);
     return;
   }
 
-  const drawMap = () => {
+  let kakaoSucceeded = false;
+  const drawKakao = () => {
     try {
-      const LAT = 35.5492;
-      const LNG = 129.3148;
+      clearMapEl(mapEl);
       const map = new window.kakao.maps.Map(mapEl, {
-        center: new window.kakao.maps.LatLng(LAT, LNG),
+        center: new window.kakao.maps.LatLng(TUZ_LAT, TUZ_LNG),
         level: 3,
       });
       new window.kakao.maps.Marker({
         map,
-        position: new window.kakao.maps.LatLng(LAT, LNG),
-        title: 'TUZ',
+        position: new window.kakao.maps.LatLng(TUZ_LAT, TUZ_LNG),
+        title: 'Tuz',
       });
+      kakaoSucceeded = true;
+      mapEl.dataset.mapDrawn = 'kakao';
     } catch (e) {
-      console.warn('[tuz] kakao map init failed:', e);
-      renderMapFallback(mapEl, '지도 초기화 실패 — 카카오맵 도메인 등록을 확인하세요');
+      console.warn('[tuz] kakao map init failed, using leaflet:', e);
+      renderLeafletMap(mapEl);
     }
   };
 
-  // 이미 SDK가 로드돼 있으면 즉시 그림 (dual-module 상황 포함)
-  if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === 'function') {
-    window.kakao.maps.load(drawMap);
-    return;
-  }
+  const tryLoad = () => {
+    if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === 'function') {
+      window.kakao.maps.load(drawKakao);
+      return true;
+    }
+    return false;
+  };
 
-  // 스크립트가 이미 문서에 추가돼 있으면 로드 대기
+  if (tryLoad()) return;
+
   const existing = document.querySelector('script[data-tuz-kakao]');
   if (existing) {
-    existing.addEventListener('load', () => window.kakao.maps.load(drawMap));
-    existing.addEventListener('error', () => renderMapFallback(mapEl, 'Kakao 스크립트 로드 실패'));
-    return;
+    existing.addEventListener('load', tryLoad);
+    existing.addEventListener('error', () => renderLeafletMap(mapEl));
+  } else {
+    const script = document.createElement('script');
+    script.dataset.tuzKakao = '1';
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${window.KAKAO_APP_KEY}&autoload=false`;
+    script.onload = tryLoad;
+    script.onerror = () => renderLeafletMap(mapEl);
+    document.head.appendChild(script);
   }
 
-  const script = document.createElement('script');
-  script.dataset.tuzKakao = '1';
-  script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${window.KAKAO_APP_KEY}&autoload=false`;
-  script.onload = () => window.kakao.maps.load(drawMap);
-  script.onerror = () => renderMapFallback(mapEl, 'Kakao 스크립트 로드 실패 — 도메인 등록 또는 네트워크를 확인하세요');
-  document.head.appendChild(script);
+  // 안전망: 3.5초 안에 Kakao가 window.kakao를 정의하지 않으면 Leaflet로 전환
+  // (도메인 whitelist 미등록 시 Kakao는 빈 응답을 보내 SDK가 초기화되지 않음)
+  setTimeout(() => {
+    if (!kakaoSucceeded && !(window.kakao && window.kakao.maps)) {
+      renderLeafletMap(mapEl);
+    }
+  }, 3500);
 }
 
 export const RENDERERS = {
@@ -745,4 +815,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=17').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=18').catch((e) => console.warn('[tuz] admin module not loaded:', e));
