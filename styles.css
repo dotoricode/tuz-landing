@@ -185,6 +185,67 @@ body {
 .card--ivory { background: var(--ivory-2); }
 .card--red__sub { font-size: 12px; margin-top: 8px; opacity: 0.9; }
 
+/* 클릭 가능한 카드 (홈 "오늘의 공지" 등) — 버튼 리셋 + 우측 화살표 */
+.card--clickable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+.card--clickable:active { transform: scale(0.98); }
+.card--clickable:hover { box-shadow: 0 8px 24px rgba(122, 29, 16, 0.22); }
+.card--clickable__text { flex: 1; min-width: 0; }
+.card__chev { flex-shrink: 0; opacity: 0.85; }
+/* [hidden] 속성이 display:flex를 확실히 덮어쓰도록 (HTML hidden 속성 정상화) */
+.card--clickable[hidden] { display: none; }
+
+/* ─── 오늘의 공지 마퀴 (페이지 최상단 좌우 슬라이드 띠) ─── */
+.today-marquee {
+  display: block;
+  width: 100%;
+  background: var(--paper);
+  color: var(--tuz-red);
+  padding: 8px 0;
+  border: none;
+  border-top: 1px solid var(--tuz-red);
+  border-bottom: 1px solid var(--tuz-red);
+  cursor: pointer;
+  overflow: hidden;
+  font-family: inherit;
+  position: relative;
+  z-index: 5;
+}
+.today-marquee[hidden] { display: none; }
+.today-marquee__track {
+  display: inline-flex;
+  gap: 48px;
+  white-space: nowrap;
+  animation: today-marquee-scroll 18s linear infinite;
+  will-change: transform;
+}
+.today-marquee__item {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding-right: 48px;
+}
+.today-marquee__item b {
+  font-weight: 700;
+}
+@keyframes today-marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.today-marquee:hover .today-marquee__track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .today-marquee__track { animation: none; }
+}
+
 /* ─── status bar (home) ─── */
 .status-bar {
   width: 100%;
@@ -291,10 +352,34 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tile--accent .tile__k,
-.tile--accent .tile__e,
-.tile--accent svg { color: var(--tuz-red); }
-.tile svg { color: var(--tuz-red); flex-shrink: 0; }
+/* 모든 타일 텍스트/아이콘 — 잉크색 통일 (WiFi 빨강 타일만 예외) */
+.tile { position: relative; }
+.tile__k { color: var(--ink); }
+.tile__e { color: var(--tuz-red); font-weight: 700; }
+.tile svg { color: var(--ink-2); flex-shrink: 0; }
+.tile--red svg { color: var(--tuz-red); }
+.tile--red .tile__k { color: var(--tuz-red); }
+.tile--red .tile__e { color: rgba(165, 42, 26, 0.78); }
+
+/* 업데이트 알림 점 (notification dot) */
+.tile__dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tuz-red);
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.tile--red .tile__dot { background: #fff7ee; box-shadow: 0 0 0 2px var(--tuz-red); }
+
+/* 업데이트 있는 타일 — 딥레드 테두리 */
+.tile.has-update {
+  border-color: var(--tuz-red);
+  box-shadow: 0 4px 14px rgba(165, 42, 26, 0.12), var(--shadow-sm);
+}
+.tile--red.has-update { border-color: var(--tuz-red-deep); }
 
 /* ─── notice ticker (ink card on home) ─── */
 .notice-ticker {
@@ -344,7 +429,9 @@ body {
 .sig {
   text-align: center;
   font-size: 11px;
-  color: var(--ink-3);
+  color: var(--tuz-red);
+  opacity: 0.7;
+  padding-top: 24px;
   padding-bottom: 40px;
   letter-spacing: 0.06em;
   font-family: var(--font-display);
@@ -506,18 +593,47 @@ body {
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  padding: 14px 16px;
+  overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
-.notice--soft { background: var(--paper); }
+.notice--event {
+  background: var(--tuz-red-soft);
+  border-color: rgba(165, 42, 26, 0.28);
+}
+.notice--pinned {
+  border-color: var(--tuz-red);
+  box-shadow: 0 4px 16px rgba(165, 42, 26, 0.14);
+}
+.notice__photo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  object-fit: cover;
+  background: var(--ivory-2);
+  border-bottom: 1px solid var(--line);
+}
+.notice__body {
+  padding: 14px 16px;
+}
 .notice__head {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
-.notice__head time { font-size: 11px; color: var(--ink-4); }
-.notice__title { font-size: 15px; font-weight: 600; line-height: 1.35; }
+.notice__head time {
+  font-size: 11px;
+  color: var(--ink-4);
+  margin-left: auto;
+}
+.notice__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
 .notice__title-en {
   font-size: 11px;
   color: var(--ink-3);
@@ -531,6 +647,18 @@ body {
   margin: 8px 0 0;
   line-height: 1.5;
 }
+
+/* 카테고리 칩 컬러 변형 */
+.chip-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+.chip--notice  { background: rgba(26, 22, 18, 0.06);  color: var(--ink-2);  border-color: transparent; }
+.chip--event   { background: var(--tuz-red);          color: #fff7ee;       border-color: transparent; }
+.chip--new     { background: var(--tuz-red-soft);     color: var(--tuz-red); border-color: transparent; }
+.chip--hours   { background: var(--ink);              color: var(--ivory);  border-color: transparent; }
+.chip--season  { background: var(--tuz-green);        color: #fff7ee;       border-color: transparent; }
+.chip--special { background: rgba(176, 125, 0, 0.12); color: #8b6300;       border-color: transparent; }
 
 /* ─── menu rows ─── */
 .menu-row {
@@ -1046,18 +1174,6 @@ body {
   font-weight: 600;
 }
 
-/* NEW 뱃지 (자동) */
-.chip--new {
-  background: var(--tuz-red);
-  color: #fff7ee;
-  border-color: transparent;
-}
-/* SEASON 뱃지 */
-.chip--season {
-  background: var(--tuz-green);
-  color: #fff7ee;
-  border-color: transparent;
-}
 
 /* ─── 라이트박스 ─── */
 .tuz-lightbox {

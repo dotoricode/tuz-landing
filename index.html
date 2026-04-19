@@ -13,8 +13,8 @@
 <meta name="twitter:title" content="Tuz · coffee &amp; dessert"/>
 <meta name="twitter:description" content="Tuz · coffee & dessert"/>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a52a1a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Georgia,serif' font-size='28' font-weight='600' fill='%23f4ecda'%3ETUZ%3C/text%3E%3C/svg%3E"/>
-<link rel="stylesheet" href="styles.css"/>
-<link rel="stylesheet" href="admin.css"/>
+<link rel="stylesheet" href="styles.css?v=30"/>
+<link rel="stylesheet" href="admin.css?v=30"/>
 <!-- Kakao Maps SDK — API 키는 settings.kakao_app_key 또는 app.js 상수로 교체 필요 -->
 <script>
   window.KAKAO_APP_KEY = '6bed886efad74c5a3e40969b07d35cc8'; // 사용자가 https://developers.kakao.com 에서 발급 후 입력
@@ -31,6 +31,14 @@
       <div class="hero__tag" id="tagline">Have a Tuz day!</div>
       <div class="hero__tag-en">coffee &amp; dessert</div>
     </header>
+
+    <!-- 오늘의 공지 마퀴 (핀된 공지가 있을 때만 표시 — 영업시간 상태바 위) -->
+    <button class="today-marquee" data-go="news" type="button" hidden id="todayNoticeCard" aria-label="오늘의 공지 보기">
+      <span class="today-marquee__track">
+        <span class="today-marquee__item">📌 오늘의 공지 · <b id="notice"></b></span>
+        <span class="today-marquee__item" aria-hidden="true">📌 오늘의 공지 · <b id="noticeMirror"></b></span>
+      </span>
+    </button>
 
     <div class="section">
       <button class="status-bar" data-go="hours" type="button" aria-label="영업시간 보기">
@@ -58,8 +66,8 @@
         <button class="tile tile--accent" data-go="news" type="button">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1112 0v5l1.5 2H4.5L6 16z"/><path d="M10 21a2 2 0 004 0"/></svg>
           <div>
-            <div class="tile__k">공지</div>
-            <div class="tile__e">3 NEW</div>
+            <div class="tile__k">공지사항</div>
+            <div class="tile__e">NOTICE</div>
           </div>
         </button>
 
@@ -75,7 +83,7 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.4 9.4l6-.9L12 3z"/></svg>
           <div>
             <div class="tile__k">오늘의 추천</div>
-            <div class="tile__e">BARISTA'S PICK</div>
+            <div class="tile__e">TODAY'S PICK</div>
           </div>
         </button>
 
@@ -100,20 +108,12 @@
         <button class="tile" data-go="greeting" type="button">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>
           <div>
-            <div class="tile__k">사장님 인사</div>
-            <div class="tile__e">HELLO</div>
+            <div class="tile__k">인사말</div>
+            <div class="tile__e">GREETING</div>
           </div>
         </button>
       </div>
     </div>
-
-    <div class="section">
-      <div class="card card--ink" hidden>
-        <div class="eyebrow eyebrow--dim">오늘의 공지</div>
-        <div class="notice-ticker" id="notice"></div>
-      </div>
-    </div>
-
 
     <div class="sig">Tuz · since 2026 · Ulsan</div>
   </section>
@@ -161,36 +161,42 @@
       홈
     </button>
     <div class="page-head">
-      <h1>공지 · 이벤트</h1>
-      <span class="page-head__en">NEWS</span>
+      <h1>공지사항</h1>
+      <span class="page-head__en">NOTICE</span>
     </div>
     <div class="section stack" id="newsList">
       <article class="notice">
-        <header class="notice__head">
-          <span class="chip">EVENT</span>
-          <time>2026.04.15</time>
-        </header>
-        <div class="notice__title">쿠폰 10개 → 한 달 음료 FREE</div>
-        <div class="notice__title-en">Stamp 10 → 1 month free drinks</div>
-        <p>매달 말일 5명 추첨 · 카운터 스탬프 카드를 채워주세요</p>
+        <div class="notice__body">
+          <header class="notice__head">
+            <span class="chip">EVENT</span>
+            <time>2026.04.15</time>
+          </header>
+          <div class="notice__title">쿠폰 10개 → 한 달 음료 FREE</div>
+          <div class="notice__title-en">Stamp 10 → 1 month free drinks</div>
+          <p>매달 말일 5명 추첨 · 카운터 스탬프 카드를 채워주세요</p>
+        </div>
       </article>
-      <article class="notice notice--soft">
-        <header class="notice__head">
-          <span class="chip chip--ink">NEW</span>
-          <time>2026.04.16</time>
-        </header>
-        <div class="notice__title">시즌 신메뉴 · 체리블러썸 라떼</div>
-        <div class="notice__title-en">Cherry Blossom Latte</div>
-        <p>봄 한정 · 2026.04.15 ~ 05.15 · +500원 디카페인 가능</p>
+      <article class="notice">
+        <div class="notice__body">
+          <header class="notice__head">
+            <span class="chip chip--ink">NEW</span>
+            <time>2026.04.16</time>
+          </header>
+          <div class="notice__title">시즌 신메뉴 · 체리블러썸 라떼</div>
+          <div class="notice__title-en">Cherry Blossom Latte</div>
+          <p>봄 한정 · 2026.04.15 ~ 05.15 · +500원 디카페인 가능</p>
+        </div>
       </article>
-      <article class="notice notice--soft">
-        <header class="notice__head">
-          <span class="chip chip--ink">HOURS</span>
-          <time>2026.04.17</time>
-        </header>
-        <div class="notice__title">어린이날 단축운영 (5/5)</div>
-        <div class="notice__title-en">Children's Day · short hours</div>
-        <p>10:00 – 18:00 · 평소보다 일찍 마감합니다</p>
+      <article class="notice">
+        <div class="notice__body">
+          <header class="notice__head">
+            <span class="chip chip--ink">HOURS</span>
+            <time>2026.04.17</time>
+          </header>
+          <div class="notice__title">어린이날 단축운영 (5/5)</div>
+          <div class="notice__title-en">Children's Day · short hours</div>
+          <p>10:00 – 18:00 · 평소보다 일찍 마감합니다</p>
+        </div>
       </article>
     </div>
   </section>
@@ -243,7 +249,7 @@
         <div class="hours-row"><div><div class="day">토 · 일</div><div class="day-en">Sat · Sun</div></div><div class="time" id="hoursWeekendTime">10:00 – 23:00</div></div>
         <div class="hours-row closed" id="hoursRegularClosureRow"><div><div class="day" id="hoursRegularClosureKr">매월 마지막 월요일</div><div class="day-en" id="hoursRegularClosureEn">Last Mon</div></div><div class="time">휴무</div></div>
       </div>
-      <div class="card card--ivory" id="hoursOpenNow">
+      <div class="card card--ivory open-now" id="hoursOpenNow">
         <span class="dot-green"></span>
         <div><b>영업시간 확인 중…</b></div>
       </div>
@@ -353,21 +359,17 @@
       홈
     </button>
     <div class="page-head">
-      <h1>사장님 인사말</h1>
-      <span class="page-head__en">HELLO</span>
+      <h1>인사말</h1>
+      <span class="page-head__en">GREETING</span>
     </div>
     <div class="section stack">
       <div id="greetPhoto" class="photo-block is-empty"></div>
       <div class="card">
-        <p class="greet" id="greetBody">안녕하세요, TUZ 사장 혜원입니다.
-
-작은 가게지만 커피 한 잔, 디저트 한 접시에 온 정성을 담았습니다. 바쁜 하루 중에 잠깐 들러 쉬어가는 공간이 되면 좋겠어요.
-
-궁금한 점, 불편한 점 있으시면 편하게 말씀해 주세요. 오늘도 좋은 하루 보내세요 🤍</p>
+        <p class="greet" id="greetBody"></p>
         <div class="greet__sign" id="greetSign">— TUZ 드림</div>
       </div>
       <div class="card card--ivory greet__sns">
-        <div class="greet__sns-label">함께 소통해요</div>
+        <div class="greet__sns-label">Connect with us</div>
         <div class="btn-row">
           <a class="btn btn--ghost" href="https://www.instagram.com/tuzz2026/" target="_blank" rel="noopener">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>
@@ -389,6 +391,6 @@
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
 </button>
 
-<script type="module" src="app.js?v=20"></script>
+<script type="module" src="app.js?v=30"></script>
 </body>
 </html>

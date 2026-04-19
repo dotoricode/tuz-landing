@@ -1,4 +1,4 @@
-import { supabase, refreshTable } from './app.js?v=20';
+import { supabase, refreshTable } from './app.js?v=30';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -10,15 +10,18 @@ function autoToday() {
 // noun: UI에서 부를 자연스러운 이름 (예: "공지" → "+ 공지 추가")
 const SCHEMAS = {
   news: {
-    label: '공지 · 이벤트',
+    label: '공지사항',
     noun: '공지',
     mode: 'list',
     views: ['news'],
     fields: [
-      { col: 'tag',       label: '분류',         type: 'select', options: ['','EVENT'], placeholder: '' },
+      { col: 'tag',       label: '분류',         type: 'select',
+        options: ['', 'NOTICE', 'EVENT', 'NEW', 'HOURS', 'SEASON', 'SPECIAL'] },
       { col: 'title',     label: '제목 (한글)',  type: 'text',   required: true },
       { col: 'title_en',  label: '제목 (영문)',  type: 'text',   placeholder: '비워두면 영문 표시 안 됨' },
       { col: 'body',      label: '본문',         type: 'textarea' },
+      { col: 'photo',     label: '사진 (선택)',  type: 'photo',
+        hint: '업로드 시 카드 상단에 16:9 배너로 표시됩니다.' },
       { col: 'is_today',  label: '홈 화면 "오늘의 공지"로 표시', type: 'checkbox',
         hint: '체크 시 홈 화면 상단에 이 공지가 노출됩니다. 여러 개 체크하면 가장 최근 것 하나만 표시됩니다.' },
       { col: 'date',      autoDate: true },
@@ -341,6 +344,12 @@ function buildField(f, row) {
     container.appendChild(preview);
     container.appendChild(fileBtn);
     wrap.appendChild(container);
+    if (f.hint) {
+      const hint = document.createElement('span');
+      hint.className = 'tuz-field__hint';
+      hint.textContent = f.hint;
+      wrap.appendChild(hint);
+    }
     return wrap;
   }
 
@@ -806,6 +815,17 @@ async function appendRows(tableName, schema, rows) {
 }
 
 // ─── 저장 로직 ──────────────────────────────
+// 공지의 "오늘의 공지" 핀 단일화
+// 저장 직전에 호출 — payload에 is_today=true 인 행이 있으면, DB의 모든 기존 핀을 일단 해제.
+// 직후 upsert가 payload의 새 핀을 다시 true로 설정하므로 결과적으로 단일 핀 보장.
+async function enforceNewsTodayExclusive(payload) {
+  const arr = Array.isArray(payload) ? payload : [payload];
+  const wantsPin = arr.some((r) => r.is_today === true);
+  if (!wantsPin) return; // 사용자가 모든 핀을 끈 케이스 — 다른 행 건드리지 않음
+  const { error } = await supabase.from('news').update({ is_today: false }).eq('is_today', true);
+  if (error) throw error;
+}
+
 async function saveRows(tableName, schema, rows, removedIds) {
   if (schema.mode === 'single') {
     const r = rows[0] || {};
@@ -818,6 +838,7 @@ async function saveRows(tableName, schema, rows, removedIds) {
     for (const f of schema.fields) {
       if (f.required && !payload[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
     }
+    if (tableName === 'news') await enforceNewsTodayExclusive(payload);
     const { error } = await supabase.from(tableName).upsert(payload);
     if (error) throw error;
     return;
@@ -844,6 +865,7 @@ async function saveRows(tableName, schema, rows, removedIds) {
   }).filter(Boolean);
 
   if (!payload.length) return;
+  if (tableName === 'news') await enforceNewsTodayExclusive(payload);
   const { error } = await supabase.from(tableName).upsert(payload);
   if (error) throw error;
 }
@@ -932,6 +954,7 @@ async function openItemEditor(tableName, itemId) {
             schema.fields.forEach((f) => {
               if (!f.autoDate) payload[f.col] = row[f.col] ?? null;
             });
+            if (tableName === 'news') await enforceNewsTodayExclusive([payload]);
             const { error: upErr } = await supabase.from(tableName).upsert(payload);
             if (upErr) throw upErr;
             toast('저장되었습니다');

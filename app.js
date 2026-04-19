@@ -198,6 +198,30 @@ function todayStr() {
   return `${d.getFullYear()}.${mm}.${dd}`;
 }
 
+function relativeTime(dateStr) {
+  if (!dateStr) return '';
+  const m = String(dateStr).match(/^(\d{4})[.-](\d{1,2})[.-](\d{1,2})/);
+  if (!m) return dateStr;
+  const target = new Date(+m[1], +m[2] - 1, +m[3]);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const diff = Math.round((today - target) / 86400000);
+  if (diff === 0) return '오늘';
+  if (diff === 1) return '어제';
+  if (diff > 1 && diff <= 7) return `${diff}일 전`;
+  if (diff > 7 && diff <= 14) return '지난주';
+  if (diff > 14 && diff <= 30) return `${Math.floor(diff / 7)}주 전`;
+  return `${m[1]}.${m[2].padStart(2, '0')}.${m[3].padStart(2, '0')}`;
+}
+
+const NEWS_TAG_META = {
+  NOTICE:  { label: 'NOTICE',   cls: 'chip--notice',  icon: '📌' },
+  EVENT:   { label: 'EVENT',   cls: 'chip--event',   icon: '🎁' },
+  NEW:     { label: 'NEW',     cls: 'chip--new',     icon: '✨' },
+  HOURS:   { label: 'HOURS',   cls: 'chip--hours',   icon: '⏰' },
+  SEASON:  { label: 'SEASON',  cls: 'chip--season',  icon: '🌸' },
+  SPECIAL: { label: 'SPECIAL', cls: 'chip--special', icon: '⭐' },
+};
+
 // ─── 렌더러 ──────────────────────────────────
 function renderPickCard(p) {
   const photoUrl = imgUrl(p.photo);
@@ -233,12 +257,45 @@ function renderPicks(picks) {
 
   if (bigEl) bigEl.innerHTML = big ? renderPickCard(big) : '';
   if (smallEl) smallEl.innerHTML = small ? renderPickCard(small) : '';
+
+  // 최근 7일 이내 추가/수정된 pick이 있으면 타일에 점
+  const recent = (picks || []).some((p) => isRecent(p.createdAt) || isRecent(p.updatedAt));
+  markTileUpdate('pick', recent);
+}
+
+// 타일에 "업데이트 있음" 표시 — 빨간 점 + 딥레드 테두리 (.has-update 클래스)
+// .tile[data-go=...] 로 한정해 마퀴/카드 버튼 같은 다른 [data-go] 요소를 제외
+function markTileUpdate(viewName, hasUpdate) {
+  const tile = document.querySelector(`.tile[data-go="${viewName}"]`);
+  if (!tile) return;
+  tile.classList.toggle('has-update', !!hasUpdate);
+  const existing = tile.querySelector('.tile__dot');
+  if (hasUpdate && !existing) {
+    const dot = document.createElement('span');
+    dot.className = 'tile__dot';
+    dot.setAttribute('aria-label', '새 업데이트');
+    tile.appendChild(dot);
+  } else if (!hasUpdate && existing) {
+    existing.remove();
+  }
+}
+
+// "최근 N일 이내" 판정 — createdAt 기준
+function isRecent(isoTs, days = 7) {
+  if (!isoTs) return false;
+  const t = new Date(isoTs);
+  if (isNaN(t.getTime())) return false;
+  return (Date.now() - t.getTime()) <= days * 86400000;
 }
 
 function updateTodayNotice(items) {
   const ticker = document.getElementById('notice');
-  const card = ticker ? ticker.closest('.card') : null;
+  const tickerMirror = document.getElementById('noticeMirror');
+  const card = document.getElementById('todayNoticeCard');
   const pinned = (items || []).filter((n) => n.isToday && n.title);
+  // 공지 타일 업데이트 표시 — 핀된 공지가 있거나 7일 이내 새 공지가 있으면
+  const hasRecent = (items || []).some((n) => isRecent(n.createdAt) || isRecent(n.updatedAt));
+  markTileUpdate('news', pinned.length > 0 || hasRecent);
   if (!card) return;
   if (!pinned.length) {
     card.hidden = true;
@@ -251,49 +308,55 @@ function updateTodayNotice(items) {
     return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
   });
   const top = pinned[0];
-  ticker.textContent = top.title;
+  if (ticker) ticker.textContent = top.title;
+  if (tickerMirror) tickerMirror.textContent = top.title;
   card.hidden = false;
 }
 
 function renderNews(items) {
   const list = document.getElementById('newsList');
-  updateTodayNotice(items);
+  updateTodayNotice(items); // 핀 점도 여기서 처리됨 (markTileUpdate)
   if (!list) return;
   if (!items || !items.length) {
     renderEmpty('newsList', 'news');
-    const newsBadge = document.querySelector('[data-go="news"] .tile__e');
-    if (newsBadge) newsBadge.hidden = true;
     return;
   }
   const valid = items.filter((n) => n.title);
   if (!valid.length) {
     renderEmpty('newsList', 'news');
-    const newsBadge = document.querySelector('[data-go="news"] .tile__e');
-    if (newsBadge) newsBadge.hidden = true;
     return;
   }
-  const today = todayStr();
-  list.innerHTML = valid.map((n, i) => {
-    const chipLabel = n.date === today ? 'NEW' : (n.tag === 'EVENT' ? 'EVENT' : '');
-    const chipHtml = chipLabel ? `<span class="chip${i === 0 ? '' : ' chip--ink'}">${chipLabel}</span>` : '';
-    const todayChip = n.isToday ? `<span class="chip chip--pin" title="홈 오늘의 공지">📌 오늘</span>` : '';
+  list.innerHTML = valid.map((n) => {
+    const tagKey = String(n.tag || '').toUpperCase();
+    const meta = NEWS_TAG_META[tagKey];
+    const chipHtml = meta
+      ? `<span class="chip ${meta.cls}"><span class="chip-icon">${meta.icon}</span>${esc(meta.label)}</span>`
+      : '';
+    const todayChip = n.isToday
+      ? `<span class="chip chip--pin" title="홈 오늘의 공지">📌 오늘의 공지</span>`
+      : '';
+    const photoUrl = imgUrl(n.photo);
+    const photoHtml = photoUrl
+      ? `<img class="notice__photo" src="${esc(photoUrl)}" alt="${esc(n.title || '')}" loading="lazy">`
+      : '';
+    const noticeCls = ['notice'];
+    if (tagKey === 'EVENT') noticeCls.push('notice--event');
+    if (n.isToday) noticeCls.push('notice--pinned');
     return `
-    <article class="notice${i === 0 ? '' : ' notice--soft'}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
-      <header class="notice__head">
-        ${chipHtml}${todayChip}
-        <time>${esc(n.date || today)}</time>
-      </header>
-      <div class="notice__title">${esc(n.title || '')}</div>
-      ${n.titleEn ? `<div class="notice__title-en">${esc(n.titleEn)}</div>` : ''}
-      ${n.body ? `<p>${esc(n.body)}</p>` : ''}
+    <article class="${noticeCls.join(' ')}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
+      ${photoHtml}
+      <div class="notice__body">
+        <header class="notice__head">
+          ${chipHtml}${todayChip}
+          <time>${esc(relativeTime(n.date))}</time>
+        </header>
+        <div class="notice__title">${esc(n.title || '')}</div>
+        ${n.titleEn ? `<div class="notice__title-en">${esc(n.titleEn)}</div>` : ''}
+        ${n.body ? `<p>${esc(n.body)}</p>` : ''}
+      </div>
     </article>
-  `; }).join('');
-  // 뱃지 업데이트
-  const newsBadge = document.querySelector('[data-go="news"] .tile__e');
-  if (newsBadge) {
-    newsBadge.textContent = valid.length + ' NEW';
-    newsBadge.hidden = false;
-  }
+    `;
+  }).join('');
 }
 
 function renderWinners(items) {
@@ -502,6 +565,10 @@ function renderMenu(items) {
   // 대표 사진은 settings에서 가져옴 (setting이 이미 로드되어 있으면 적용)
   if (CURRENT_SETTINGS) updateMenuHero(CURRENT_SETTINGS);
 
+  // 최근 7일 이내 추가/수정된 메뉴가 있으면 타일에 점
+  const recent = (items || []).some((m) => isRecent(m.createdAt) || isRecent(m.updatedAt));
+  markTileUpdate('menu', recent);
+
   if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
 
   const order = [];
@@ -622,10 +689,9 @@ async function loadTable(table, renderer, { single = false, order = 'sort_order'
     const { data, error } = single ? await query.maybeSingle() : await query;
     if (error) throw error;
     const rows = (single ? (data ? [data] : []) : data || []).map(toCamel);
-    if (rows.length) {
-      renderer(rows);
-      writeCache(table, rows);
-    }
+    // 항상 renderer 호출 — 빈 배열이면 renderer가 빈 상태(empty-state)를 그림
+    renderer(rows);
+    if (rows.length) writeCache(table, rows);
   } catch (e) {
     console.warn(`[tuz] ${table} load failed:`, e.message || e);
     showConnectionToast();
@@ -821,4 +887,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=20').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=30').catch((e) => console.warn('[tuz] admin module not loaded:', e));

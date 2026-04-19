@@ -12,3 +12,7 @@ Thumbs.db
 # Original design bundle (handoff reference, not part of the shipped site)
 _design_source/
 .gstack/
+
+# Local design audit / preview scratchpads
+.design-audit/
+.design-preview/
