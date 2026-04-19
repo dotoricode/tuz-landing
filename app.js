@@ -630,8 +630,9 @@ async function loadTable(table, renderer, { single = false, order = 'sort_order'
 }
 
 // ─── 지도 초기화 (Kakao → Leaflet → 링크 카드 3단 폴백) ─
-const TUZ_LAT = 35.5492;
-const TUZ_LNG = 129.3148;
+// 울산광역시 중구 염포로 22 — Nominatim 지오코딩 기준 반구1동 염포로 시작점
+const TUZ_LAT = 35.5596;
+const TUZ_LNG = 129.3443;
 
 function clearMapEl(mapEl) {
   mapEl.innerHTML = '';
@@ -815,4 +816,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=18').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=19').catch((e) => console.warn('[tuz] admin module not loaded:', e));

@@ -1,4 +1,4 @@
-import { supabase, refreshTable } from './app.js?v=18';
+import { supabase, refreshTable } from './app.js?v=19';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
