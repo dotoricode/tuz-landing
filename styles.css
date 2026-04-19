@@ -130,7 +130,7 @@ body {
 }
 .hero .mark {
   font-family: var(--font-display);
-  font-variation-settings: 'opsz' 144;
+  font-variation-settings: 'opsz' 72;
   font-weight: 600;
   letter-spacing: -0.04em;
   font-size: 68px;

@@ -276,6 +276,52 @@
 .tuz-icon-btn:hover { background: var(--ivory-2, #f4ecda); }
 .tuz-icon-btn.is-danger { color: var(--tuz-red, #a52a1a); }
 
+/* ─── 목록 편집 (드래그앤드롭) ─── */
+.tuz-editor__list.is-manage { gap: 6px; }
+.tuz-editor__list.is-manage .tuz-row-card {
+  padding: 8px 10px;
+  gap: 0;
+  cursor: grab;
+  user-select: none;
+}
+.tuz-editor__list.is-manage .tuz-row-card.is-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+.tuz-editor__list.is-manage .tuz-row-card.is-drop-target {
+  border-color: var(--tuz-red, #a52a1a);
+  border-style: dashed;
+  background: rgba(165, 42, 26, 0.04);
+}
+.tuz-editor__list.is-manage .tuz-row-card__head {
+  gap: 10px;
+}
+.tuz-drag-handle {
+  color: var(--ink-3, #6e6356);
+  font-size: 14px;
+  letter-spacing: -2px;
+  cursor: grab;
+  user-select: none;
+  padding: 0 2px;
+}
+.tuz-row-card__summary {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink, #1a1612);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tuz-row-card__fields {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line, rgba(0,0,0,0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* ─── Field ────────────────────────────────── */
 .tuz-field {
   display: flex;
