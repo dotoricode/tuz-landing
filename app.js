@@ -8,6 +8,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 let WIFI_PW = 'tuz12345';  // settings 테이블에서 덮어씀
+let CURRENT_SETTINGS = null; // 최신 settings 공유
 const ADDRESS = '울산광역시 중구 염포로22, 2층';
 const CACHE_MS = 2 * 60 * 1000;
 
@@ -43,8 +44,8 @@ export function showView(name, { pushHistory = true } = {}) {
     history.pushState({ view: target }, '', hash || window.location.pathname);
   }
   document.title = target === 'home'
-    ? 'TUZ · 커피와 사람 사이'
-    : `TUZ · ${titleOf(target)}`;
+    ? 'Tuz · coffee & dessert'
+    : `Tuz · ${titleOf(target)}`;
 
   const loader = LOADERS[target];
   if (loader) loader();
@@ -234,8 +235,29 @@ function renderPicks(picks) {
   if (smallEl) smallEl.innerHTML = small ? renderPickCard(small) : '';
 }
 
+function updateTodayNotice(items) {
+  const ticker = document.getElementById('notice');
+  const card = ticker ? ticker.closest('.card') : null;
+  const pinned = (items || []).filter((n) => n.isToday && n.title);
+  if (!card) return;
+  if (!pinned.length) {
+    card.hidden = true;
+    return;
+  }
+  // 가장 최근 항목 (date desc, 동일 날짜면 created_at desc)
+  pinned.sort((a, b) => {
+    const da = String(a.date || ''); const db = String(b.date || '');
+    if (da !== db) return db.localeCompare(da);
+    return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+  });
+  const top = pinned[0];
+  ticker.textContent = top.title;
+  card.hidden = false;
+}
+
 function renderNews(items) {
   const list = document.getElementById('newsList');
+  updateTodayNotice(items);
   if (!list) return;
   if (!items || !items.length) {
     renderEmpty('newsList', 'news');
@@ -254,10 +276,11 @@ function renderNews(items) {
   list.innerHTML = valid.map((n, i) => {
     const chipLabel = n.date === today ? 'NEW' : (n.tag === 'EVENT' ? 'EVENT' : '');
     const chipHtml = chipLabel ? `<span class="chip${i === 0 ? '' : ' chip--ink'}">${chipLabel}</span>` : '';
+    const todayChip = n.isToday ? `<span class="chip chip--pin" title="홈 오늘의 공지">📌 오늘</span>` : '';
     return `
     <article class="notice${i === 0 ? '' : ' notice--soft'}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
       <header class="notice__head">
-        ${chipHtml}
+        ${chipHtml}${todayChip}
         <time>${esc(n.date || today)}</time>
       </header>
       <div class="notice__title">${esc(n.title || '')}</div>
@@ -382,6 +405,7 @@ function updateHoursPage(settings) {
 function renderSettings(items) {
   const s = items && items[0];
   if (!s) return;
+  CURRENT_SETTINGS = s;
   if (s.wifiSsid) {
     const el = document.getElementById('wifiSsid');
     if (el) el.textContent = s.wifiSsid;
@@ -395,6 +419,28 @@ function renderSettings(items) {
   }
   updateStatusBar(s);
   updateHoursPage(s);
+  updateMenuHero(s);
+}
+
+function updateMenuHero(settings) {
+  const heroEl = document.getElementById('menuHero');
+  if (!heroEl) return;
+  const heroUrl = imgUrl(settings?.menuHeroPhoto);
+  if (heroUrl) {
+    const block = document.createElement('div');
+    block.className = 'photo-block';
+    block.id = 'menuHero';
+    block.innerHTML = `<img src="${esc(heroUrl)}" alt="menu hero">`;
+    heroEl.replaceWith(block);
+  } else {
+    // 빈 상태 복원
+    if (!heroEl.classList.contains('is-empty')) {
+      const block = document.createElement('div');
+      block.className = 'photo-block is-empty';
+      block.id = 'menuHero';
+      heroEl.replaceWith(block);
+    }
+  }
 }
 
 function renderGreeting(items) {
@@ -423,22 +469,21 @@ function renderGreeting(items) {
   }
 }
 
-function renderMenu(items) {
-  if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
+function isToday(isoTs) {
+  if (!isoTs) return false;
+  const d = new Date(isoTs);
+  if (isNaN(d.getTime())) return false;
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear()
+    && d.getMonth() === now.getMonth()
+    && d.getDate() === now.getDate();
+}
 
-  const heroRow = items.find((r) => r.heroPhoto);
-  const heroEl = document.getElementById('menuHero');
-  if (heroEl) {
-    const heroUrl = imgUrl(heroRow?.heroPhoto);
-    if (heroUrl) {
-      const block = document.createElement('div');
-      block.className = 'photo-block';
-      block.id = 'menuHero';
-      block.innerHTML = `<img src="${esc(heroUrl)}" alt="menu hero">`;
-      heroEl.replaceWith(block);
-    }
-    // if no hero photo, leave existing .photo-block.is-empty
-  }
+function renderMenu(items) {
+  // 대표 사진은 settings에서 가져옴 (setting이 이미 로드되어 있으면 적용)
+  if (CURRENT_SETTINGS) updateMenuHero(CURRENT_SETTINGS);
+
+  if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
 
   const order = [];
   const groups = new Map();
@@ -457,10 +502,15 @@ function renderMenu(items) {
       <div class="eyebrow">${esc(cat)}</div>
       ${groups.get(cat).map((m) => {
         const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
+        const photoUrl = imgUrl(m.photo);
+        const autoNew = isToday(m.createdAt);
+        const photoBtn = photoUrl
+          ? `<button type="button" class="menu-photo-btn" data-menu-photo="${esc(photoUrl)}" data-menu-name="${esc(m.name)}" aria-label="${esc(m.name)} 사진 보기"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></button>`
+          : '';
         return `
         <div class="menu-row"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
           <div class="menu-row__l">
-            <div class="name">${esc(m.name)}${m.isSignature ? ` <span class="chip chip--sm">시그니처</span>` : ''}${m.tag ? ` <span class="chip chip--sm">${esc(m.tag)}</span>` : ''}</div>
+            <div class="name">${esc(m.name)}${m.isSignature ? ` <span class="chip chip--sm">시그니처</span>` : ''}${autoNew ? ` <span class="chip chip--sm chip--new">NEW</span>` : ''}${m.tag ? ` <span class="chip chip--sm">${esc(m.tag)}</span>` : ''}${photoBtn}</div>
             ${m.nameEn ? `<div class="name-en">${esc(m.nameEn)}</div>` : ''}
           </div>
           <div class="dots"></div>
@@ -470,6 +520,38 @@ function renderMenu(items) {
       }).join('')}
     </div>
   `).join('');
+}
+
+// ─── 메뉴 사진 라이트박스 ──────────────────
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-menu-photo]');
+  if (!btn) return;
+  e.preventDefault();
+  openPhotoLightbox(btn.dataset.menuPhoto, btn.dataset.menuName || '');
+});
+
+function openPhotoLightbox(url, caption) {
+  const existing = document.getElementById('tuz-lightbox');
+  if (existing) existing.remove();
+  const box = document.createElement('div');
+  box.id = 'tuz-lightbox';
+  box.className = 'tuz-lightbox';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-modal', 'true');
+  box.innerHTML = `
+    <button type="button" class="tuz-lightbox__close" aria-label="닫기">×</button>
+    <figure class="tuz-lightbox__fig">
+      <img src="${esc(url)}" alt="${esc(caption)}"/>
+      ${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}
+    </figure>
+  `;
+  const close = () => box.remove();
+  box.querySelector('.tuz-lightbox__close').addEventListener('click', close);
+  box.addEventListener('click', (e) => { if (e.target === box) close(); });
+  document.addEventListener('keydown', function onKey(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+  });
+  document.body.appendChild(box);
 }
 
 // ─── DB 컬럼(snake_case) → JS(camelCase) 변환 ──
@@ -484,13 +566,13 @@ function toCamel(row) {
 // ─── 캐시 ─────────────────────────────────────
 function readCache(key) {
   try {
-    const raw = localStorage.getItem(`tuz-cache-v4:${key}`);
+    const raw = localStorage.getItem(`tuz-cache-v5:${key}`);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch (_) { return null; }
 }
 function writeCache(key, data) {
-  try { localStorage.setItem(`tuz-cache-v4:${key}`, JSON.stringify({ at: Date.now(), data })); }
+  try { localStorage.setItem(`tuz-cache-v5:${key}`, JSON.stringify({ at: Date.now(), data })); }
   catch (_) { /* ignore */ }
 }
 
@@ -523,22 +605,33 @@ async function loadTable(table, renderer, { single = false, order = 'sort_order'
 }
 
 // ─── Kakao Maps 초기화 ───────────────────────
-let _kakaoMapInit = false;
+function renderMapFallback(mapEl, reason) {
+  mapEl.classList.add('is-empty');
+  const q = encodeURIComponent(ADDRESS);
+  mapEl.innerHTML = `
+    <a class="map-fallback" href="https://map.kakao.com/?q=${q}" target="_blank" rel="noopener">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      <span class="map-fallback__title">카카오맵에서 보기</span>
+      <span class="map-fallback__sub">${esc(ADDRESS)}</span>
+    </a>
+  `;
+  if (reason) mapEl.title = reason;
+}
+
 function initKakaoMap() {
-  if (_kakaoMapInit) return;
-  _kakaoMapInit = true;
   const mapEl = document.getElementById('map');
-  if (!mapEl || !window.KAKAO_APP_KEY) {
-    if (mapEl) {
-      mapEl.classList.add('is-empty');
-      mapEl.title = 'Kakao Maps API 키를 설정하세요';
-    }
+  if (!mapEl) return;
+  // 이미 초기화됐거나 Kakao SDK 로딩 중이면 중복 실행 방지 (dual-module 방어)
+  if (mapEl.dataset.mapInit === '1') return;
+  mapEl.dataset.mapInit = '1';
+
+  if (!window.KAKAO_APP_KEY) {
+    renderMapFallback(mapEl, 'Kakao Maps API 키를 설정하세요');
     return;
   }
-  const script = document.createElement('script');
-  script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${window.KAKAO_APP_KEY}&autoload=false`;
-  script.onload = () => {
-    window.kakao.maps.load(() => {
+
+  const drawMap = () => {
+    try {
       const LAT = 35.5492;
       const LNG = 129.3148;
       const map = new window.kakao.maps.Map(mapEl, {
@@ -550,8 +643,31 @@ function initKakaoMap() {
         position: new window.kakao.maps.LatLng(LAT, LNG),
         title: 'TUZ',
       });
-    });
+    } catch (e) {
+      console.warn('[tuz] kakao map init failed:', e);
+      renderMapFallback(mapEl, '지도 초기화 실패 — 카카오맵 도메인 등록을 확인하세요');
+    }
   };
+
+  // 이미 SDK가 로드돼 있으면 즉시 그림 (dual-module 상황 포함)
+  if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === 'function') {
+    window.kakao.maps.load(drawMap);
+    return;
+  }
+
+  // 스크립트가 이미 문서에 추가돼 있으면 로드 대기
+  const existing = document.querySelector('script[data-tuz-kakao]');
+  if (existing) {
+    existing.addEventListener('load', () => window.kakao.maps.load(drawMap));
+    existing.addEventListener('error', () => renderMapFallback(mapEl, 'Kakao 스크립트 로드 실패'));
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.dataset.tuzKakao = '1';
+  script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${window.KAKAO_APP_KEY}&autoload=false`;
+  script.onload = () => window.kakao.maps.load(drawMap);
+  script.onerror = () => renderMapFallback(mapEl, 'Kakao 스크립트 로드 실패 — 도메인 등록 또는 네트워크를 확인하세요');
   document.head.appendChild(script);
 }
 
@@ -577,14 +693,26 @@ const LOADERS = {
 
 // settings는 항상 먼저 로드 — 모든 페이지에서 WiFi 정보가 필요할 수 있음
 LOADERS.wifi();
+// news도 먼저 로드 — 홈의 "오늘의 공지"가 필요
+LOADERS.news();
 
 // 관리자가 저장한 후 현재 보이는 화면의 데이터를 강제 새로고침
 export async function refreshTable(table) {
   // invalidate cache and reload
-  try { localStorage.removeItem(`tuz-cache-v4:${table}`); } catch (_) { /* ignore */ }
-  const viewMap = { news: 'news', pick: 'pick', winners: 'event', greeting: 'greeting', menu: 'menu', settings: 'wifi' };
-  const loader = LOADERS[viewMap[table]];
-  if (loader) await loader();
+  try { localStorage.removeItem(`tuz-cache-v5:${table}`); } catch (_) { /* ignore */ }
+  const loaderKeys = {
+    news: ['news'],
+    pick: ['pick'],
+    winners: ['event'],
+    greeting: ['greeting'],
+    menu: ['menu'],
+    settings: ['wifi'], // settings 재로드 → wifi/hours/menuHero 모두 갱신됨
+  };
+  const keys = loaderKeys[table] || [];
+  for (const k of keys) {
+    const loader = LOADERS[k];
+    if (loader) await loader();
+  }
 }
 
 // ─── 초기 라우트 ──────────────────────────────
@@ -592,4 +720,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=11').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=12').catch((e) => console.warn('[tuz] admin module not loaded:', e));

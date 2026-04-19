@@ -1,4 +1,4 @@
-import { supabase, refreshTable } from './app.js';
+import { supabase, refreshTable } from './app.js?v=12';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -19,6 +19,8 @@ const SCHEMAS = {
       { col: 'title',     label: '제목 (한글)',  type: 'text',   required: true },
       { col: 'title_en',  label: '제목 (영문)',  type: 'text',   placeholder: '비워두면 영문 표시 안 됨' },
       { col: 'body',      label: '본문',         type: 'textarea' },
+      { col: 'is_today',  label: '홈 화면 "오늘의 공지"로 표시', type: 'checkbox',
+        hint: '체크 시 홈 화면 상단에 이 공지가 노출됩니다. 여러 개 체크하면 가장 최근 것 하나만 표시됩니다.' },
       { col: 'date',      autoDate: true },
     ],
   },
@@ -80,13 +82,27 @@ const SCHEMAS = {
     mode: 'list',
     views: ['menu'],
     fields: [
-      { col: 'hero_photo',   label: '대표 사진 (첫 행만)', type: 'photo' },
-      { col: 'category',     label: '카테고리', type: 'text', required: true, placeholder: 'COFFEE · 커피' },
+      { col: 'category',     label: '카테고리', type: 'select', required: true,
+        options: ['COFFEE · 커피', 'BAKERY · 베이커리', 'DESSERT · 디저트'] },
       { col: 'name',         label: '메뉴명 (한글)', type: 'text', required: true },
       { col: 'name_en',      label: '메뉴명 (영문)', type: 'text' },
       { col: 'price',        label: '가격', type: 'text', placeholder: '4,500' },
-      { col: 'tag',          label: '뱃지', type: 'text', placeholder: 'NEW' },
+      { col: 'photo',        label: '메뉴 사진 (선택)', type: 'photo',
+        hint: '업로드 시 메뉴 옆에 사진 보기 버튼이 생깁니다.' },
+      { col: 'tag',          label: '뱃지 (수동)', type: 'text', placeholder: '예) 한정, LIMITED',
+        hint: '오늘 등록한 메뉴는 자동으로 NEW 뱃지가 붙습니다. 수동 뱃지는 선택사항입니다.' },
       { col: 'is_signature', label: '시그니처 메뉴', type: 'checkbox' },
+    ],
+  },
+  settings_menu_hero: {
+    label: '메뉴 대표 사진',
+    noun: '대표 사진',
+    mode: 'single',
+    views: ['menu'],
+    table: 'settings',
+    fields: [
+      { col: 'menu_hero_photo', label: '대표 사진', type: 'photo',
+        hint: '메뉴 페이지 상단에 표시되는 대표 이미지입니다.' },
     ],
   },
   settings_hours: {
@@ -331,7 +347,12 @@ function buildField(f, row) {
     input.rows = f.rows || 3;
   } else if (f.type === 'select') {
     input = document.createElement('select');
-    (f.options || []).forEach((o) => {
+    const options = (f.options || []).slice();
+    const current = row[f.col];
+    if (current != null && current !== '' && !options.includes(current)) {
+      options.push(current); // 기존 값 보존
+    }
+    options.forEach((o) => {
       const opt = document.createElement('option');
       opt.value = o; opt.textContent = o;
       input.appendChild(opt);

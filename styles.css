@@ -14,8 +14,8 @@
   --ink-2: #3d342b;
   --ink-3: #6e6356;
   --ink-4: #8a7f70;  /* WCAG AA 대비 향상 (기존 #a39a8d) */
-  --line: rgba(26, 22, 18, 0.08);
-  --line-2: rgba(26, 22, 18, 0.16);
+  --line: rgba(26, 22, 18, 0.16);
+  --line-2: rgba(26, 22, 18, 0.24);
   --shadow-sm: 0 1px 2px rgba(26, 22, 18, 0.04), 0 0 0 1px rgba(26, 22, 18, 0.04);
   --shadow-md: 0 4px 14px rgba(26, 22, 18, 0.06), 0 0 0 1px rgba(26, 22, 18, 0.04);
   --shadow-lg: 0 10px 30px rgba(122, 29, 16, 0.12), 0 1px 2px rgba(26, 22, 18, 0.06);
@@ -842,7 +842,31 @@ body {
   object-fit: cover;
   display: block;
 }
-.photo-block.is-empty::after {
+/* 지도 로드 실패 폴백 — "카카오맵에서 보기" 링크 카드 */
+.map-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+  color: var(--tuz-red);
+  text-decoration: none;
+  text-align: center;
+}
+.map-fallback:hover { background: var(--tuz-red-soft); }
+.map-fallback__title { font-size: 14px; font-weight: 600; }
+.map-fallback__sub {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.4;
+  word-break: keep-all;
+}
+.photo-block:has(.map-fallback) { background: var(--ivory-2); }
+
+.photo-block.is-empty:not(:has(.map-fallback))::after {
   content: '';
   display: block;
   width: 32px;
@@ -958,4 +982,97 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ─── menu row 사진 보기 버튼 ─── */
+.menu-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  color: var(--ink-3);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: transform 0.1s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.menu-photo-btn:hover {
+  border-color: var(--tuz-red);
+  color: var(--tuz-red);
+}
+.menu-photo-btn:active { transform: scale(0.92); }
+
+/* 오늘의 공지 pin chip */
+.chip--pin {
+  background: var(--tuz-red-soft);
+  color: var(--tuz-red);
+  font-weight: 600;
+}
+
+/* NEW 뱃지 (자동) */
+.chip--new {
+  background: var(--tuz-red);
+  color: #fff7ee;
+  border-color: transparent;
+}
+
+/* ─── 라이트박스 ─── */
+.tuz-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 8, 6, 0.82);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: tuz-lightbox-in 0.18s ease;
+}
+@keyframes tuz-lightbox-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tuz-lightbox__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff7ee;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.tuz-lightbox__close:hover { background: rgba(255, 255, 255, 0.22); }
+.tuz-lightbox__fig {
+  margin: 0;
+  max-width: min(92vw, 720px);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.tuz-lightbox__fig img {
+  max-width: 100%;
+  max-height: 78vh;
+  object-fit: contain;
+  border-radius: var(--r-md);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  background: #fff;
+}
+.tuz-lightbox__fig figcaption {
+  color: rgba(255, 247, 238, 0.88);
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: -0.01em;
 }

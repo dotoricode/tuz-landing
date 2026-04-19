@@ -169,3 +169,8 @@ ALTER TABLE settings ADD COLUMN IF NOT EXISTS holiday_notice TEXT;
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS regular_closure_kr TEXT DEFAULT '매월 마지막 월요일';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS regular_closure_en TEXT DEFAULT 'Last Mon';
 ALTER TABLE winners ADD COLUMN IF NOT EXISTS period TEXT;
+
+-- ─── 2026-04-19 개선: 메뉴 사진 + 오늘의 공지 ─────────
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS menu_hero_photo TEXT;
+ALTER TABLE menu ADD COLUMN IF NOT EXISTS photo TEXT;
+ALTER TABLE news ADD COLUMN IF NOT EXISTS is_today BOOLEAN DEFAULT false;
