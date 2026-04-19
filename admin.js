@@ -88,10 +88,12 @@ const SCHEMAS = {
       { col: 'name_en',      label: '메뉴명 (영문)', type: 'text' },
       { col: 'price',        label: '가격', type: 'text', placeholder: '4,500' },
       { col: 'photo',        label: '메뉴 사진 (선택)', type: 'photo',
-        hint: '업로드 시 메뉴 옆에 사진 보기 버튼이 생깁니다.' },
-      { col: 'tag',          label: '뱃지 (수동)', type: 'text', placeholder: '예) 한정, LIMITED',
-        hint: '오늘 등록한 메뉴는 자동으로 NEW 뱃지가 붙습니다. 수동 뱃지는 선택사항입니다.' },
-      { col: 'is_signature', label: '시그니처 메뉴', type: 'checkbox' },
+        hint: '업로드 시 메뉴명 왼쪽에 썸네일이 표시됩니다.' },
+      { col: 'tag',          label: '뱃지', type: 'tags',
+        options: ['NEW', 'SEASON', 'SIGNATURE'],
+        labels: { NEW: 'NEW', SEASON: 'SEASON', SIGNATURE: '시그니처' },
+        autoTags: ['NEW'],
+        hint: '오늘 등록한 메뉴는 NEW 뱃지가 자동 부여됩니다. SEASON · 시그니처는 눌러서 선택하세요.' },
     ],
   },
   settings_menu_hero: {
@@ -250,24 +252,38 @@ function renderPageActions() {
       bar.className = 'tuz-admin-bar';
       bar.setAttribute('data-admin-actions', key);
 
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tuz-admin-action';
       if (schema.mode === 'single') {
-        btn.classList.add('is-edit');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tuz-admin-action is-edit';
         btn.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           ${esc(schema.noun)} 수정
         `;
+        btn.addEventListener('click', () => openEditor(key));
+        bar.appendChild(btn);
       } else {
-        btn.classList.add('is-add');
-        btn.innerHTML = `
+        // list mode — 추가와 편집 분리
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'tuz-admin-action is-add';
+        addBtn.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           ${esc(schema.noun)} 추가
         `;
+        addBtn.addEventListener('click', () => openEditor(key, { addOnly: true }));
+        bar.appendChild(addBtn);
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'tuz-admin-action is-edit';
+        editBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          목록 편집
+        `;
+        editBtn.addEventListener('click', () => openEditor(key, { manage: true }));
+        bar.appendChild(editBtn);
       }
-      btn.addEventListener('click', () => openEditor(key, { addNew: schema.mode === 'list' }));
-      bar.appendChild(btn);
 
       head.insertAdjacentElement('afterend', bar);
     });
@@ -338,6 +354,45 @@ function buildField(f, row) {
     input.addEventListener('change', () => { row[f.col] = input.checked; });
     checkRow.appendChild(input);
     wrap.appendChild(checkRow);
+    return wrap;
+  }
+
+  if (f.type === 'tags') {
+    // 뱃지 다중 선택 — CSV 로 저장
+    const current = new Set(
+      String(row[f.col] || '').split(',').map((s) => s.trim()).filter(Boolean).map((s) => s.toUpperCase())
+    );
+    const group = document.createElement('div');
+    group.className = 'tuz-tags';
+    const autoSet = new Set((f.autoTags || []).map((s) => s.toUpperCase()));
+    (f.options || []).forEach((optRaw) => {
+      const opt = String(optRaw).toUpperCase();
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tuz-tag';
+      const isAuto = autoSet.has(opt);
+      if (isAuto) btn.classList.add('is-auto');
+      btn.dataset.tag = opt;
+      const label = (f.labels && f.labels[opt]) || opt;
+      btn.textContent = isAuto ? `${label} (자동)` : label;
+      if (current.has(opt) || isAuto) btn.classList.add('is-on');
+      btn.disabled = isAuto;
+      btn.addEventListener('click', () => {
+        if (isAuto) return;
+        if (btn.classList.toggle('is-on')) current.add(opt);
+        else current.delete(opt);
+        const manual = [...current].filter((t) => !autoSet.has(t));
+        row[f.col] = manual.length ? manual.join(',') : null;
+      });
+      group.appendChild(btn);
+    });
+    wrap.appendChild(group);
+    if (f.hint) {
+      const hint = document.createElement('span');
+      hint.className = 'tuz-field__hint';
+      hint.textContent = f.hint;
+      wrap.appendChild(hint);
+    }
     return wrap;
   }
 
@@ -428,13 +483,14 @@ function openLogin() {
 }
 
 // ─── 에디터 ─────────────────────────────────
-async function openEditor(key, { addNew = false } = {}) {
+async function openEditor(key, { addOnly = false, manage = false } = {}) {
   const schema = SCHEMAS[key];
   if (!schema) return;
   const tableName = schema.table || key;
 
   // fetch current rows
   let rows = [];
+  let existingRows = []; // manage 모드에서 사용 (순서 비교)
   if (schema.mode === 'single') {
     let q = supabase.from(tableName).select('*');
     if (schema.filter) {
@@ -445,18 +501,26 @@ async function openEditor(key, { addNew = false } = {}) {
     const base = schema.filter ? { ...schema.filter } : (tableName === 'settings' ? { id: 1 } : {});
     rows = [data ? { ...data } : base];
   } else {
-    const { data, error } = await supabase.from(tableName).select('*').order('sort_order', { ascending: true });
-    if (error) { toast(`불러오기 실패: ${error.message}`, { error: true }); return; }
-    rows = (data || []).map((r) => ({ ...r }));
-    if (addNew) rows.push({});
+    if (addOnly) {
+      // 추가 전용 — 빈 행 하나만
+      rows = [{}];
+    } else {
+      const { data, error } = await supabase.from(tableName).select('*').order('sort_order', { ascending: true });
+      if (error) { toast(`불러오기 실패: ${error.message}`, { error: true }); return; }
+      existingRows = (data || []).map((r) => ({ ...r }));
+      rows = existingRows.map((r) => ({ ...r }));
+    }
   }
 
   const removedIds = [];
+  const isListAdd = schema.mode === 'list' && addOnly;
+  const isListManage = schema.mode === 'list' && manage;
 
   const body = document.createElement('div');
   body.className = 'tuz-editor';
   const listEl = document.createElement('div');
   listEl.className = 'tuz-editor__list';
+  if (isListManage) listEl.classList.add('is-manage');
   body.appendChild(listEl);
 
   function rebuild() {
@@ -468,28 +532,33 @@ async function openEditor(key, { addNew = false } = {}) {
     const card = document.createElement('div');
     card.className = 'tuz-row-card';
 
-    if (schema.mode === 'list') {
+    if (isListManage) {
+      // 편집 모드 — 드래그 핸들 + 삭제 + 인라인 필드 (축약)
+      card.setAttribute('draggable', 'true');
+      card.classList.add('is-draggable');
+      card.dataset.idx = String(idx);
       const head = document.createElement('div');
       head.className = 'tuz-row-card__head';
+      const displayLabel = summarizeRow(schema, row);
       head.innerHTML = `
+        <span class="tuz-drag-handle" aria-hidden="true">⋮⋮</span>
         <span class="tuz-row-card__num">${idx + 1}</span>
+        <span class="tuz-row-card__summary">${esc(displayLabel)}</span>
         <div class="tuz-row-card__actions">
-          <button type="button" class="tuz-icon-btn" data-act="up"   aria-label="위로">▲</button>
-          <button type="button" class="tuz-icon-btn" data-act="down" aria-label="아래로">▼</button>
+          <button type="button" class="tuz-icon-btn" data-act="edit" aria-label="수정">✎</button>
           <button type="button" class="tuz-icon-btn is-danger" data-act="del" aria-label="삭제">✕</button>
         </div>
       `;
       card.appendChild(head);
 
-      head.querySelector('[data-act="up"]').addEventListener('click', () => {
-        if (idx === 0) return;
-        [rows[idx - 1], rows[idx]] = [rows[idx], rows[idx - 1]];
-        rebuild();
-      });
-      head.querySelector('[data-act="down"]').addEventListener('click', () => {
-        if (idx === rows.length - 1) return;
-        [rows[idx + 1], rows[idx]] = [rows[idx], rows[idx + 1]];
-        rebuild();
+      const fieldsWrap = document.createElement('div');
+      fieldsWrap.className = 'tuz-row-card__fields';
+      fieldsWrap.hidden = true;
+      schema.fields.forEach((f) => fieldsWrap.appendChild(buildField(f, row)));
+      card.appendChild(fieldsWrap);
+
+      head.querySelector('[data-act="edit"]').addEventListener('click', () => {
+        fieldsWrap.hidden = !fieldsWrap.hidden;
       });
       head.querySelector('[data-act="del"]').addEventListener('click', () => {
         if (!confirm('이 항목을 삭제할까요?')) return;
@@ -497,14 +566,47 @@ async function openEditor(key, { addNew = false } = {}) {
         rows.splice(idx, 1);
         rebuild();
       });
-    }
 
-    schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
+      // Drag & drop
+      card.addEventListener('dragstart', (e) => {
+        card.classList.add('is-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(idx));
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('is-dragging');
+        listEl.querySelectorAll('.is-drop-target').forEach((el) => el.classList.remove('is-drop-target'));
+      });
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        card.classList.add('is-drop-target');
+      });
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('is-drop-target');
+      });
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        const to = idx;
+        if (isNaN(from) || from === to) return;
+        const [moved] = rows.splice(from, 1);
+        rows.splice(to, 0, moved);
+        rebuild();
+      });
+    } else if (schema.mode === 'list') {
+      // 추가 모드 — 순수 입력 폼, 순서 조정 없음
+      schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
+      return card;
+    } else {
+      // single 모드
+      schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
+    }
     return card;
   }
 
-  // bottom add button for list mode — natural label
-  if (schema.mode === 'list') {
+  // 추가 모드 — "하나 더 추가" 버튼 (연속 등록)
+  if (isListAdd) {
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'tuz-btn2 is-ghost tuz-editor__add';
@@ -512,7 +614,6 @@ async function openEditor(key, { addNew = false } = {}) {
     addBtn.addEventListener('click', () => {
       rows.push({});
       rebuild();
-      // 새 카드로 스크롤
       const last = listEl.lastElementChild;
       if (last) last.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
@@ -521,8 +622,14 @@ async function openEditor(key, { addNew = false } = {}) {
 
   rebuild();
 
+  const title = isListManage
+    ? `${schema.label} · 목록 편집`
+    : isListAdd
+      ? `${schema.label} · 추가`
+      : `${schema.label} 수정`;
+
   openModal({
-    title: schema.mode === 'list' ? `${schema.label} 관리` : `${schema.label} 수정`,
+    title,
     body,
     actions: [
       { label: '취소', onClick: ({ close }) => close() },
@@ -532,7 +639,11 @@ async function openEditor(key, { addNew = false } = {}) {
           const btn = ctx.overlay.querySelector('.tuz-sheet__foot .is-primary');
           if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; btn.setAttribute('aria-busy', 'true'); }
           try {
-            await saveRows(tableName, schema, rows, removedIds);
+            if (isListAdd) {
+              await appendRows(tableName, schema, rows);
+            } else {
+              await saveRows(tableName, schema, rows, removedIds);
+            }
             toast('저장되었습니다');
             await refreshTable(tableName);
             ctx.close();
@@ -544,6 +655,43 @@ async function openEditor(key, { addNew = false } = {}) {
       },
     ],
   });
+}
+
+function summarizeRow(schema, row) {
+  const nameField = schema.fields.find((f) => f.col === 'name' || f.col === 'title' || f.col === 'nick');
+  const catField = schema.fields.find((f) => f.col === 'category');
+  const pieces = [];
+  if (catField && row[catField.col]) pieces.push(row[catField.col]);
+  if (nameField && row[nameField.col]) pieces.push(row[nameField.col]);
+  return pieces.join(' · ') || '(비어있는 항목)';
+}
+
+async function appendRows(tableName, schema, rows) {
+  // 기존 마지막 sort_order 계산
+  const { data: last } = await supabase
+    .from(tableName)
+    .select('sort_order')
+    .order('sort_order', { ascending: false })
+    .limit(1);
+  const startOrder = ((last && last[0]?.sort_order) || 0) + 1;
+
+  const payload = rows.map((r, i) => {
+    const out = { sort_order: startOrder + i };
+    schema.fields.forEach((f) => {
+      if (f.autoDate) { out[f.col] = r[f.col] ?? autoToday(); return; }
+      out[f.col] = r[f.col] ?? null;
+    });
+    const firstReq = schema.fields.find((f) => f.required);
+    if (firstReq && !out[firstReq.col]) return null;
+    for (const f of schema.fields) {
+      if (f.required && !out[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
+    }
+    return out;
+  }).filter(Boolean);
+
+  if (!payload.length) throw new Error('추가할 항목이 없습니다. 필수 항목을 입력해주세요.');
+  const { error } = await supabase.from(tableName).insert(payload);
+  if (error) throw error;
 }
 
 // ─── 저장 로직 ──────────────────────────────

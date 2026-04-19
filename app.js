@@ -479,6 +479,26 @@ function isToday(isoTs) {
     && d.getDate() === now.getDate();
 }
 
+// 뱃지 CSV → 배열, 자동 NEW 포함
+function resolveBadges(m) {
+  const raw = String(m.tag || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const set = new Set(raw.map((s) => s.toUpperCase()));
+  if (m.isSignature) set.add('SIGNATURE'); // 구 데이터 호환
+  if (isToday(m.createdAt)) set.add('NEW');
+  return [...set];
+}
+
+const BADGE_LABEL = {
+  NEW: 'NEW',
+  SEASON: 'SEASON',
+  SIGNATURE: '시그니처',
+};
+const BADGE_CLASS = {
+  NEW: 'chip--new',
+  SEASON: 'chip--season',
+  SIGNATURE: '',
+};
+
 function renderMenu(items) {
   // 대표 사진은 settings에서 가져옴 (setting이 이미 로드되어 있으면 적용)
   if (CURRENT_SETTINGS) updateMenuHero(CURRENT_SETTINGS);
@@ -503,14 +523,20 @@ function renderMenu(items) {
       ${groups.get(cat).map((m) => {
         const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
         const photoUrl = imgUrl(m.photo);
-        const autoNew = isToday(m.createdAt);
-        const photoBtn = photoUrl
-          ? `<button type="button" class="menu-photo-btn" data-menu-photo="${esc(photoUrl)}" data-menu-name="${esc(m.name)}" aria-label="${esc(m.name)} 사진 보기"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></button>`
+        const badges = resolveBadges(m);
+        const badgesHtml = badges.map((b) => {
+          const label = BADGE_LABEL[b] || b;
+          const cls = BADGE_CLASS[b] || '';
+          return ` <span class="chip chip--sm ${cls}">${esc(label)}</span>`;
+        }).join('');
+        const thumbHtml = photoUrl
+          ? `<button type="button" class="menu-thumb" data-menu-photo="${esc(photoUrl)}" data-menu-name="${esc(m.name)}" aria-label="${esc(m.name)} 사진 보기"><img src="${esc(photoUrl)}" alt="${esc(m.name)}" loading="lazy"/></button>`
           : '';
         return `
-        <div class="menu-row"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
+        <div class="menu-row${photoUrl ? ' has-thumb' : ''}"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
+          ${thumbHtml}
           <div class="menu-row__l">
-            <div class="name">${esc(m.name)}${m.isSignature ? ` <span class="chip chip--sm">시그니처</span>` : ''}${autoNew ? ` <span class="chip chip--sm chip--new">NEW</span>` : ''}${m.tag ? ` <span class="chip chip--sm">${esc(m.tag)}</span>` : ''}${photoBtn}</div>
+            <div class="name">${esc(m.name)}${badgesHtml}</div>
             ${m.nameEn ? `<div class="name-en">${esc(m.nameEn)}</div>` : ''}
           </div>
           <div class="dots"></div>

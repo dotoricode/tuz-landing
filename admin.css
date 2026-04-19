@@ -437,6 +437,42 @@
 }
 .tuz-admin-action svg { flex-shrink: 0; }
 
+/* ─── 태그/뱃지 다중선택 ─── */
+.tuz-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0;
+}
+.tuz-tag {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2, rgba(0,0,0,0.16));
+  background: transparent;
+  color: var(--ink-2, #3d342b);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tuz-tag:hover:not(:disabled) {
+  border-color: var(--tuz-red, #a52a1a);
+  color: var(--tuz-red, #a52a1a);
+}
+.tuz-tag.is-on {
+  background: var(--tuz-red, #a52a1a);
+  color: #fff7ee;
+  border-color: var(--tuz-red, #a52a1a);
+}
+.tuz-tag.is-auto {
+  background: rgba(165, 42, 26, 0.14);
+  color: var(--tuz-red, #a52a1a);
+  border-color: transparent;
+  cursor: default;
+  opacity: 0.85;
+}
+
 /* ─── 항목별 수정/삭제 오버레이 ─────────────── */
 .tuz-item-actions {
   position: absolute;
