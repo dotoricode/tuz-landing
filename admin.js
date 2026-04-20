@@ -1,4 +1,4 @@
-import { supabase, refreshTable } from './app.js?v=31';
+import { supabase, refreshTable } from './app.js?v=32';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -168,19 +168,20 @@ const SCHEMAS = {
       { col: 'spotlight_label', label: '라벨', type: 'text',
         placeholder: '이번 주의 한 잔',
         hint: '비워두면 "이번 주의 한 잔" 으로 표시됩니다.' },
-      { col: 'spotlight_pick_id', label: '추천 메뉴 지정', type: 'select',
-        hint: '비워두면 큰 사장 pick 가장 최근 항목이 자동으로 표시됩니다.',
+      { col: 'spotlight_menu_id', label: '이번 주의 한 잔 메뉴 지정', type: 'select',
+        hint: '비워두면 이번 주의 한 잔 섹션이 숨겨집니다. 계절/시즌 추천 메뉴를 지정하세요.',
         optionsLoader: async () => {
           const { data, error } = await supabase
-            .from('pick')
-            .select('id,name,barista,date')
-            .order('date', { ascending: false });
+            .from('menu')
+            .select('id,name,name_en,is_signature,sort_order')
+            .order('is_signature', { ascending: false })
+            .order('sort_order', { ascending: true });
           if (error) throw error;
           return [
-            { value: '', label: '— 자동 (큰 사장 최신) —' },
-            ...(data || []).map((p) => ({
-              value: p.id,
-              label: `${p.barista || ''} · ${p.name || '(이름 없음)'}${p.date ? ' · ' + p.date : ''}`.replace(/^ · /, ''),
+            { value: '', label: '— 표시 안 함 —' },
+            ...(data || []).map((m) => ({
+              value: m.id,
+              label: `${m.name || '(이름 없음)'}${m.name_en ? ' / ' + m.name_en : ''}`,
             })),
           ];
         },

@@ -132,18 +132,27 @@ if (btnRoute) {
 
 // ─── 테마 ─────────────────────────────────────
 const themeBtn = document.getElementById('themeToggle');
+const THEME_CYCLE = ['light', 'dark', 'auto'];
+const THEME_LABELS = { light: '라이트 모드', dark: '다크 모드', auto: '시스템 모드' };
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  if (themeBtn) themeBtn.title = THEME_LABELS[theme] || '';
+}
+
 try {
-  if (localStorage.getItem('tuz-theme') === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-} catch (_) { /* ignore */ }
+  const saved = localStorage.getItem('tuz-theme');
+  applyTheme(THEME_CYCLE.includes(saved) ? saved : 'auto');
+} catch (_) {
+  applyTheme('auto');
+}
 
 if (themeBtn) {
   themeBtn.addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const next = isDark ? '' : 'dark';
-    if (next) document.documentElement.setAttribute('data-theme', next);
-    else document.documentElement.removeAttribute('data-theme');
+    const current = document.documentElement.getAttribute('data-theme') || 'auto';
+    const idx = THEME_CYCLE.indexOf(current);
+    const next = THEME_CYCLE[(idx + 1) % THEME_CYCLE.length];
+    applyTheme(next);
     try { localStorage.setItem('tuz-theme', next); } catch (_) { /* ignore */ }
   });
 }
@@ -251,6 +260,31 @@ function renderPickCard(p) {
   `;
 }
 
+function renderHomePickCard(pick) {
+  const tag = pick.barista === '큰 사장' ? '큰사장 pick' : '작은사장 pick';
+  const price = pick.price ? `${Number(pick.price).toLocaleString()}원` : '';
+  return `
+    <span class="home-pick__tag">${tag}</span>
+    <div class="home-pick__name">${pick.name || ''}</div>
+    ${pick.note ? `<p class="home-pick__note">${pick.note}</p>` : ''}
+    ${price ? `<div class="home-pick__price">${price}</div>` : ''}
+  `;
+}
+
+function renderHomePicks(big, small) {
+  const section = document.getElementById('homePicksSection');
+  if (!section) return;
+  const bigEl = document.getElementById('homePickBig');
+  const smallEl = document.getElementById('homePickSmall');
+  if (!big && !small) {
+    section.hidden = true;
+    return;
+  }
+  if (bigEl) bigEl.innerHTML = big ? renderHomePickCard(big) : '';
+  if (smallEl) smallEl.innerHTML = small ? renderHomePickCard(small) : '';
+  section.hidden = false;
+}
+
 function renderPicks(picks) {
   LATEST_PICKS = picks || [];
 
@@ -267,8 +301,7 @@ function renderPicks(picks) {
   const recent = (picks || []).some((p) => isNewSince(p.createdAt, 'pick') || isNewSince(p.updatedAt, 'pick'));
   markTileUpdate('pick', recent);
 
-  // 홈 spotlight도 picks 변경 시 재계산
-  renderSpotlight();
+  renderHomePicks(big, small);
 }
 
 // 타일에 "업데이트 있음" 표시 — 빨간 점 + 딥레드 테두리 (.has-update 클래스)
@@ -482,8 +515,10 @@ function updateHoursPage(settings) {
   }
 }
 
-// 최신 picks 캐시 — settings(spotlight_pick_id) 또는 picks가 갱신되면 spotlight 재계산
+// 최신 picks 캐시 — picks 변경 시 홈 렌더 재계산
 let LATEST_PICKS = null;
+// 최신 menu 캐시 — spotlight(menu 기반) 및 signature preview 중복 필터에 사용
+let LATEST_MENU = null;
 
 function renderSettings(items) {
   const s = items && items[0];
@@ -552,24 +587,12 @@ function renderStampCard(s) {
 function renderSpotlight() {
   const card = document.getElementById('spotlightCard');
   if (!card) return;
-  const picks = LATEST_PICKS || [];
   const settings = CURRENT_SETTINGS || {};
 
-  // 1) settings.spotlightPickId 우선
-  let target = null;
-  if (settings.spotlightPickId) {
-    target = picks.find((p) => p.id === settings.spotlightPickId);
-  }
-  // 2) 비어있으면 큰 사장 최신 행 (barista 값이 '큰 사장' 또는 '큰 사장 pick' 모두 매칭)
-  if (!target) {
-    target = picks
-      .filter((p) => p.name && /큰\s*사장/.test(String(p.barista || '')))
-      .sort((a, b) => {
-        const da = String(a.date || a.createdAt || '');
-        const db = String(b.date || b.createdAt || '');
-        return db.localeCompare(da);
-      })[0];
-  }
+  // spotlightMenuId가 지정된 메뉴 항목을 사용 — 없으면 섹션 숨김 (랜덤 fallback 없음)
+  const menuId = settings.spotlightMenuId;
+  const target = menuId ? (LATEST_MENU || []).find((m) => m.id === menuId) : null;
+
   if (!target) {
     card.hidden = true;
     return;
@@ -599,42 +622,56 @@ function renderSpotlight() {
     const u = imgUrl(target.photo);
     photoEl.innerHTML = u
       ? `<img src="${esc(u)}" alt="${esc(target.name || '')}" loading="lazy">`
-      : '';
-    photoEl.style.display = u ? '' : 'none';
+      : `<span class="menu-preview__art-mono" aria-hidden="true">T</span>`;
+    photoEl.style.display = '';
   }
 }
 
 function renderMenuPreview(items) {
+  LATEST_MENU = items || [];
+
   const sec = document.getElementById('menuPreviewSection');
   const list = document.getElementById('menuPreview');
-  if (!sec || !list) return;
+  if (!sec || !list) { renderSpotlight(); return; }
+
+  // Picks와 Spotlight로 이미 노출된 항목을 SIGNATURE 캐러셀에서 제외
+  const pickNames = new Set(
+    (LATEST_PICKS || [])
+      .filter((p) => p.name && (p.barista === '큰 사장' || p.barista === '작은 사장'))
+      .map((p) => p.name)
+  );
+  const spotlightId = (CURRENT_SETTINGS || {}).spotlightMenuId;
 
   const sigs = (items || [])
     .filter((m) => m.name && (m.isSignature === true || /SIGNATURE/i.test(String(m.tag || ''))))
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    .filter((m) => !pickNames.has(m.name) && m.id !== spotlightId)
     .slice(0, 8);
 
   if (!sigs.length) {
     sec.hidden = true;
     list.innerHTML = '';
-    return;
+  } else {
+    sec.hidden = false;
+    list.innerHTML = sigs.map((m) => {
+      const u = imgUrl(m.photo);
+      const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
+      const art = u
+        ? `<img src="${esc(u)}" alt="${esc(m.name)}" loading="lazy">`
+        : `<span class="menu-preview__art-mono" aria-hidden="true">T</span>`;
+      return `
+        <article class="menu-preview__card" data-go="menu">
+          <div class="menu-preview__art">${art}</div>
+          <div class="menu-preview__name">${esc(m.name)}</div>
+          ${m.nameEn ? `<div class="menu-preview__name-en">${esc(m.nameEn)}</div>` : ''}
+          ${priceStr ? `<div class="menu-preview__price">${esc(priceStr)}</div>` : ''}
+        </article>
+      `;
+    }).join('');
   }
-  sec.hidden = false;
-  list.innerHTML = sigs.map((m) => {
-    const u = imgUrl(m.photo);
-    const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
-    const art = u
-      ? `<img src="${esc(u)}" alt="${esc(m.name)}" loading="lazy">`
-      : `<span class="menu-preview__art-mono" aria-hidden="true">T</span>`;
-    return `
-      <article class="menu-preview__card" data-go="menu">
-        <div class="menu-preview__art">${art}</div>
-        <div class="menu-preview__name">${esc(m.name)}</div>
-        ${m.nameEn ? `<div class="menu-preview__name-en">${esc(m.nameEn)}</div>` : ''}
-        ${priceStr ? `<div class="menu-preview__price">${esc(priceStr)}</div>` : ''}
-      </article>
-    `;
-  }).join('');
+
+  // LATEST_MENU가 채워진 뒤 spotlight를 렌더 (menu 기반이므로 여기서 호출)
+  renderSpotlight();
 }
 
 function renderFaq(items) {
@@ -858,6 +895,7 @@ function writeCache(key, data) {
 // ─── Supabase 로더 ────────────────────────────
 const loadingFlags = {};
 async function loadTable(table, renderer, { single = false, order = 'sort_order' } = {}) {
+  if (window.__tuzMock) return; // mock.js calls RENDERERS directly
   if (loadingFlags[table]) return;
 
   const cached = readCache(table);
@@ -1074,12 +1112,26 @@ export async function refreshTable(table) {
   }
 }
 
+// ─── QR 스캔 claim 파라미터 처리 ─────────────────
+// ?claim=XXXXXX 가 있으면 sessionStorage에 저장 후 URL 정리
+// lib/views.js가 로그인 상태 확인 후 자동 적립 처리
+{
+  const _params = new URLSearchParams(window.location.search);
+  const _claimCode = _params.get('claim');
+  if (_claimCode) {
+    try { sessionStorage.setItem('pendingClaim', _claimCode.trim().toUpperCase()); } catch (_) {}
+    const _url = new URL(window.location.href);
+    _url.searchParams.delete('claim');
+    history.replaceState(null, '', _url.pathname + _url.search + _url.hash);
+  }
+}
+
 // ─── 초기 라우트 ──────────────────────────────
 const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=31').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=32').catch((e) => console.warn('[tuz] admin module not loaded:', e));
 
 // auth + per-user 스탬프 뷰 모듈 boot (Phase 2)
-import('./lib/views.js?v=31').catch((e) => console.warn('[tuz] views module not loaded:', e));
+import('./lib/views.js?v=32').catch((e) => console.warn('[tuz] views module not loaded:', e));
