@@ -11,10 +11,10 @@ const corsHeaders = {
 };
 
 const BONUS_TIERS = [
-  { tier: 'normal',     weight: 80 },
+  { tier: 'normal',     weight: 85 },
   { tier: 'double',     weight: 10 },
-  { tier: 'half_off',   weight: 7  },
-  { tier: 'free_drink', weight: 3  },
+  { tier: 'half_off',   weight: 4  },
+  { tier: 'free_drink', weight: 1  },
 ] as const;
 
 type BonusTier = typeof BONUS_TIERS[number]['tier'];
@@ -124,8 +124,20 @@ Deno.serve(async (req) => {
         ]
       : [{ ...baseRow, note: '스탬프 적립' }];
 
-    const { error: insErr } = await admin.from('stamps').insert(insertRows);
+    const { data: insertedStamps, error: insErr } = await admin
+      .from('stamps').insert(insertRows).select('id');
     if (insErr) return json({ error: insErr.message }, 500);
+
+    if (bonusType === 'half_off' || bonusType === 'free_drink') {
+      const stampId = insertedStamps?.[0]?.id ?? null;
+      const { error: couponErr } = await admin.from('coupons').insert({
+        user_id: user.id,
+        stamp_id: stampId,
+        coupon_type: bonusType,
+        note: `룰렛 당첨 (${bonusType})`,
+      });
+      if (couponErr) console.error('[claim-stamp] coupon insert failed:', couponErr.message);
+    }
 
     const { count } = await admin
       .from('stamps').select('id', { count: 'exact', head: true })

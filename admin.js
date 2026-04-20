@@ -1,4 +1,7 @@
 import { supabase, refreshTable } from './app.js?v=32';
+import { adminListActiveCoupons, adminRedeemCoupon } from './lib/stamps.js';
+
+const COUPON_LABEL_KR = { half_off: '반값 쿠폰', free_drink: '무료 음료권' };
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -370,6 +373,89 @@ function renderPageActions() {
       }
     });
   });
+
+  renderCouponActionButton();
+}
+
+// ─── 쿠폰 관리 버튼 (스탬프 뷰에만 노출) ────────
+function renderCouponActionButton() {
+  if (!currentUser) return;
+  const stampView = document.querySelector('[data-view="stamp"]');
+  const anchor = stampView?.querySelector('.page-head');
+  if (!anchor) return;
+
+  const bar = document.createElement('div');
+  bar.className = 'tuz-admin-bar';
+  bar.setAttribute('data-admin-actions', 'coupons');
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'tuz-admin-action is-edit';
+  btn.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a2 2 0 010-4V6a2 2 0 00-2-2H4a2 2 0 00-2 2v2a2 2 0 010 4v2a2 2 0 002 2h14a2 2 0 002-2v-2zM12 4v16"/></svg>
+    쿠폰 관리
+  `;
+  btn.addEventListener('click', openCouponsManager);
+  bar.appendChild(btn);
+  anchor.insertAdjacentElement('afterend', bar);
+}
+
+async function openCouponsManager() {
+  const body = document.createElement('div');
+  body.className = 'tuz-coupons-manager';
+  body.innerHTML = '<p style="color:var(--ink-3);font-size:13px">불러오는 중…</p>';
+
+  const modal = openModal({ title: '활성 쿠폰', body, actions: [{ label: '닫기', primary: true, onClick: ({ close }) => close() }] });
+
+  async function refresh() {
+    try {
+      const coupons = await adminListActiveCoupons();
+      if (!coupons.length) {
+        body.innerHTML = '<p style="color:var(--ink-3);font-size:13px;padding:20px 0;text-align:center">활성 쿠폰이 없습니다</p>';
+        return;
+      }
+      body.innerHTML = `
+        <ul class="tuz-coupon-list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px">
+          ${coupons.map((c) => {
+            const nick = c.profiles?.nickname || '(이름 없음)';
+            const type = COUPON_LABEL_KR[c.coupon_type] || c.coupon_type;
+            const issued = new Date(c.issued_at).toLocaleString('ko-KR');
+            return `
+              <li data-coupon-id="${esc(c.id)}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper)">
+                <div style="flex:1;min-width:0">
+                  <strong style="display:block;font-size:14px">${esc(nick)} · ${esc(type)}</strong>
+                  <span style="font-size:11px;color:var(--ink-3)">${esc(issued)}</span>
+                </div>
+                <button type="button" class="tuz-btn2 is-primary" data-redeem-id="${esc(c.id)}">소진 처리</button>
+              </li>
+            `;
+          }).join('')}
+        </ul>
+      `;
+    } catch (e) {
+      body.innerHTML = `<p style="color:var(--tuz-red);font-size:13px">불러오기 실패: ${esc(e.message || e)}</p>`;
+    }
+  }
+
+  body.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-redeem-id]');
+    if (!btn) return;
+    const id = btn.dataset.redeemId;
+    btn.disabled = true;
+    btn.textContent = '처리 중…';
+    try {
+      await adminRedeemCoupon(id);
+      toast('쿠폰 소진 완료');
+      await refresh();
+    } catch (err) {
+      toast(`실패: ${err.message || err}`, { error: true });
+      btn.disabled = false;
+      btn.textContent = '소진 처리';
+    }
+  });
+
+  await refresh();
+  return modal;
 }
 
 // ─── 입력 필드 빌더 (공용) ──────────────────

@@ -1635,6 +1635,26 @@ body {
 .stamp-history__date { color: var(--ink-3); font-size: 12px; flex: 1; }
 .stamp-history__tag { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: var(--tuz-red-soft); color: var(--tuz-red); }
 .stamp-history__tag.is-redeemed { background: rgba(26,22,18,0.06); color: var(--ink-3); }
+.stamp-history__bonus {
+  display: inline-block; margin-left: 6px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
+  padding: 2px 7px; border-radius: 999px; color: #fff;
+  vertical-align: middle;
+}
+
+/* ─── 내 쿠폰 리스트 ─── */
+.coupon-list { display: flex; flex-direction: column; gap: 8px; }
+.coupon-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--paper);
+}
+.coupon-item--half_off   { border-color: #5c7a4e; background: rgba(92,122,78,0.06); }
+.coupon-item--free_drink { border-color: #2d5016; background: rgba(45,80,22,0.08); }
+.coupon-item__body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.coupon-item__label { font-size: 14px; font-weight: 600; color: var(--ink); }
+.coupon-item__sub { font-size: 12px; color: var(--ink-3); }
+.coupon-item__date { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
 
 .account-row {
   display: flex; align-items: center; gap: 12px;
