@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Phone, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/i18n/navigation";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { cn } from "@/lib/utils";
 
-const NAV_IDS = ["menu", "pick", "notice", "gallery", "visit", "store"] as const;
+const NAV_IDS = ["notice", "pick", "visit", "faq", "gallery", "hours"] as const;
 
-export function SiteHeader() {
+type SiteHeaderProps = {
+  phone?: string | null;
+  address?: string | null;
+};
+
+export function SiteHeader({ phone, address }: SiteHeaderProps) {
   const t = useTranslations("nav");
   const brandT = useTranslations("brand");
   const [scrolled, setScrolled] = useState(false);
@@ -30,6 +35,7 @@ export function SiteHeader() {
   }, [sheetOpen]);
 
   const close = () => setSheetOpen(false);
+  const telHref = phone ? `tel:${phone.replace(/\s+/g, "")}` : null;
 
   return (
     <header
@@ -50,19 +56,19 @@ export function SiteHeader() {
           {brandT("name")}
         </Link>
 
-        <nav aria-label="Primary" className="hidden md:flex items-center gap-7">
+        <nav aria-label="Primary" className="hidden lg:flex items-center gap-0.5">
           {NAV_IDS.map((id) => (
             <a
               key={id}
               href={`/#${id}`}
-              className="font-body text-sm text-tuz-ink-2 hover:text-tuz-red-deep transition-colors duration-[var(--duration-fast)]"
+              className="font-body text-sm text-tuz-ink-2 hover:text-tuz-red-deep transition-colors duration-[var(--duration-fast)] px-2.5 py-2 rounded whitespace-nowrap"
             >
               {t(id)}
             </a>
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <LocaleSwitcher />
         </div>
 
@@ -70,9 +76,10 @@ export function SiteHeader() {
           type="button"
           onClick={() => setSheetOpen(true)}
           aria-label={t("openMenu")}
-          className="md:hidden inline-flex items-center justify-center size-11 rounded-md text-tuz-ink hover:bg-tuz-ivory"
+          className="lg:hidden inline-flex items-center gap-2 h-11 px-3 rounded-md text-tuz-ink hover:bg-tuz-ivory"
         >
-          <Menu className="size-5" />
+          <Menu className="size-5" aria-hidden />
+          <span className="font-body text-base">{t("menu")}</span>
         </button>
       </div>
 
@@ -81,7 +88,7 @@ export function SiteHeader() {
           role="dialog"
           aria-modal="true"
           aria-label={t("openMenu")}
-          className="fixed inset-0 z-50 bg-tuz-paper md:hidden"
+          className="fixed inset-0 z-50 bg-tuz-paper lg:hidden overflow-y-auto"
         >
           <div className="container mx-auto max-w-7xl px-5 h-[72px] flex items-center justify-between">
             <span className="font-display text-3xl text-tuz-ink">
@@ -96,16 +103,43 @@ export function SiteHeader() {
               <X className="size-5" />
             </button>
           </div>
+
+          {(telHref || address) && (
+            <div className="container mx-auto max-w-7xl px-5 pb-4">
+              <div className="rounded-lg border border-tuz-ink/10 bg-tuz-ivory p-5 flex flex-col gap-3">
+                {telHref && (
+                  <a
+                    href={telHref}
+                    onClick={close}
+                    className="inline-flex items-center gap-3 font-body text-xl text-tuz-ink active:text-tuz-red-deep"
+                  >
+                    <Phone className="size-5 text-tuz-red" aria-hidden />
+                    <span className="font-semibold">{phone}</span>
+                  </a>
+                )}
+                {address && (
+                  <p className="inline-flex items-start gap-3 font-body text-base text-tuz-ink-2 leading-relaxed">
+                    <MapPin
+                      className="size-5 mt-0.5 text-tuz-red shrink-0"
+                      aria-hidden
+                    />
+                    <span>{address}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           <nav
             aria-label="Primary mobile"
-            className="container mx-auto max-w-7xl px-5 pt-6 flex flex-col gap-1"
+            className="container mx-auto max-w-7xl px-5 pt-2 pb-12 flex flex-col gap-1"
           >
             {NAV_IDS.map((id) => (
               <a
                 key={id}
                 href={`/#${id}`}
                 onClick={close}
-                className="font-body text-4xl text-tuz-ink py-3 border-b border-tuz-ink/5 hover:text-tuz-red-deep"
+                className="font-body text-3xl text-tuz-ink py-4 border-b border-tuz-ink/5 hover:text-tuz-red-deep"
               >
                 {t(id)}
               </a>

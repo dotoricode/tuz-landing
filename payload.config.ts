@@ -13,6 +13,7 @@ import { MenuItems } from "./payload/collections/MenuItems.ts";
 import { TodayPicks } from "./payload/collections/TodayPicks.ts";
 import { Winners } from "./payload/collections/Winners.ts";
 import { Gallery } from "./payload/collections/Gallery.ts";
+import { Faqs } from "./payload/collections/Faqs.ts";
 
 import { Settings } from "./payload/globals/Settings.ts";
 import { StoreHours } from "./payload/globals/StoreHours.ts";
@@ -48,7 +49,7 @@ export default buildConfig({
     },
   }),
   sharp,
-  collections: [Users, Media, Notices, MenuItems, TodayPicks, Winners, Gallery],
+  collections: [Users, Media, Notices, MenuItems, TodayPicks, Winners, Gallery, Faqs],
   globals: [Settings, StoreHours, Location, AboutStory],
   localization: {
     locales: [

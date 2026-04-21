@@ -58,7 +58,7 @@ function Row({ label, value }: { label: string; value: string }) {
     <tr className="border-t border-tuz-ink/8">
       <th
         scope="row"
-        className="py-4 pr-6 font-body font-normal text-sm text-tuz-ink-3 uppercase tracking-widest align-top w-[40%] whitespace-nowrap"
+        className="py-4 pr-6 font-body font-medium text-base md:text-lg text-tuz-ink-2 align-top w-[40%] whitespace-nowrap"
       >
         {label}
       </th>

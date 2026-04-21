@@ -27,15 +27,15 @@ export function AddressCopy({ address }: { address: string }) {
     <button
       type="button"
       onClick={copy}
-      className="inline-flex items-center gap-2 text-sm font-body text-tuz-ink-2 hover:text-tuz-red-deep"
+      className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-md border border-tuz-ink/15 font-body text-base text-tuz-ink-2 hover:text-tuz-red-deep hover:border-tuz-red-deep transition-colors"
     >
       {copied ? (
         <>
-          <Check className="size-4" /> {t("copied")}
+          <Check className="size-5 text-tuz-green" aria-hidden /> {t("copied")}
         </>
       ) : (
         <>
-          <Copy className="size-4" /> {t("copyAddress")}
+          <Copy className="size-5" aria-hidden /> {t("copyAddress")}
         </>
       )}
     </button>

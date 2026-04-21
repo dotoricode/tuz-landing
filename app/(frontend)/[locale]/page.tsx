@@ -3,13 +3,15 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
 import { routing, type Locale } from "@/lib/i18n/routing";
+import { getAllMenuItems } from "@/lib/queries";
 import { Hero } from "@/components/sections/Hero/Hero";
-import { SignatureMenu } from "@/components/sections/SignatureMenu/SignatureMenu";
-import { TodaysPick } from "@/components/sections/TodaysPick/TodaysPick";
+import { WinnersStrip } from "@/components/sections/Footer/WinnersStrip";
 import { Notice } from "@/components/sections/Notice/Notice";
-import { Gallery } from "@/components/sections/Gallery/Gallery";
+import { TodaysPick } from "@/components/sections/TodaysPick/TodaysPick";
 import { VisitUs } from "@/components/sections/VisitUs/VisitUs";
-import { StoreInfo } from "@/components/sections/StoreInfo/StoreInfo";
+import { Faq } from "@/components/sections/Faq/Faq";
+import { Gallery } from "@/components/sections/Gallery/Gallery";
+import { MenuModal } from "@/components/chrome/MenuModal";
 
 export async function generateMetadata({
   params,
@@ -40,15 +42,20 @@ export default async function Home({
   setRequestLocale(locale);
   const loc = locale as Locale;
 
+  const menuItems = await getAllMenuItems(loc);
+
   return (
     <>
       <Hero locale={loc} />
-      <SignatureMenu locale={loc} />
-      <TodaysPick locale={loc} />
+      <WinnersStrip locale={loc} />
       <Notice locale={loc} />
+      <TodaysPick locale={loc} />
+      <div className="grid grid-cols-1 lg:grid-cols-2">
+        <VisitUs locale={loc} />
+        <Faq locale={loc} />
+      </div>
       <Gallery locale={loc} />
-      <VisitUs locale={loc} />
-      <StoreInfo locale={loc} />
+      <MenuModal items={menuItems} />
     </>
   );
 }

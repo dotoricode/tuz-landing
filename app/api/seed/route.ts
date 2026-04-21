@@ -1,16 +1,8 @@
-import { config as loadDotenv } from "dotenv";
-loadDotenv({ path: ".env.local" });
+import { NextResponse } from "next/server";
+import { getPayload } from "@/lib/payload";
 
-import { getPayload } from "payload";
-import config from "../payload.config.ts";
+export const dynamic = "force-dynamic";
 
-/**
- * One-shot seed: default globals + demo collection content.
- * Idempotent — 각 컬렉션·글로벌을 개별 검사해서 비어 있을 때만 채움.
- * Run with: pnpm exec tsx scripts/seed.ts
- */
-
-/** Lexical richText 한 문단 생성 헬퍼 */
 function lexParagraph(text: string) {
   return {
     root: {
@@ -44,7 +36,6 @@ function lexParagraph(text: string) {
   };
 }
 
-/** 여러 문단 Lexical richText */
 function lexMulti(paragraphs: string[]) {
   return {
     root: {
@@ -76,17 +67,25 @@ function lexMulti(paragraphs: string[]) {
   };
 }
 
-async function seed() {
-  console.log("[seed] script start");
-  console.log(
-    "[seed] config loaded, DATABASE_URI set:",
-    Boolean(process.env.DATABASE_URI),
-  );
+export async function POST(request: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "seed is disabled in production" },
+      { status: 403 },
+    );
+  }
+  const { searchParams } = new URL(request.url);
+  const secret = searchParams.get("secret");
+  if (secret !== "dev") {
+    return NextResponse.json(
+      { error: "append ?secret=dev to the URL" },
+      { status: 401 },
+    );
+  }
 
-  const payload = await getPayload({ config });
-  console.log("[seed] payload ready");
+  const log: string[] = [];
+  const payload = await getPayload();
 
-  console.log("→ globals");
   await payload.updateGlobal({
     slug: "settings",
     locale: "ko",
@@ -97,7 +96,7 @@ async function seed() {
       social: { instagram: "tuzz2026", youtube: "monday_channel94" },
     },
   });
-  console.log("  settings (ko) ✓");
+  log.push("settings (ko) ✓");
 
   await payload.updateGlobal({
     slug: "storeHours",
@@ -114,7 +113,7 @@ async function seed() {
     locale: "en",
     data: { regularClosure: "Last Monday of every month" },
   });
-  console.log("  storeHours ✓");
+  log.push("storeHours ✓");
 
   await payload.updateGlobal({
     slug: "location",
@@ -135,26 +134,23 @@ async function seed() {
       addressShort: "22 Yeompo-ro",
     },
   });
-  console.log("  location ✓");
+  log.push("location ✓");
 
-  // AboutStory — richText 단락 2개 + 서명
   const currentAbout = await payload.findGlobal({
     slug: "aboutStory",
     locale: "ko",
   });
-  const aboutBodyKo =
-    "안녕하세요, 울산 중구 염포로의 작은 카페 Tuz입니다. 오랫동안 동네에 머무를 따뜻한 공간을 꿈꾸며 두 사장이 매일 한 잔씩 정성껏 내립니다.";
-  const currentAboutText =
-    typeof (currentAbout as { body?: { root?: { children?: Array<{ children?: Array<{ text?: string }> }> } } }).body?.root?.children?.[0]?.children?.[0]?.text === "string"
-      ? (currentAbout as { body: { root: { children: Array<{ children: Array<{ text: string }> }> } } }).body.root.children[0].children[0].text
-      : "";
-  if (!currentAboutText) {
+  const aboutBody = (currentAbout as { body?: { root?: { children?: Array<{ children?: Array<{ text?: string }> }> } } }).body;
+  const hasAboutText =
+    typeof aboutBody?.root?.children?.[0]?.children?.[0]?.text === "string" &&
+    aboutBody.root.children[0].children[0].text.length > 0;
+  if (!hasAboutText) {
     await payload.updateGlobal({
       slug: "aboutStory",
       locale: "ko",
       data: {
         body: lexMulti([
-          aboutBodyKo,
+          "안녕하세요, 울산 중구 염포로의 작은 카페 Tuz입니다. 오랫동안 동네에 머무를 따뜻한 공간을 꿈꾸며 두 사장이 매일 한 잔씩 정성껏 내립니다.",
           "커피는 진하지 않아도 괜찮습니다. 서두르지 않는 하루의 온도를 담아 드립니다.",
         ]),
         signatureName: "큰 사장 & 작은 사장 드림",
@@ -172,12 +168,10 @@ async function seed() {
         signatureName: "From the two owners",
       },
     });
-    console.log("  aboutStory ✓");
+    log.push("aboutStory ✓");
   } else {
-    console.log("  aboutStory (existing, skip) ✓");
+    log.push("aboutStory (existing, skip)");
   }
-
-  console.log("→ collections");
 
   const { totalDocs: noticeCount } = await payload.find({
     collection: "notices",
@@ -228,9 +222,9 @@ async function seed() {
         data: { title: n.en.title, body: lexParagraph(n.en.body) },
       });
     }
-    console.log(`  notices (${notices.length} demo) ✓`);
+    log.push(`notices (${notices.length} demo) ✓`);
   } else {
-    console.log(`  notices (${noticeCount} existing, skip) ✓`);
+    log.push(`notices (${noticeCount} existing, skip)`);
   }
 
   const { totalDocs: menuCount } = await payload.find({
@@ -239,28 +233,22 @@ async function seed() {
   });
   if (menuCount === 0) {
     const demo = [
-      // COFFEE (시그니처 포함)
-      { ko: "에스프레소", en: "Espresso", category: "COFFEE", price: "3,500", tag: null, isSignature: false },
-      { ko: "아메리카노", en: "Americano", category: "COFFEE", price: "4,000", tag: null, isSignature: false },
-      { ko: "카페라떼", en: "Cafe Latte", category: "COFFEE", price: "4,500", tag: null, isSignature: false },
+      { ko: "에스프레소", en: "Espresso", category: "COFFEE", price: "3,500", tag: "", isSignature: false },
+      { ko: "아메리카노", en: "Americano", category: "COFFEE", price: "4,000", tag: "", isSignature: false },
+      { ko: "카페라떼", en: "Cafe Latte", category: "COFFEE", price: "4,500", tag: "", isSignature: false },
       { ko: "TUZ 시그니처", en: "TUZ Signature", category: "COFFEE", price: "5,500", tag: "NEW", isSignature: true },
-      { ko: "핸드드립", en: "Hand Drip", category: "COFFEE", price: "5,000", tag: null, isSignature: true },
-      // NON-COFFEE
-      { ko: "유자차", en: "Yuja Tea", category: "NON_COFFEE", price: "4,500", tag: null, isSignature: false },
-      { ko: "아이스티", en: "Iced Tea", category: "NON_COFFEE", price: "4,500", tag: null, isSignature: false },
-      { ko: "초코라떼", en: "Chocolate Latte", category: "NON_COFFEE", price: "5,000", tag: null, isSignature: false },
-      // BAKERY
-      { ko: "버터 스콘", en: "Butter Scone", category: "BAKERY", price: "3,500", tag: null, isSignature: false },
+      { ko: "핸드드립", en: "Hand Drip", category: "COFFEE", price: "5,000", tag: "", isSignature: true },
+      { ko: "유자차", en: "Yuja Tea", category: "NON_COFFEE", price: "4,500", tag: "", isSignature: false },
+      { ko: "아이스티", en: "Iced Tea", category: "NON_COFFEE", price: "4,500", tag: "", isSignature: false },
+      { ko: "초코라떼", en: "Chocolate Latte", category: "NON_COFFEE", price: "5,000", tag: "", isSignature: false },
+      { ko: "버터 스콘", en: "Butter Scone", category: "BAKERY", price: "3,500", tag: "", isSignature: false },
       { ko: "크로플", en: "Croffle", category: "BAKERY", price: "4,500", tag: "NEW", isSignature: true },
-      { ko: "바닐라 휘낭시에", en: "Vanilla Financier", category: "BAKERY", price: "3,000", tag: null, isSignature: false },
-      // DESSERT
+      { ko: "바닐라 휘낭시에", en: "Vanilla Financier", category: "BAKERY", price: "3,000", tag: "", isSignature: false },
       { ko: "바스크 치즈케이크", en: "Basque Cheesecake", category: "DESSERT", price: "5,500", tag: "BEST", isSignature: true },
-      { ko: "티라미수", en: "Tiramisu", category: "DESSERT", price: "5,500", tag: null, isSignature: false },
-      // SEASONAL
+      { ko: "티라미수", en: "Tiramisu", category: "DESSERT", price: "5,500", tag: "", isSignature: false },
       { ko: "딸기 라떼", en: "Strawberry Latte", category: "SEASONAL", price: "5,500", tag: "SEASONAL", isSignature: false },
       { ko: "청귤 에이드", en: "Green Tangerine Ade", category: "SEASONAL", price: "5,000", tag: "SEASONAL", isSignature: false },
     ] as const;
-
     for (let i = 0; i < demo.length; i++) {
       const m = demo[i];
       const created = await payload.create({
@@ -271,7 +259,7 @@ async function seed() {
           nameEn: m.en,
           category: m.category,
           price: m.price,
-          tag: (m.tag ?? "") as "NEW" | "BEST" | "SEASONAL" | "",
+          tag: m.tag,
           isSignature: m.isSignature,
           sortOrder: i,
           published: true,
@@ -284,9 +272,9 @@ async function seed() {
         data: { name: m.en },
       });
     }
-    console.log(`  menuItems (${demo.length} demo) ✓`);
+    log.push(`menuItems (${demo.length} demo) ✓`);
   } else {
-    console.log(`  menuItems (${menuCount} existing, skip) ✓`);
+    log.push(`menuItems (${menuCount} existing, skip)`);
   }
 
   const { totalDocs: pickCount } = await payload.find({
@@ -340,9 +328,9 @@ async function seed() {
         note: "Whole seasonal strawberries, blended — a spring-only pour.",
       },
     });
-    console.log("  todayPicks (2 demo) ✓");
+    log.push("todayPicks (2 demo) ✓");
   } else {
-    console.log(`  todayPicks (${pickCount} existing, skip) ✓`);
+    log.push(`todayPicks (${pickCount} existing, skip)`);
   }
 
   const { totalDocs: winnersCount } = await payload.find({
@@ -366,9 +354,9 @@ async function seed() {
         },
       });
     }
-    console.log("  winners (3 demo) ✓");
+    log.push(`winners (${winners.length} demo) ✓`);
   } else {
-    console.log(`  winners (${winnersCount} existing, skip) ✓`);
+    log.push(`winners (${winnersCount} existing, skip)`);
   }
 
   const { totalDocs: faqCount } = await payload.find({
@@ -378,86 +366,44 @@ async function seed() {
   if (faqCount === 0) {
     const faqs = [
       {
-        ko: {
-          q: "주차가 가능한가요?",
-          a: "가게 바로 앞은 주차가 어렵습니다. 염포로 골목 공영주차장(도보 3분)을 이용해 주세요. 차량은 좁은 골목 진입 전에 주차하시길 권장드립니다.",
-        },
-        en: {
-          q: "Is parking available?",
-          a: "Parking right in front is difficult. Please use the public lot on Yeompo-ro (3-min walk). We recommend parking before entering the narrow alley.",
-        },
+        ko: { q: "주차가 가능한가요?", a: "가게 바로 앞은 주차가 어렵습니다. 염포로 골목 공영주차장(도보 3분)을 이용해 주세요." },
+        en: { q: "Is parking available?", a: "Parking right in front is difficult. Please use the public lot on Yeompo-ro (3-min walk)." },
         category: "visit" as const,
         sortOrder: 0,
       },
       {
-        ko: {
-          q: "와이파이는 있나요?",
-          a: "네, 매장 전체에 무료 와이파이가 제공됩니다. 비밀번호는 카운터 또는 오시는 길 섹션의 Wi-Fi 카드에서 확인하실 수 있습니다.",
-        },
-        en: {
-          q: "Is there Wi-Fi?",
-          a: "Yes — free Wi-Fi covers the entire cafe. Passwords are at the counter or on the Wi-Fi card in the Visit us section.",
-        },
+        ko: { q: "와이파이는 있나요?", a: "네, 매장 전체에 무료 와이파이가 제공됩니다. 비밀번호는 카운터 또는 오시는 길 섹션의 Wi-Fi 카드에서 확인하실 수 있습니다." },
+        en: { q: "Is there Wi-Fi?", a: "Yes — free Wi-Fi covers the entire cafe. Password is at the counter or on the Wi-Fi card in the Visit us section." },
         category: "visit" as const,
         sortOrder: 1,
       },
       {
-        ko: {
-          q: "반려동물 동반이 가능한가요?",
-          a: "죄송합니다. 위생상의 이유로 반려동물 동반은 제한됩니다. 단, 시각 장애인 보조견은 언제든 환영합니다.",
-        },
-        en: {
-          q: "Can I bring a pet?",
-          a: "Unfortunately pets are not allowed for hygiene reasons. Guide dogs for the visually impaired are always welcome.",
-        },
+        ko: { q: "반려동물 동반이 가능한가요?", a: "죄송합니다. 위생상의 이유로 반려동물 동반은 제한됩니다. 단, 시각 장애인 보조견은 언제든 환영합니다." },
+        en: { q: "Can I bring a pet?", a: "Unfortunately pets are not allowed for hygiene reasons. Guide dogs for the visually impaired are always welcome." },
         category: "visit" as const,
         sortOrder: 2,
       },
       {
-        ko: {
-          q: "예약이 필요한가요?",
-          a: "평일에는 예약 없이 방문하셔도 자리가 있을 확률이 높습니다. 주말 오후에는 혼잡할 수 있으니 여유 있게 방문하시거나 전화(052-123-4567)로 문의해 주세요.",
-        },
-        en: {
-          q: "Do I need a reservation?",
-          a: "Weekdays usually have open seats without a reservation. Weekend afternoons can be busy — please call ahead if you'd like peace of mind.",
-        },
+        ko: { q: "예약이 필요한가요?", a: "평일에는 예약 없이 방문하셔도 자리가 있을 확률이 높습니다. 주말 오후에는 혼잡할 수 있으니 전화(052-123-4567)로 미리 문의해 주세요." },
+        en: { q: "Do I need a reservation?", a: "Weekdays usually have open seats without a reservation. Weekend afternoons can be busy — please call ahead." },
         category: "general" as const,
         sortOrder: 3,
       },
       {
-        ko: {
-          q: "단체(10명 이상) 이용이 가능한가요?",
-          a: "네, 사전에 전화로 연락 주시면 조용한 시간대로 자리를 준비해 드립니다. 당일 방문은 어려울 수 있습니다.",
-        },
-        en: {
-          q: "Can you host groups of 10+?",
-          a: "Yes — please call in advance and we'll arrange seating during a quieter slot. Walk-in groups may not be accommodated.",
-        },
+        ko: { q: "단체(10명 이상) 이용이 가능한가요?", a: "네, 사전에 전화로 연락 주시면 조용한 시간대로 자리를 준비해 드립니다." },
+        en: { q: "Can you host groups of 10+?", a: "Yes — please call in advance and we will arrange seating during a quieter slot." },
         category: "general" as const,
         sortOrder: 4,
       },
       {
-        ko: {
-          q: "노키즈존인가요?",
-          a: "아닙니다. 아이와 함께 오시는 분들을 환영합니다. 다만 다른 손님에게 방해가 되지 않도록 보호자께서 함께 지켜봐 주시면 감사하겠습니다.",
-        },
-        en: {
-          q: "Is this a no-kids zone?",
-          a: "No — families with children are welcome. We kindly ask guardians to help keep the space comfortable for other guests.",
-        },
+        ko: { q: "노키즈존인가요?", a: "아닙니다. 아이와 함께 오시는 분들을 환영합니다. 다만 다른 손님에게 방해가 되지 않도록 보호자께서 함께 지켜봐 주시면 감사하겠습니다." },
+        en: { q: "Is this a no-kids zone?", a: "No — families with children are welcome. We kindly ask guardians to help keep the space comfortable for other guests." },
         category: "general" as const,
         sortOrder: 5,
       },
       {
-        ko: {
-          q: "비건 메뉴가 있나요?",
-          a: "블랙 커피 계열과 유자차, 아이스티 등 비건 선택지가 있습니다. 베이커리는 버터·우유가 포함되어 있어 비건이 아닙니다.",
-        },
-        en: {
-          q: "Are there vegan options?",
-          a: "Black coffees, yuja tea, and iced tea are vegan. Bakery items contain butter and milk, so they are not vegan-friendly.",
-        },
+        ko: { q: "비건 메뉴가 있나요?", a: "블랙 커피 계열과 유자차, 아이스티 등 비건 선택지가 있습니다. 베이커리는 버터·우유가 포함되어 있어 비건이 아닙니다." },
+        en: { q: "Are there vegan options?", a: "Black coffees, yuja tea, and iced tea are vegan. Bakery items contain butter and milk, so they are not vegan-friendly." },
         category: "menu" as const,
         sortOrder: 6,
       },
@@ -484,17 +430,10 @@ async function seed() {
         },
       });
     }
-    console.log(`  faqs (${faqs.length} demo) ✓`);
+    log.push(`faqs (${faqs.length} demo) ✓`);
   } else {
-    console.log(`  faqs (${faqCount} existing, skip) ✓`);
+    log.push(`faqs (${faqCount} existing, skip)`);
   }
 
-  console.log("[seed] ✓ complete");
+  return NextResponse.json({ ok: true, log });
 }
-
-seed()
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error("[seed] FAILED:", err);
-    process.exit(1);
-  });

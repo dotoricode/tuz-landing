@@ -20,9 +20,9 @@ export async function TodaysPick({ locale }: { locale: Locale }) {
   }
 
   return (
-    <SectionAnchor id="pick" aria-labelledby="pick-heading" dense>
+    <SectionAnchor id="pick" aria-labelledby="pick-heading">
       <div className="container mx-auto max-w-7xl px-5 md:px-8">
-        <FadeUp className="mb-12 md:mb-20 text-center">
+        <FadeUp className="mb-10 md:mb-14 text-center">
           <p className="eyebrow text-tuz-red">{t("eyebrow")}</p>
           <h2
             id="pick-heading"
@@ -35,7 +35,12 @@ export async function TodaysPick({ locale }: { locale: Locale }) {
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] md:gap-10 gap-16 items-start">
           <FadeUp>
             {big ? (
-              <BaristaPickCard pick={big} baristaLabel={t("ownerBig")} locale={locale} />
+              <BaristaPickCard
+                pick={big}
+                baristaLabel={t("ownerBig")}
+                locale={locale}
+                labelVariant="filled"
+              />
             ) : (
               <div className="rounded-lg border border-dashed border-tuz-ink/15 p-10 text-center text-tuz-ink-3">
                 {t("ownerBig")} · TBD
@@ -61,7 +66,12 @@ export async function TodaysPick({ locale }: { locale: Locale }) {
 
           <FadeUp delay={0.1}>
             {small ? (
-              <BaristaPickCard pick={small} baristaLabel={t("ownerSmall")} locale={locale} />
+              <BaristaPickCard
+                pick={small}
+                baristaLabel={t("ownerSmall")}
+                locale={locale}
+                labelVariant="outline"
+              />
             ) : (
               <div className="rounded-lg border border-dashed border-tuz-ink/15 p-10 text-center text-tuz-ink-3">
                 {t("ownerSmall")} · TBD

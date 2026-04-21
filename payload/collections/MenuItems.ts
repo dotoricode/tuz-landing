@@ -18,6 +18,11 @@ export const MenuItems: CollectionConfig = {
   },
   fields: [
     { name: "name", type: "text", required: true, localized: true },
+    {
+      name: "nameEn",
+      type: "text",
+      admin: { description: "영문 병기 (로케일 무관, 모든 언어에서 함께 노출)" },
+    },
     { name: "description", type: "textarea", localized: true },
     {
       name: "price",

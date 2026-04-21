@@ -34,6 +34,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: ["192.168.219.101"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.supabase.co" },

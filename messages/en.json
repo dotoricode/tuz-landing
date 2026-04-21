@@ -1,7 +1,7 @@
 {
   "brand": {
     "name": "Tuz",
-    "tagline": "Have a Tuz day!",
+    "tagline": "Have a \"TUZ\" day!",
     "since": "since 2026 · Ulsan"
   },
   "nav": {
@@ -9,8 +9,9 @@
     "pick": "Today's pick",
     "notice": "News",
     "gallery": "Gallery",
+    "faq": "FAQ",
     "visit": "Visit us",
-    "store": "Store info",
+    "hours": "Hours",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
@@ -23,7 +24,10 @@
     "hero": {
       "eyebrow": "Yeompo-ro, Jung-gu, Ulsan",
       "statusOpen": "Open now",
-      "statusClosed": "Closed"
+      "statusClosed": "Closed",
+      "ctaMenu": "Menu",
+      "ctaPick": "Today's pick",
+      "ctaHours": "Hours"
     },
     "menu": {
       "eyebrow": "Signature",
@@ -56,7 +60,11 @@
       "copied": "Copied",
       "wifiTitle": "Free Wi-Fi",
       "copyPassword": "Copy password",
-      "directions": "Get directions"
+      "directions": "Get directions",
+      "phoneLabel": "Phone",
+      "callNow": "Call now",
+      "kakaoDirections": "Open in KakaoMap",
+      "naverDirections": "Open in Naver Map"
     },
     "store": {
       "eyebrow": "Hours",
@@ -65,13 +73,39 @@
       "weekend": "Weekends",
       "regularClosure": "Regular closure"
     },
+    "about": {
+      "eyebrow": "Our story",
+      "title": "A note from us"
+    },
+    "menuList": {
+      "eyebrow": "Menu",
+      "title": "Full menu",
+      "categories": {
+        "COFFEE": "COFFEE",
+        "NON_COFFEE": "NON-COFFEE",
+        "BAKERY": "BAKERY",
+        "DESSERT": "DESSERT",
+        "SEASONAL": "SEASONAL"
+      }
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Frequently asked"
+    },
     "footer": {
       "winnersTitle": "This month's favorites",
       "followUs": "Follow",
       "address": "Address",
       "hours": "Hours",
+      "phone": "Phone",
+      "instagramLabel": "Instagram",
+      "youtubeLabel": "YouTube",
       "rights": "All rights reserved."
     }
+  },
+  "mobileCta": {
+    "call": "Call",
+    "directions": "Directions"
   },
   "meta": {
     "title": "Tuz — a cafe in Jung-gu, Ulsan",

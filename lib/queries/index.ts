@@ -12,6 +12,7 @@ import type {
   StoreHour,
   Location,
   AboutStory,
+  Faq,
 } from "@/payload-types";
 
 /**
@@ -89,6 +90,34 @@ export const getSignatureMenu = cache(
     return result.docs;
   },
 );
+
+export const getAllMenuItems = cache(
+  async (locale: Locale): Promise<MenuItem[]> => {
+    const payload = await getPayload();
+    const result = await payload.find({
+      collection: "menuItems",
+      locale,
+      fallbackLocale: "ko",
+      where: { published: { equals: true } },
+      sort: ["category", "sortOrder"],
+      limit: 100,
+    });
+    return result.docs;
+  },
+);
+
+export const getFaqs = cache(async (locale: Locale): Promise<Faq[]> => {
+  const payload = await getPayload();
+  const result = await payload.find({
+    collection: "faqs",
+    locale,
+    fallbackLocale: "ko",
+    where: { published: { equals: true } },
+    sort: ["sortOrder"],
+    limit: 50,
+  });
+  return result.docs;
+});
 
 export const getTodayPicks = cache(async (locale: Locale): Promise<TodayPick[]> => {
   const payload = await getPayload();

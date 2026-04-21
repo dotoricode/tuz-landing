@@ -15,6 +15,8 @@ const badgeVariants = cva(
           "border border-tuz-red text-tuz-red px-2 py-0.5 text-[11px]",
         chipFilledRed:
           "bg-tuz-red text-tuz-paper px-2 py-0.5 text-[11px]",
+        chipOutlineInk:
+          "border border-tuz-ink/50 bg-tuz-paper text-tuz-ink px-2 py-0.5 text-[11px]",
         status:
           "bg-tuz-ivory text-tuz-ink px-3 py-1 text-xs tracking-normal normal-case rounded-full",
       },

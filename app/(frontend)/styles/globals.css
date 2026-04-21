@@ -51,8 +51,8 @@
   --text-eyebrow--line-height: 1;
   --text-eyebrow--letter-spacing: 0.18em;
 
-  /* Section rhythm */
-  --spacing-section: clamp(4rem, 3rem + 5vw, 9rem);
+  /* Section rhythm — mobile tight, desktop editorial */
+  --spacing-section: clamp(2.5rem, 1.25rem + 5vw, 9rem);
 
   /* Radii */
   --radius-sm: 6px;

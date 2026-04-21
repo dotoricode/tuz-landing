@@ -14,17 +14,17 @@ export async function SignatureMenu({ locale }: { locale: Locale }) {
   ]);
 
   return (
-    <SectionAnchor id="menu" aria-labelledby="menu-heading">
+    <SectionAnchor id="signature" aria-labelledby="signature-heading" dense>
       <div className="container mx-auto max-w-7xl px-5 md:px-8">
-        <FadeUp className="mb-10 md:mb-16 max-w-2xl">
+        <FadeUp className="mb-8 md:mb-12 max-w-2xl">
           <p className="eyebrow text-tuz-red">{t("eyebrow")}</p>
           <h2
-            id="menu-heading"
-            className="mt-4 font-body text-display-lg text-tuz-ink"
+            id="signature-heading"
+            className="mt-3 font-body text-display-md text-tuz-ink"
           >
             <TextReveal text={t("title")} />
           </h2>
-          <p className="mt-4 font-body text-lg md:text-xl text-tuz-ink-2">
+          <p className="mt-3 font-body text-base md:text-lg text-tuz-ink-2">
             {t("description")}
           </p>
         </FadeUp>
@@ -35,21 +35,11 @@ export async function SignatureMenu({ locale }: { locale: Locale }) {
           </div>
         ) : (
           <>
-            {/* Desktop: editorial bento — first item takes a 2×2 hero tile */}
-            <div className="hidden md:grid md:grid-cols-3 md:grid-rows-2 md:gap-5 md:auto-rows-[260px]">
-              {items.slice(0, 5).map((item, i) => (
-                <FadeUp
-                  key={item.id}
-                  delay={0.06 * i}
-                  className={
-                    i === 0 ? "col-span-2 row-span-2" : "col-span-1 row-span-1"
-                  }
-                >
-                  <MenuCard
-                    item={item}
-                    size={i === 0 ? "lg" : "md"}
-                    className="h-full"
-                  />
+            {/* Desktop: even 3-column grid (hero tile removed) */}
+            <div className="hidden md:grid md:grid-cols-3 md:gap-5">
+              {items.slice(0, 6).map((item, i) => (
+                <FadeUp key={item.id} delay={0.06 * i}>
+                  <MenuCard item={item} size="md" className="h-full" />
                 </FadeUp>
               ))}
             </div>

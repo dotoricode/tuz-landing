@@ -6,7 +6,9 @@ import { hasLocale } from "next-intl";
 import { routing, locales } from "@/lib/i18n/routing";
 import { fontClassNames } from "@/lib/fonts";
 import { SiteHeader } from "@/components/chrome/SiteHeader";
+import { MobileStickyCTA } from "@/components/chrome/MobileStickyCTA";
 import { Footer } from "@/components/sections/Footer/Footer";
+import { getLocation } from "@/lib/queries";
 import type { Locale } from "@/lib/i18n/routing";
 import "../styles/globals.css";
 
@@ -49,15 +51,26 @@ export default async function LocaleLayout({
     notFound();
   }
   setRequestLocale(locale);
-  const messages = await getMessages();
+  const [messages, location] = await Promise.all([
+    getMessages(),
+    getLocation(locale as Locale),
+  ]);
+
+  const mapHref =
+    location.lat && location.lng
+      ? `https://map.kakao.com/link/map/${encodeURIComponent(
+          location.address ?? "Tuz",
+        )},${location.lat},${location.lng}`
+      : null;
 
   return (
     <html lang={locale} className={`${fontClassNames} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col bg-background text-foreground pb-[64px] lg:pb-0">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <SiteHeader />
+          <SiteHeader phone={location.phone} address={location.address} />
           <main className="flex-1">{children}</main>
           <Footer locale={locale as Locale} />
+          <MobileStickyCTA phone={location.phone} mapHref={mapHref} />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -1,16 +1,17 @@
 {
   "brand": {
     "name": "Tuz",
-    "tagline": "Have a Tuz day!",
+    "tagline": "Have a \"TUZ\" day!",
     "since": "since 2026 · Ulsan"
   },
   "nav": {
     "menu": "메뉴",
     "pick": "오늘의 픽",
-    "notice": "공지",
+    "notice": "소식",
     "gallery": "갤러리",
+    "faq": "FAQ",
     "visit": "오시는 길",
-    "store": "매장 정보",
+    "hours": "영업시간",
     "openMenu": "메뉴 열기",
     "closeMenu": "메뉴 닫기"
   },
@@ -23,7 +24,10 @@
     "hero": {
       "eyebrow": "울산 중구 염포로",
       "statusOpen": "지금 영업 중",
-      "statusClosed": "영업 종료"
+      "statusClosed": "영업 종료",
+      "ctaMenu": "메뉴판",
+      "ctaPick": "오늘의 픽",
+      "ctaHours": "영업시간"
     },
     "menu": {
       "eyebrow": "Signature",
@@ -56,7 +60,11 @@
       "copied": "복사되었습니다",
       "wifiTitle": "무료 Wi-Fi",
       "copyPassword": "비밀번호 복사",
-      "directions": "길찾기"
+      "directions": "길찾기",
+      "phoneLabel": "전화 문의",
+      "callNow": "전화 걸기",
+      "kakaoDirections": "카카오맵 길찾기",
+      "naverDirections": "네이버 지도 길찾기"
     },
     "store": {
       "eyebrow": "Hours",
@@ -65,13 +73,39 @@
       "weekend": "주말",
       "regularClosure": "정기 휴무"
     },
+    "about": {
+      "eyebrow": "Our story",
+      "title": "사장님 한마디"
+    },
+    "menuList": {
+      "eyebrow": "Menu",
+      "title": "전체 메뉴",
+      "categories": {
+        "COFFEE": "COFFEE · 커피",
+        "NON_COFFEE": "NON-COFFEE · 논커피",
+        "BAKERY": "BAKERY · 베이커리",
+        "DESSERT": "DESSERT · 디저트",
+        "SEASONAL": "SEASONAL · 시즌 메뉴"
+      }
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "자주 묻는 질문"
+    },
     "footer": {
       "winnersTitle": "이달의 주인공",
       "followUs": "팔로우",
       "address": "주소",
       "hours": "영업시간",
+      "phone": "전화",
+      "instagramLabel": "인스타그램",
+      "youtubeLabel": "유튜브",
       "rights": "All rights reserved."
     }
+  },
+  "mobileCta": {
+    "call": "전화",
+    "directions": "길찾기"
   },
   "meta": {
     "title": "Tuz — 울산 중구의 카페",

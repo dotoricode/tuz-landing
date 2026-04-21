@@ -10,6 +10,7 @@
     "generate:types": "payload generate:types --use-swc",
     "generate:importmap": "payload generate:importmap --use-swc",
     "payload": "payload --use-swc",
+    "seed": "tsx scripts/seed.ts",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:update": "playwright test --update-snapshots"
