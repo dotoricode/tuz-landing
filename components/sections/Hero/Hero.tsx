@@ -37,7 +37,7 @@ export async function Hero({ locale }: HeroProps) {
           id="hero-heading"
           className="font-display text-display-xl text-tuz-ink leading-[0.9]"
         >
-          <TextReveal text={brandT("name")} />
+          <TextReveal text={brandT("name")} trigger="immediate" />
         </h1>
 
         <FadeUp delay={0.28} className="mt-6 max-w-2xl">

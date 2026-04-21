@@ -5,6 +5,7 @@ import { SectionAnchor } from "@/components/chrome/SectionAnchor";
 import { MenuCard } from "./MenuCard";
 import { MenuCarousel } from "./MenuCarousel";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { TextReveal } from "@/components/motion/TextReveal";
 
 export async function SignatureMenu({ locale }: { locale: Locale }) {
   const [items, t] = await Promise.all([
@@ -21,7 +22,7 @@ export async function SignatureMenu({ locale }: { locale: Locale }) {
             id="menu-heading"
             className="mt-4 font-display text-display-lg text-tuz-ink"
           >
-            {t("title")}
+            <TextReveal text={t("title")} />
           </h2>
           <p className="mt-4 font-editorial text-lg md:text-xl text-tuz-ink-2">
             {t("description")}

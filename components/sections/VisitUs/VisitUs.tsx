@@ -4,6 +4,7 @@ import type { Locale } from "@/lib/i18n/routing";
 import { getLocation, getSettings } from "@/lib/queries";
 import { SectionAnchor } from "@/components/chrome/SectionAnchor";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { TextReveal } from "@/components/motion/TextReveal";
 import { WifiCard } from "./WifiCard";
 import { AddressCopy } from "./AddressCopy";
 
@@ -36,7 +37,7 @@ export async function VisitUs({ locale }: { locale: Locale }) {
             id="visit-heading"
             className="mt-4 font-display text-display-lg text-tuz-ink"
           >
-            {t("title")}
+            <TextReveal text={t("title")} />
           </h2>
           {coord && (
             <p className="mt-3 font-mono text-xs tracking-widest uppercase text-tuz-ink-3">

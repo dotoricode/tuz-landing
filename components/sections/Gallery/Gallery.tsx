@@ -1,11 +1,11 @@
 import { getTranslations } from "next-intl/server";
-import Image from "next/image";
 import type { Locale } from "@/lib/i18n/routing";
 import { getGallery } from "@/lib/queries";
 import { SectionAnchor } from "@/components/chrome/SectionAnchor";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { TextReveal } from "@/components/motion/TextReveal";
 import { GalleryCarousel } from "./GalleryCarousel";
-import type { Media } from "@/payload-types";
+import { GalleryGrid } from "./GalleryGrid";
 
 export async function Gallery({ locale }: { locale: Locale }) {
   const [items, t] = await Promise.all([
@@ -24,34 +24,13 @@ export async function Gallery({ locale }: { locale: Locale }) {
             id="gallery-heading"
             className="mt-4 font-display text-display-lg text-tuz-ink"
           >
-            {t("title")}
+            <TextReveal text={t("title")} />
           </h2>
         </FadeUp>
 
-        {/* Desktop: CSS columns masonry */}
+        {/* Desktop: CSS columns masonry with lightbox */}
         <div className="hidden md:block">
-          <div className="columns-2 lg:columns-3 gap-4 [column-fill:_balance]">
-            {items.map((g) => {
-              const photo =
-                typeof g.image === "object" ? (g.image as Media) : null;
-              if (!photo?.url) return null;
-              return (
-                <div
-                  key={g.id}
-                  className="relative mb-4 break-inside-avoid overflow-hidden rounded-lg bg-tuz-ivory"
-                >
-                  <Image
-                    src={photo.url}
-                    alt={g.altText ?? ""}
-                    width={photo.width ?? 800}
-                    height={photo.height ?? 1000}
-                    sizes="(min-width: 1024px) 33vw, 50vw"
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              );
-            })}
-          </div>
+          <GalleryGrid items={items} />
         </div>
 
         {/* Mobile: Embla */}

@@ -3,6 +3,7 @@ import type { Locale } from "@/lib/i18n/routing";
 import { getNotices, getPinnedNotice } from "@/lib/queries";
 import { SectionAnchor } from "@/components/chrome/SectionAnchor";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { TextReveal } from "@/components/motion/TextReveal";
 import { Badge } from "@/components/ui/badge";
 import { NoticeMarquee } from "./NoticeMarquee";
 
@@ -39,7 +40,7 @@ export async function Notice({ locale }: { locale: Locale }) {
                 id="notice-heading"
                 className="mt-4 font-display text-display-lg text-tuz-ink"
               >
-                {t("title")}
+                <TextReveal text={t("title")} />
               </h2>
             </div>
           </FadeUp>

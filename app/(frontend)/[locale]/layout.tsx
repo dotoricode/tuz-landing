@@ -3,17 +3,33 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
-import { routing } from "@/lib/i18n/routing";
+import { routing, locales } from "@/lib/i18n/routing";
 import { fontClassNames } from "@/lib/fonts";
 import { SiteHeader } from "@/components/chrome/SiteHeader";
 import { Footer } from "@/components/sections/Footer/Footer";
 import type { Locale } from "@/lib/i18n/routing";
 import "../styles/globals.css";
 
-export const metadata: Metadata = {
-  title: "Tuz",
-  description: "Have a Tuz day!",
-};
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tuz.kr";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    title: { default: "Tuz", template: "%s · Tuz" },
+    description: "Have a Tuz day!",
+    metadataBase: new URL(BASE_URL),
+    alternates: {
+      canonical: locale === "ko" ? "/" : `/${locale}`,
+      languages: Object.fromEntries(
+        locales.map((l) => [l, l === "ko" ? "/" : `/${l}`]),
+      ),
+    },
+  };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

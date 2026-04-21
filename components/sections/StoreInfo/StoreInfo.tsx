@@ -3,6 +3,7 @@ import type { Locale } from "@/lib/i18n/routing";
 import { getStoreHours, getAbout } from "@/lib/queries";
 import { SectionAnchor } from "@/components/chrome/SectionAnchor";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { TextReveal } from "@/components/motion/TextReveal";
 import { HoursTable } from "./HoursTable";
 import { AboutStory } from "./AboutStory";
 
@@ -23,7 +24,7 @@ export async function StoreInfo({ locale }: { locale: Locale }) {
               id="store-heading"
               className="mt-4 font-display text-display-md text-tuz-ink"
             >
-              {t("title")}
+              <TextReveal text={t("title")} />
             </h2>
             <div className="mt-8">
               <HoursTable

@@ -4,6 +4,7 @@ import { getTodayPicks } from "@/lib/queries";
 import { SectionAnchor } from "@/components/chrome/SectionAnchor";
 import { BaristaPickCard } from "./BaristaPickCard";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { TextReveal } from "@/components/motion/TextReveal";
 
 export async function TodaysPick({ locale }: { locale: Locale }) {
   const [picks, t] = await Promise.all([
@@ -27,7 +28,7 @@ export async function TodaysPick({ locale }: { locale: Locale }) {
             id="pick-heading"
             className="mt-4 font-display text-display-lg text-tuz-ink"
           >
-            {t("title")}
+            <TextReveal text={t("title")} />
           </h2>
         </FadeUp>
 
