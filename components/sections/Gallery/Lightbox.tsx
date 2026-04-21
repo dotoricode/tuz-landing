@@ -82,7 +82,7 @@ export function Lightbox({ items, index, onClose, onNav }: LightboxProps) {
             <div className="relative max-w-5xl w-full">
               <Image
                 src={photo.url}
-                alt={item?.altText ?? ""}
+                alt={item?.altText || (index !== null ? `Gallery image ${index + 1}` : "Gallery image")}
                 width={photo.width ?? 1200}
                 height={photo.height ?? 900}
                 className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
@@ -125,7 +125,11 @@ export function Lightbox({ items, index, onClose, onNav }: LightboxProps) {
           >
             <ChevronRight className="size-5" />
           </button>
-          <p className="fixed bottom-4 left-1/2 -translate-x-1/2 font-mono text-xs text-tuz-paper/60">
+          <p
+            aria-live="polite"
+            aria-atomic="true"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 font-mono text-xs text-tuz-paper/60"
+          >
             {index !== null ? index + 1 : "—"} / {items.length}
           </p>
         </>
