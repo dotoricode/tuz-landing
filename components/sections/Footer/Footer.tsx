@@ -30,7 +30,7 @@ export async function Footer({ locale }: { locale: Locale }) {
       <div className="container mx-auto max-w-7xl px-5 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr_1fr] gap-10 md:gap-12">
           <div>
-            <p className="font-display text-5xl md:text-6xl leading-none text-tuz-ink">
+            <p className="font-body text-5xl md:text-6xl leading-none text-tuz-ink">
               Tuz
             </p>
             <p className="mt-3 font-mono text-xs uppercase tracking-widest text-tuz-ink-3">

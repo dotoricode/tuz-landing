@@ -89,7 +89,7 @@ export function Lightbox({ items, index, onClose, onNav }: LightboxProps) {
                 priority
               />
               {item?.caption && (
-                <p className="mt-3 text-center font-editorial text-tuz-ivory/80 text-sm">
+                <p className="mt-3 text-center font-body text-tuz-ivory/80 text-sm">
                   {typeof item.caption === "string" ? item.caption : ""}
                 </p>
               )}

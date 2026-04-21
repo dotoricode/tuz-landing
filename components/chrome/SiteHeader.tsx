@@ -105,7 +105,7 @@ export function SiteHeader() {
                 key={id}
                 href={`/#${id}`}
                 onClick={close}
-                className="font-display text-4xl text-tuz-ink py-3 border-b border-tuz-ink/5 hover:text-tuz-red-deep"
+                className="font-body text-4xl text-tuz-ink py-3 border-b border-tuz-ink/5 hover:text-tuz-red-deep"
               >
                 {t(id)}
               </a>

@@ -32,12 +32,12 @@ export function AboutStory({ about }: AboutStoryProps) {
 
       <div className="flex flex-col gap-4">
         {plainText && (
-          <p className="font-editorial italic text-xl md:text-2xl leading-snug text-tuz-ink">
+          <p className="font-body italic text-xl md:text-2xl leading-snug text-tuz-ink">
             {plainText}
           </p>
         )}
         {about.signatureName && (
-          <p className="mt-4 font-editorial text-tuz-ink-3">
+          <p className="mt-4 font-body text-tuz-ink-3">
             — {about.signatureName}
           </p>
         )}

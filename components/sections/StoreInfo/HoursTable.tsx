@@ -62,7 +62,7 @@ function Row({ label, value }: { label: string; value: string }) {
       >
         {label}
       </th>
-      <td className="py-4 font-display text-xl md:text-2xl text-tuz-ink">
+      <td className="py-4 font-body text-xl md:text-2xl text-tuz-ink">
         {value}
       </td>
     </tr>

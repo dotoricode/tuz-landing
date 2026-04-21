@@ -54,7 +54,7 @@ export function WifiCard({ ssid, password, className }: WifiCardProps) {
             <Wifi className="size-4" />
             <span className="eyebrow">{t("wifiTitle")}</span>
           </div>
-          <p className="mt-3 font-display text-3xl md:text-4xl leading-none">
+          <p className="mt-3 font-body text-3xl md:text-4xl leading-none">
             {ssid ?? "—"}
           </p>
           {password && (

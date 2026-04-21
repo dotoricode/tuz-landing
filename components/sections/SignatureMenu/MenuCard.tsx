@@ -46,7 +46,7 @@ export function MenuCard({ item, size = "md", className }: MenuCardProps) {
             className="object-cover transition-transform duration-[var(--duration-slow)] group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="absolute inset-0 grid place-items-center text-tuz-ink-3 font-editorial text-lg">
+          <div className="absolute inset-0 grid place-items-center text-tuz-ink-3 font-body text-lg">
             {item.name?.slice(0, 8) ?? "menu"}
           </div>
         )}
@@ -62,14 +62,14 @@ export function MenuCard({ item, size = "md", className }: MenuCardProps) {
       <div className="p-4 md:p-5 flex flex-col gap-1">
         <h3
           className={cn(
-            "font-display text-tuz-ink",
+            "font-body text-tuz-ink",
             size === "lg" ? "text-3xl" : "text-2xl",
           )}
         >
           {item.name}
         </h3>
         {item.description && (
-          <p className="font-editorial text-tuz-ink-3 text-sm line-clamp-2">
+          <p className="font-body text-tuz-ink-3 text-sm line-clamp-2">
             {item.description}
           </p>
         )}

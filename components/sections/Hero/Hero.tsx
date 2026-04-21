@@ -41,7 +41,7 @@ export async function Hero({ locale }: HeroProps) {
         </h1>
 
         <FadeUp delay={0.28} className="mt-6 max-w-2xl">
-          <p className="font-editorial text-2xl md:text-4xl text-tuz-ink-2 leading-tight">
+          <p className="font-display text-2xl md:text-4xl text-tuz-ink-2 leading-tight">
             {settings.tagline ?? brandT("tagline")}
           </p>
         </FadeUp>

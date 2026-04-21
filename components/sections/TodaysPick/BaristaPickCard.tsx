@@ -41,7 +41,7 @@ export function BaristaPickCard({
             className="object-cover transition-transform duration-[var(--duration-slow)] group-hover:scale-[1.02]"
           />
         ) : (
-          <div className="absolute inset-0 grid place-items-center text-tuz-ink-3 font-editorial text-2xl">
+          <div className="absolute inset-0 grid place-items-center text-tuz-ink-3 font-body text-2xl">
             {pick.name}
           </div>
         )}
@@ -55,11 +55,11 @@ export function BaristaPickCard({
             {dateLabel}
           </span>
         )}
-        <h3 className="font-display text-3xl md:text-4xl text-tuz-ink leading-tight">
+        <h3 className="font-body text-3xl md:text-4xl text-tuz-ink leading-tight">
           {pick.name}
         </h3>
         {pick.note && (
-          <p className="font-editorial italic text-lg md:text-xl text-tuz-ink-2 leading-snug mt-1">
+          <p className="font-body italic text-lg md:text-xl text-tuz-ink-2 leading-snug mt-1">
             &ldquo;{pick.note}&rdquo;
           </p>
         )}

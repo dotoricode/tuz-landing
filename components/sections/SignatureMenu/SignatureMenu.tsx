@@ -20,11 +20,11 @@ export async function SignatureMenu({ locale }: { locale: Locale }) {
           <p className="eyebrow text-tuz-red">{t("eyebrow")}</p>
           <h2
             id="menu-heading"
-            className="mt-4 font-display text-display-lg text-tuz-ink"
+            className="mt-4 font-body text-display-lg text-tuz-ink"
           >
             <TextReveal text={t("title")} />
           </h2>
-          <p className="mt-4 font-editorial text-lg md:text-xl text-tuz-ink-2">
+          <p className="mt-4 font-body text-lg md:text-xl text-tuz-ink-2">
             {t("description")}
           </p>
         </FadeUp>

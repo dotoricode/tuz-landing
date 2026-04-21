@@ -26,7 +26,7 @@ export async function TodaysPick({ locale }: { locale: Locale }) {
           <p className="eyebrow text-tuz-red">{t("eyebrow")}</p>
           <h2
             id="pick-heading"
-            className="mt-4 font-display text-display-lg text-tuz-ink"
+            className="mt-4 font-body text-display-lg text-tuz-ink"
           >
             <TextReveal text={t("title")} />
           </h2>
@@ -52,7 +52,7 @@ export async function TodaysPick({ locale }: { locale: Locale }) {
               />
               <span
                 aria-hidden
-                className="relative top-1/2 -translate-y-1/2 block font-editorial italic text-5xl text-tuz-red px-3 bg-tuz-paper"
+                className="relative top-1/2 -translate-y-1/2 block font-body italic text-5xl text-tuz-red px-3 bg-tuz-paper"
               >
                 &amp;
               </span>

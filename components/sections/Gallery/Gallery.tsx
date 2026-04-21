@@ -22,7 +22,7 @@ export async function Gallery({ locale }: { locale: Locale }) {
           <p className="eyebrow text-tuz-red">{t("eyebrow")}</p>
           <h2
             id="gallery-heading"
-            className="mt-4 font-display text-display-lg text-tuz-ink"
+            className="mt-4 font-body text-display-lg text-tuz-ink"
           >
             <TextReveal text={t("title")} />
           </h2>

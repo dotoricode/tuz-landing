@@ -35,7 +35,7 @@ export async function VisitUs({ locale }: { locale: Locale }) {
           <p className="eyebrow text-tuz-red">{t("eyebrow")}</p>
           <h2
             id="visit-heading"
-            className="mt-4 font-display text-display-lg text-tuz-ink"
+            className="mt-4 font-body text-display-lg text-tuz-ink"
           >
             <TextReveal text={t("title")} />
           </h2>
@@ -52,7 +52,7 @@ export async function VisitUs({ locale }: { locale: Locale }) {
             <div className="absolute inset-0 grid place-items-center">
               <div className="text-center px-6">
                 <MapPin className="size-6 text-tuz-red mx-auto" aria-hidden />
-                <p className="mt-3 font-editorial italic text-tuz-ink-2">
+                <p className="mt-3 font-body italic text-tuz-ink-2">
                   {location.addressShort ?? address}
                 </p>
                 <p className="mt-1 font-mono text-xs text-tuz-ink-3">
@@ -76,7 +76,7 @@ export async function VisitUs({ locale }: { locale: Locale }) {
             <WifiCard ssid={settings.wifiSsid} password={settings.wifiPassword} />
             <div className="rounded-lg border border-tuz-ink/10 p-6 md:p-7 bg-tuz-paper">
               <p className="eyebrow text-tuz-ink-3 mb-3">Address</p>
-              <p className="font-display text-2xl md:text-3xl text-tuz-ink leading-snug">
+              <p className="font-body text-2xl md:text-3xl text-tuz-ink leading-snug">
                 {address}
               </p>
               {location.phone && (

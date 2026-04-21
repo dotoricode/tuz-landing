@@ -22,7 +22,7 @@ export async function StoreInfo({ locale }: { locale: Locale }) {
             <p className="eyebrow text-tuz-red">{t("eyebrow")}</p>
             <h2
               id="store-heading"
-              className="mt-4 font-display text-display-md text-tuz-ink"
+              className="mt-4 font-body text-display-md text-tuz-ink"
             >
               <TextReveal text={t("title")} />
             </h2>
