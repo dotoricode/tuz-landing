@@ -54,3 +54,6 @@ next-env.d.ts
 # Design audit scratchpads
 .design-audit/
 .design-preview/
+tests/.results/
+tests/.report/
+tests/.snapshots/
