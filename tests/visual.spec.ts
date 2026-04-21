@@ -40,7 +40,9 @@ test.describe("critical paths", () => {
     await expect(page.locator("h1")).toContainText("Tuz");
   });
 
-  test("keyboard nav — header focus ring visible", async ({ page }) => {
+  test("keyboard nav — header focus ring visible", async ({ page, browserName }) => {
+    // Safari on iOS does not support Tab-key focus traversal; skip webkit.
+    test.skip(browserName === "webkit", "WebKit does not support Tab navigation in the same way");
     await page.goto("/");
     await page.keyboard.press("Tab");
     const focusedEl = await page.evaluate(() => document.activeElement?.tagName);
