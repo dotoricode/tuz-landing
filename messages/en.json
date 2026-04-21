@@ -1,0 +1,80 @@
+{
+  "brand": {
+    "name": "Tuz",
+    "tagline": "Have a Tuz day!",
+    "since": "since 2026 · Ulsan"
+  },
+  "nav": {
+    "menu": "Menu",
+    "pick": "Today's pick",
+    "notice": "News",
+    "gallery": "Gallery",
+    "visit": "Visit us",
+    "store": "Store info",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "locale": {
+    "ko": "한국어",
+    "en": "English",
+    "switch": "Switch language"
+  },
+  "sections": {
+    "hero": {
+      "eyebrow": "Yeompo-ro, Jung-gu, Ulsan",
+      "statusOpen": "Open now",
+      "statusClosed": "Closed"
+    },
+    "menu": {
+      "eyebrow": "Signature",
+      "title": "Signature menu",
+      "description": "Handpicked by our owner baristas — drinks and bakery we stand behind."
+    },
+    "pick": {
+      "eyebrow": "Today's choice",
+      "title": "Today's pick",
+      "ownerBig": "Senior owner's pick",
+      "ownerSmall": "Junior owner's pick"
+    },
+    "notice": {
+      "eyebrow": "News",
+      "title": "News",
+      "readMore": "Read more",
+      "close": "Close"
+    },
+    "gallery": {
+      "eyebrow": "Gallery",
+      "title": "The room & the moments",
+      "openLightbox": "Expand",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "visit": {
+      "eyebrow": "Visit us",
+      "title": "Find us",
+      "copyAddress": "Copy address",
+      "copied": "Copied",
+      "wifiTitle": "Free Wi-Fi",
+      "copyPassword": "Copy password",
+      "directions": "Get directions"
+    },
+    "store": {
+      "eyebrow": "Hours",
+      "title": "Opening hours",
+      "weekday": "Weekdays",
+      "weekend": "Weekends",
+      "regularClosure": "Regular closure"
+    },
+    "footer": {
+      "winnersTitle": "This month's favorites",
+      "followUs": "Follow",
+      "address": "Address",
+      "hours": "Hours",
+      "rights": "All rights reserved."
+    }
+  },
+  "meta": {
+    "title": "Tuz — a cafe in Jung-gu, Ulsan",
+    "description": "Warm coffee and a quiet room. 2F, 22 Yeompo-ro, Jung-gu, Ulsan."
+  }
+}

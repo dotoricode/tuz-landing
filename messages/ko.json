@@ -1,0 +1,80 @@
+{
+  "brand": {
+    "name": "Tuz",
+    "tagline": "Have a Tuz day!",
+    "since": "since 2026 · Ulsan"
+  },
+  "nav": {
+    "menu": "메뉴",
+    "pick": "오늘의 픽",
+    "notice": "공지",
+    "gallery": "갤러리",
+    "visit": "오시는 길",
+    "store": "매장 정보",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기"
+  },
+  "locale": {
+    "ko": "한국어",
+    "en": "English",
+    "switch": "언어 전환"
+  },
+  "sections": {
+    "hero": {
+      "eyebrow": "울산 중구 염포로",
+      "statusOpen": "지금 영업 중",
+      "statusClosed": "영업 종료"
+    },
+    "menu": {
+      "eyebrow": "Signature",
+      "title": "시그니처 메뉴",
+      "description": "오너 바리스타가 엄선한 대표 음료와 베이커리."
+    },
+    "pick": {
+      "eyebrow": "Today's choice",
+      "title": "오늘의 픽",
+      "ownerBig": "큰 사장 pick",
+      "ownerSmall": "작은 사장 pick"
+    },
+    "notice": {
+      "eyebrow": "News",
+      "title": "소식",
+      "readMore": "자세히 보기",
+      "close": "닫기"
+    },
+    "gallery": {
+      "eyebrow": "Gallery",
+      "title": "공간과 순간",
+      "openLightbox": "크게 보기",
+      "prev": "이전",
+      "next": "다음"
+    },
+    "visit": {
+      "eyebrow": "Visit us",
+      "title": "오시는 길",
+      "copyAddress": "주소 복사",
+      "copied": "복사되었습니다",
+      "wifiTitle": "무료 Wi-Fi",
+      "copyPassword": "비밀번호 복사",
+      "directions": "길찾기"
+    },
+    "store": {
+      "eyebrow": "Hours",
+      "title": "영업 시간",
+      "weekday": "평일",
+      "weekend": "주말",
+      "regularClosure": "정기 휴무"
+    },
+    "footer": {
+      "winnersTitle": "이달의 주인공",
+      "followUs": "팔로우",
+      "address": "주소",
+      "hours": "영업시간",
+      "rights": "All rights reserved."
+    }
+  },
+  "meta": {
+    "title": "Tuz — 울산 중구의 카페",
+    "description": "따뜻한 커피와 조용한 공간. 울산 중구 염포로 22, 2층."
+  }
+}

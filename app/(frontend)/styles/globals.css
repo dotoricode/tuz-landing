@@ -1,0 +1,152 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Pretendard — variable font, dynamic unicode-range subsets.
+ * From the `pretendard` npm package (orioncactus/pretendard, OFL 1.1). */
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+
+@theme {
+  /* Brand palette — deep red & white, preserved from legacy site */
+  --color-tuz-red: #a52a1a;
+  --color-tuz-red-deep: #7a1d10;
+  --color-tuz-red-soft: rgb(165 42 26 / 0.08);
+  --color-tuz-ink: #1a1612;
+  --color-tuz-ink-2: #3d3631;
+  --color-tuz-ink-3: #6b625b;
+  --color-tuz-paper: #ffffff;
+  --color-tuz-ivory: #faf6ef;
+  --color-tuz-green: #1f7a32;
+
+  /* shadcn-compatible semantic mappings */
+  --color-background: var(--color-tuz-paper);
+  --color-foreground: var(--color-tuz-ink);
+  --color-primary: var(--color-tuz-red);
+  --color-primary-foreground: var(--color-tuz-paper);
+  --color-muted: var(--color-tuz-ivory);
+  --color-muted-foreground: var(--color-tuz-ink-3);
+  --color-border: color-mix(in srgb, var(--color-tuz-ink) 8%, transparent);
+  --color-input: color-mix(in srgb, var(--color-tuz-ink) 8%, transparent);
+  --color-ring: var(--color-tuz-red);
+  --color-accent: var(--color-tuz-ivory);
+  --color-accent-foreground: var(--color-tuz-ink);
+  --color-destructive: var(--color-tuz-red-deep);
+  --color-destructive-foreground: var(--color-tuz-paper);
+  --color-card: var(--color-tuz-paper);
+  --color-card-foreground: var(--color-tuz-ink);
+  --color-popover: var(--color-tuz-paper);
+  --color-popover-foreground: var(--color-tuz-ink);
+
+  /* Typography families.
+   * - Puradak var is injected by next/font/local (lib/fonts.ts)
+   * - Pretendard comes from the CSS @import above (npm `pretendard`)
+   * - Fraunces var is injected by next/font/google
+   */
+  --font-display: var(--font-puradak, "Puradak Gentle Gothic"), "Pretendard Variable", sans-serif;
+  --font-body: "Pretendard Variable", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-editorial: var(--font-fraunces, "Fraunces"), Georgia, serif;
+  --font-sans: var(--font-body);
+
+  /* Fluid display scale */
+  --text-display-xl: clamp(3.25rem, 1.5rem + 8vw, 7rem);
+  --text-display-xl--line-height: 0.95;
+  --text-display-xl--letter-spacing: -0.02em;
+  --text-display-lg: clamp(2.25rem, 1.2rem + 5vw, 4.5rem);
+  --text-display-lg--line-height: 1.02;
+  --text-display-lg--letter-spacing: -0.015em;
+  --text-display-md: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
+  --text-display-md--line-height: 1.1;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1;
+  --text-eyebrow--letter-spacing: 0.18em;
+
+  /* Section rhythm */
+  --spacing-section: clamp(4rem, 3rem + 5vw, 9rem);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius: var(--radius-md);
+
+  /* Shadows */
+  --shadow-tuz-card: 0 1px 0 rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(26 22 18 / 0.18);
+  --shadow-tuz-hover: 0 1px 0 rgb(0 0 0 / 0.04), 0 24px 48px -20px rgb(26 22 18 / 0.28);
+
+  /* Motion */
+  --ease-tuz-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-tuz-gentle: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-tuz-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 180ms;
+  --duration-base: 340ms;
+  --duration-slow: 600ms;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-feature-settings: "ss01", "cv11";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    font-feature-settings: "ss01", "cv11";
+    line-height: 1.55;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-tuz-red);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--color-tuz-red);
+    color: var(--color-tuz-paper);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility section {
+  padding-block: var(--spacing-section);
+}
+
+@utility section-dense {
+  padding-block: calc(var(--spacing-section) * 0.7);
+}
+
+@utility eyebrow {
+  font-size: var(--text-eyebrow);
+  line-height: var(--text-eyebrow--line-height);
+  letter-spacing: var(--text-eyebrow--letter-spacing);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@utility font-editorial {
+  font-family: var(--font-editorial);
+  font-style: italic;
+}
