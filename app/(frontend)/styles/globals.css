@@ -1,10 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Pretendard — variable font, dynamic unicode-range subsets.
- * From the `pretendard` npm package (orioncactus/pretendard, OFL 1.1). */
-@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
-
 @theme {
   /* Brand palette — deep red & white, preserved from legacy site */
   --color-tuz-red: #a52a1a;
@@ -36,13 +32,9 @@
   --color-popover: var(--color-tuz-paper);
   --color-popover-foreground: var(--color-tuz-ink);
 
-  /* Typography families.
-   * - Puradak var is injected by next/font/local (lib/fonts.ts)
-   * - Pretendard comes from the CSS @import above (npm `pretendard`)
-   * - Fraunces var is injected by next/font/google
-   */
+  /* Typography families — all injected by next/font (lib/fonts.ts) */
   --font-display: var(--font-puradak, "Puradak Gentle Gothic"), "Pretendard Variable", sans-serif;
-  --font-body: "Pretendard Variable", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-body: var(--font-pretendard, "Pretendard Variable"), -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   --font-editorial: var(--font-fraunces, "Fraunces"), Georgia, serif;
   --font-sans: var(--font-body);
 
