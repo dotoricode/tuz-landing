@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+<meta name="theme-color" content="#a52a1a"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>TUZ · 카페 트렌드 리포트 (관리자 전용)</title>
+<meta name="description" content="TUZ 관리자 전용 카페 트렌드 리포트"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a52a1a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Georgia,serif' font-size='28' font-weight='600' fill='%23f4ecda'%3ETUZ%3C/text%3E%3C/svg%3E"/>
+<link rel="stylesheet" href="../styles.css?v=31"/>
+<!-- DOMPurify: HTML sanitizer. SRI hash 추가는 운영 배포 전 검증 후 적용. -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js" crossorigin="anonymous"></script>
+<style>
+  body { background: var(--ivory-2); }
+
+  .trend-shell {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    background: var(--paper);
+    box-shadow: var(--shadow-md);
+  }
+  @media (min-width: 640px) {
+    body { padding: 28px 0; }
+    .trend-shell { border-radius: var(--r-lg); min-height: auto; }
+  }
+
+  .trend-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+    z-index: 5;
+  }
+  [data-theme='dark'] .trend-topbar { background: rgba(37, 32, 26, 0.94); }
+
+  .trend-back, .trend-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-2);
+    background: none;
+    border: 0;
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: background 150ms;
+  }
+  .trend-back:hover, .trend-logout:hover {
+    background: var(--tuz-red-soft);
+    color: var(--tuz-red);
+  }
+  .trend-back svg, .trend-logout svg { width: 14px; height: 14px; }
+
+  .trend-mark {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--tuz-red);
+  }
+
+  .trend-hero {
+    padding: 36px 24px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .trend-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--tuz-red);
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+  .trend-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 6vw, 40px);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+    color: var(--ink);
+  }
+  .trend-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .trend-meta time { font-variant-numeric: tabular-nums; }
+  .trend-dot { color: var(--ink-4); }
+
+  /* Auth gate */
+  .trend-gate {
+    padding: 56px 24px 64px;
+    text-align: left;
+  }
+  .trend-gate__lock {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tuz-red-soft);
+    color: var(--tuz-red);
+    border-radius: 12px;
+    margin-bottom: 18px;
+  }
+  .trend-gate__hint {
+    color: var(--ink-3);
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 0 24px;
+  }
+  .trend-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 360px;
+  }
+  .trend-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .trend-form input {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    padding: 11px 13px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-sm);
+    background: var(--paper);
+    color: var(--ink);
+    transition: border 150ms, box-shadow 150ms;
+  }
+  .trend-form input:focus {
+    outline: none;
+    border-color: var(--tuz-red);
+    box-shadow: 0 0 0 3px var(--tuz-red-soft);
+  }
+  .trend-form button {
+    margin-top: 6px;
+    padding: 12px 18px;
+    background: var(--tuz-red);
+    color: #fff;
+    border: 0;
+    border-radius: var(--r-sm);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 150ms;
+  }
+  .trend-form button:hover { background: var(--tuz-red-deep); }
+  .trend-form button:disabled { opacity: 0.6; cursor: wait; }
+  .trend-error {
+    color: var(--tuz-red-deep);
+    font-size: 13px;
+    margin: 0;
+  }
+
+  /* Article body */
+  .trend-content {
+    padding: 28px 24px 64px;
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .trend-content > * + * { margin-top: 18px; }
+  .trend-content h1, .trend-content h2, .trend-content h3, .trend-content h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .trend-content h1 { font-size: 28px; margin-top: 36px; }
+  .trend-content h2 {
+    font-size: 22px;
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 2px solid var(--tuz-red);
+    display: inline-block;
+  }
+  .trend-content h3 { font-size: 18px; margin-top: 28px; color: var(--tuz-red-deep); }
+  .trend-content h4 { font-size: 15px; margin-top: 22px; }
+  .trend-content p { margin: 0; }
+  .trend-content ul, .trend-content ol { padding-left: 22px; margin: 0; }
+  .trend-content li + li { margin-top: 6px; }
+  .trend-content li::marker { color: var(--tuz-red); }
+  .trend-content a {
+    color: var(--tuz-red);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  .trend-content a:hover { color: var(--tuz-red-deep); }
+  .trend-content strong { color: var(--ink); font-weight: 600; }
+  .trend-content em { font-style: italic; color: var(--ink-2); }
+  .trend-content blockquote {
+    margin: 0;
+    padding: 14px 18px;
+    border-left: 3px solid var(--tuz-red);
+    background: var(--tuz-red-soft);
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    color: var(--ink-2);
+    font-style: italic;
+  }
+  .trend-content code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    background: var(--ivory-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--tuz-red-deep);
+  }
+  .trend-content pre {
+    background: var(--ivory-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .trend-content pre code { background: transparent; padding: 0; color: var(--ink); }
+  .trend-content table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .trend-content th, .trend-content td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+  }
+  .trend-content th {
+    background: var(--tuz-red-soft);
+    color: var(--tuz-red-deep);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .trend-content hr {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 32px 0;
+  }
+  .trend-content img { max-width: 100%; height: auto; border-radius: var(--r-sm); }
+
+  /* Status states */
+  .trend-status {
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--ink-3);
+  }
+  .trend-status__title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--ink-2);
+    margin: 0 0 6px;
+  }
+  .trend-status__hint { font-size: 13px; color: var(--ink-4); margin: 0; }
+  .trend-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--line);
+    border-top-color: var(--tuz-red);
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    animation: trend-spin 700ms linear infinite;
+  }
+  @keyframes trend-spin { to { transform: rotate(360deg); } }
+
+  .trend-footer {
+    padding: 22px 24px 32px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-4);
+    font-size: 12px;
+    text-align: center;
+  }
+  .trend-footer a { color: var(--tuz-red); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="trend-shell">
+  <header class="trend-topbar">
+    <a class="trend-back" href="/" aria-label="홈으로">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>
+      홈
+    </a>
+    <span class="trend-mark">TUZ</span>
+    <button class="trend-logout" type="button" id="logoutBtn" hidden aria-label="로그아웃">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+      로그아웃
+    </button>
+  </header>
+
+  <!-- Authenticated: hero + report -->
+  <section class="trend-hero" id="hero" hidden>
+    <p class="trend-eyebrow">Cafe Trend Report · Admin</p>
+    <h1 class="trend-title">카페 트렌드 리포트</h1>
+    <div class="trend-meta">
+      <span>TUZ · coffee &amp; dessert</span>
+      <span class="trend-dot" aria-hidden="true">·</span>
+      <span id="updatedAt">업데이트 확인 중…</span>
+    </div>
+  </section>
+
+  <main class="trend-content" id="report" aria-live="polite" hidden></main>
+
+  <!-- Unauthenticated: login gate -->
+  <section class="trend-gate" id="gate" hidden>
+    <div class="trend-gate__lock" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 118 0v4"/></svg>
+    </div>
+    <p class="trend-eyebrow">Admin only</p>
+    <h1 class="trend-title">관리자 전용 리포트</h1>
+    <p class="trend-gate__hint">이 페이지는 TUZ 관리자만 열람할 수 있습니다.<br/>관리자 계정으로 로그인해 주세요.</p>
+    <form class="trend-form" id="loginForm" autocomplete="on">
+      <label>이메일
+        <input type="email" name="email" required autocomplete="username" inputmode="email"/>
+      </label>
+      <label>비밀번호
+        <input type="password" name="password" required autocomplete="current-password"/>
+      </label>
+      <button type="submit" id="loginBtn">로그인</button>
+      <p class="trend-error" id="loginError" hidden></p>
+    </form>
+  </section>
+
+  <footer class="trend-footer">
+    리포트는 TUZ 가 자동으로 갱신합니다 · <a href="/">tuz.kr</a>
+  </footer>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+const SUPABASE_URL = 'https://lwgissxdvemamuybxmxz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z2lzc3hkdmVtYW11eWJ4bXh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MjMxNjgsImV4cCI6MjA5MjA5OTE2OH0.bslx3DGC2KPKleWo9KejERD10e92OeBEUoQHg2_jPOo';
+const BUCKET = 'reports';
+const REPORT_FILE = 'trend-latest.html';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true },
+});
+
+const els = {
+  gate: document.getElementById('gate'),
+  hero: document.getElementById('hero'),
+  report: document.getElementById('report'),
+  logoutBtn: document.getElementById('logoutBtn'),
+  loginForm: document.getElementById('loginForm'),
+  loginBtn: document.getElementById('loginBtn'),
+  loginError: document.getElementById('loginError'),
+  updatedAt: document.getElementById('updatedAt'),
+};
+
+let isLoadingReport = false;
+
+function showAuthed() {
+  els.gate.hidden = true;
+  els.hero.hidden = false;
+  els.report.hidden = false;
+  els.logoutBtn.hidden = false;
+}
+
+function showGate() {
+  els.gate.hidden = false;
+  els.hero.hidden = true;
+  els.report.hidden = true;
+  els.logoutBtn.hidden = true;
+}
+
+function statusHTML(title, hint, withSpinner) {
+  return `
+    <div class="trend-status">
+      ${withSpinner ? '<div class="trend-spinner" aria-hidden="true"></div>' : ''}
+      <p class="trend-status__title">${title}</p>
+      ${hint ? `<p class="trend-status__hint">${hint}</p>` : ''}
+    </div>
+  `;
+}
+
+function formatUpdatedAt(iso) {
+  if (!iso) return '최근 업데이트';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '최근 업데이트';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `업데이트 ${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+async function loadReport() {
+  if (isLoadingReport) return;
+  isLoadingReport = true;
+  els.report.innerHTML = statusHTML('리포트 불러오는 중…', '잠시만 기다려 주세요.', true);
+  els.updatedAt.textContent = '업데이트 확인 중…';
+
+  try {
+    const { data: blob, error: dlErr } = await supabase
+      .storage
+      .from(BUCKET)
+      .download(REPORT_FILE);
+
+    if (dlErr) {
+      const msg = (dlErr.message || '').toLowerCase();
+      if (msg.includes('not found') || dlErr.statusCode === '404' || dlErr.statusCode === 404) {
+        els.report.innerHTML = statusHTML(
+          '아직 리포트가 준비되지 않았어요.',
+          '곧 새 리포트가 업로드됩니다.',
+          false,
+        );
+      } else {
+        els.report.innerHTML = statusHTML('리포트를 불러오지 못했어요.', dlErr.message || '', false);
+      }
+      els.updatedAt.textContent = '업데이트 정보 없음';
+      return;
+    }
+
+    const html = await blob.text();
+    const clean = DOMPurify.sanitize(html, {
+      USE_PROFILES: { html: true },
+      FORBID_TAGS: ['style', 'iframe', 'object', 'embed', 'form'],
+      FORBID_ATTR: ['onerror', 'onload', 'onclick'],
+    });
+    els.report.innerHTML = clean;
+
+    // Best-effort: read updated_at from listing
+    const { data: list } = await supabase.storage.from(BUCKET).list('', { limit: 100 });
+    const meta = list?.find((o) => o.name === REPORT_FILE);
+    els.updatedAt.textContent = formatUpdatedAt(meta?.updated_at || meta?.created_at);
+  } catch (err) {
+    console.error('[trend] load failed', err);
+    els.report.innerHTML = statusHTML('리포트를 불러오지 못했어요.', '네트워크 상태를 확인 후 새로고침해 주세요.', false);
+    els.updatedAt.textContent = '업데이트 정보 없음';
+  } finally {
+    isLoadingReport = false;
+  }
+}
+
+async function applyAuthState() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) {
+    showAuthed();
+    await loadReport();
+  } else {
+    showGate();
+  }
+}
+
+els.loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  els.loginError.hidden = true;
+  els.loginBtn.disabled = true;
+  els.loginBtn.textContent = '로그인 중…';
+
+  const f = new FormData(els.loginForm);
+  const { error } = await supabase.auth.signInWithPassword({
+    email: String(f.get('email') || '').trim(),
+    password: String(f.get('password') || ''),
+  });
+
+  els.loginBtn.disabled = false;
+  els.loginBtn.textContent = '로그인';
+
+  if (error) {
+    els.loginError.textContent = `로그인 실패: ${error.message}`;
+    els.loginError.hidden = false;
+    return;
+  }
+  // onAuthStateChange will trigger applyAuthState → loadReport
+});
+
+els.logoutBtn.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+});
+
+supabase.auth.onAuthStateChange(() => {
+  applyAuthState();
+});
+
+if (typeof DOMPurify === 'undefined') {
+  els.report.innerHTML = statusHTML('보안 모듈을 불러오지 못했습니다.', '네트워크 상태를 확인 후 새로고침해 주세요.', false);
+} else {
+  applyAuthState();
+}
+</script>
+</body>
+</html>

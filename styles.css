@@ -1246,3 +1246,7 @@ body {
   text-align: center;
   letter-spacing: -0.01em;
 }
+
+/* Admin-only UI: hidden until admin.js toggles body.is-admin on session */
+body:not(.is-admin) .admin-only { display: none !important; }
+a.tile { text-decoration: none; }
