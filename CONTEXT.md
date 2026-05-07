@@ -65,4 +65,4 @@ Owner별로 한 개씩, 동시에 두 개가 표시된다.
 
 - Pick은 Menu를 ID로 참조한다 (ADR-0001).
 - `note` (한줄 코멘트)는 Pick 고유 정보로, Menu에서 상속되지 않는다.
-- `photo`는 선택적 오버라이드. 비어 있으면 Menu의 `hero_photo`로 폴백한다.
+- `photo`는 선택적 오버라이드. 비어 있으면 Menu의 `photo`로 폴백한다 (`hero_photo`는 초기 스키마 잔재로 비어 있음).
