@@ -47,6 +47,25 @@ git push origin main
 
 > 훅 설정: `git push` 등 배포 명령 실행 시 자동으로 차단되며, 테스트 완료 확인 후 진행합니다.
 
+## 개발 팁 & 함정
+
+### 문법 검사
+`node --check file.js` — https:// import로 `--input-type=module` 실패하므로 이걸 사용.
+
+### menu 테이블 사진 컬럼
+`photo` — 어드민이 쓰는 컬럼. `hero_photo`는 초기 스키마 잔재로 비어 있음. FK join 시 `photo` 선택.
+
+### admin 모달 구조
+모달 컨테이너: `.tuz-sheet`. 행 카드: `.tuz-row-card`, `card._row`로 DOM→데이터 동기화.
+pick_big / pick_small은 `mode: 'single'` + `filter`로 동작 — 저장 시 filter가 payload에 자동 병합됨.
+
+### 커밋 제외 파일
+`.serena/`, `session-report-*.html`, `supabase/` — 커밋하지 말 것.
+
+### schema.sql 마이그레이션
+schema.sql에 추가 후 Supabase SQL Editor에 직접 붙여넣어야 적용됨. 자동 실행 없음.
+새 컬럼 추가 시 기존 NOT NULL 제약과 충돌 여부 반드시 확인.
+
 ## Agent skills
 
 ### Issue tracker
