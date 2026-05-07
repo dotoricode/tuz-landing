@@ -51,7 +51,7 @@ export function showView(name, { pushHistory = true } = {}) {
     localStorage.setItem(`tuz_seen_${target}`, Date.now());
   }
   const loader = LOADERS[target];
-  if (loader) loader();
+  if (loader) loader.fn();
 }
 
 function titleOf(view) {
@@ -866,37 +866,26 @@ export const RENDERERS = {
 };
 
 const LOADERS = {
-  news:     () => loadTable('news',     renderNews),
-  pick:     () => loadTable('pick', renderPicks, { select: '*, menu(name, name_en, price, photo)' }),
-  event:    () => loadTable('winners',  renderWinners),
-  greeting: () => loadTable('greeting', renderGreeting, { single: true }),
-  menu:     () => loadTable('menu',     renderMenu),
-  wifi:     () => loadTable('settings', renderSettings, { single: true }),
-  hours:    () => loadTable('settings', renderSettings, { single: true }),
-  location: () => initKakaoMap(),
+  news:     { table: 'news',     fn: () => loadTable('news',     renderNews) },
+  pick:     { table: 'pick',     fn: () => loadTable('pick', renderPicks, { select: '*, menu(name, name_en, price, photo)' }) },
+  event:    { table: 'winners',  fn: () => loadTable('winners',  renderWinners) },
+  greeting: { table: 'greeting', fn: () => loadTable('greeting', renderGreeting, { single: true }) },
+  menu:     { table: 'menu',     fn: () => loadTable('menu',     renderMenu) },
+  wifi:     { table: 'settings', fn: () => loadTable('settings', renderSettings, { single: true }) },
+  hours:    { table: 'settings', fn: () => loadTable('settings', renderSettings, { single: true }) },
+  location: { table: null,       fn: () => initKakaoMap() },
 };
 
 // settings는 항상 먼저 로드 — 모든 페이지에서 WiFi 정보가 필요할 수 있음
-LOADERS.wifi();
+LOADERS.wifi.fn();
 // news도 먼저 로드 — 홈의 "오늘의 공지"가 필요
-LOADERS.news();
+LOADERS.news.fn();
 
 // 관리자가 저장한 후 현재 보이는 화면의 데이터를 강제 새로고침
 export async function refreshTable(table) {
-  // invalidate cache and reload
   try { localStorage.removeItem(`tuz-cache-v5:${table}`); } catch (_) { /* ignore */ }
-  const loaderKeys = {
-    news: ['news'],
-    pick: ['pick'],
-    winners: ['event'],
-    greeting: ['greeting'],
-    menu: ['menu'],
-    settings: ['wifi'], // settings 재로드 → wifi/hours/menuHero 모두 갱신됨
-  };
-  const keys = loaderKeys[table] || [];
-  for (const k of keys) {
-    const loader = LOADERS[k];
-    if (loader) await loader();
+  for (const { table: t, fn } of Object.values(LOADERS)) {
+    if (t === table) await fn();
   }
 }
 
