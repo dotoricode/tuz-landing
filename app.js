@@ -584,14 +584,18 @@ function renderMenu(items) {
 
   if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
 
-  const order = [];
+  const CATEGORY_ORDER = ['SIGNATURE · 시그니처', 'COFFEE · 커피', 'NON-COFFEE · 논커피'];
   const groups = new Map();
   for (const r of items) {
     if (!r.name) continue;
     const cat = (r.category || '메뉴').trim();
-    if (!groups.has(cat)) { groups.set(cat, []); order.push(cat); }
+    if (!groups.has(cat)) groups.set(cat, []);
     groups.get(cat).push(r);
   }
+  const order = [
+    ...CATEGORY_ORDER.filter((c) => groups.has(c)),
+    ...[...groups.keys()].filter((c) => !CATEGORY_ORDER.includes(c)),
+  ];
   if (!order.length) { renderEmpty('menuCategories', 'menu'); return; }
 
   const container = document.getElementById('menuCategories');
@@ -934,4 +938,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=34').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=35').catch((e) => console.warn('[tuz] admin module not loaded:', e));

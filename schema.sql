@@ -195,3 +195,7 @@ DO $$ BEGIN
 END $$;
 -- is_signature 제거 (카테고리로 통일 — ADR-0003)
 ALTER TABLE menu DROP COLUMN IF EXISTS is_signature;
+
+-- ─── 2026-05 카테고리 재편: SIGNATURE / COFFEE / NON-COFFEE ─────────
+UPDATE menu SET category = 'NON-COFFEE · 논커피'
+  WHERE category IN ('BAKERY · 베이커리', 'DESSERT · 디저트');

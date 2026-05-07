@@ -83,7 +83,7 @@ const SCHEMAS = {
     groupBy: 'category', // 편집 모드에서 카테고리 탭으로 분리
     fields: [
       { col: 'category',     label: '카테고리', type: 'select', required: true,
-        options: ['COFFEE · 커피', 'BAKERY · 베이커리', 'DESSERT · 디저트'] },
+        options: ['SIGNATURE · 시그니처', 'COFFEE · 커피', 'NON-COFFEE · 논커피'] },
       { col: 'name',         label: '메뉴명 (한글)', type: 'text', required: true },
       { col: 'name_en',      label: '메뉴명 (영문)', type: 'text' },
       { col: 'price',        label: '가격', type: 'text', placeholder: '4,500' },
@@ -367,7 +367,21 @@ function buildField(f, row) {
     input.type = 'checkbox';
     input.id = `field-${f.col}`;
     input.checked = !!row[f.col];
-    input.addEventListener('change', () => { row[f.col] = input.checked; });
+    if (f.col === 'is_pinned') input.dataset.exclusivePin = '1';
+    input.addEventListener('change', () => {
+      row[f.col] = input.checked;
+      if (f.col === 'is_pinned' && input.checked) {
+        const sheet = input.closest('.tuz-sheet');
+        if (sheet) {
+          sheet.querySelectorAll('input[data-exclusive-pin]').forEach((other) => {
+            if (other === input) return;
+            other.checked = false;
+            const card = other.closest('.tuz-row-card');
+            if (card?._row) card._row.is_pinned = false;
+          });
+        }
+      }
+    });
     checkRow.appendChild(input);
     wrap.appendChild(checkRow);
     return wrap;
