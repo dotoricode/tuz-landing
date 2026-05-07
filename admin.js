@@ -16,14 +16,14 @@ const SCHEMAS = {
     views: ['news'],
     fields: [
       { col: 'tag',       label: '분류',         type: 'select',
-        options: ['', 'NOTICE', 'EVENT', 'NEW', 'HOURS', 'SEASON', 'SPECIAL'] },
+        options: ['', 'NOTICE', 'EVENT', 'NEW', 'SCHEDULE', 'SEASON', 'SPECIAL'] },
       { col: 'title',     label: '제목 (한글)',  type: 'text',   required: true },
       { col: 'title_en',  label: '제목 (영문)',  type: 'text',   placeholder: '비워두면 영문 표시 안 됨' },
       { col: 'body',      label: '본문',         type: 'textarea' },
       { col: 'photo',     label: '사진 (선택)',  type: 'photo',
         hint: '업로드 시 카드 상단에 16:9 배너로 표시됩니다.' },
-      { col: 'is_today',  label: '홈 화면 "오늘의 공지"로 표시', type: 'checkbox',
-        hint: '체크 시 홈 화면 상단에 이 공지가 노출됩니다. 여러 개 체크하면 가장 최근 것 하나만 표시됩니다.' },
+      { col: 'is_pinned', label: '홈 화면 상단에 고정', type: 'checkbox',
+        hint: '체크 시 홈 화면 마퀴에 이 공지가 노출됩니다. 수동으로 끄기 전까지 유지됩니다.' },
       { col: 'date',      autoDate: true },
     ],
   },
@@ -35,11 +35,9 @@ const SCHEMAS = {
     table: 'pick',
     filter: { barista: '큰 사장' },
     fields: [
-      { col: 'photo',   label: '사진',           type: 'photo' },
-      { col: 'name',    label: '메뉴명 (한글)',  type: 'text',     required: true },
-      { col: 'name_en', label: '메뉴명 (영문)',  type: 'text',     placeholder: '비워두면 영문 표시 안 됨' },
-      { col: 'price',   label: '가격',           type: 'text',     placeholder: '6,500', required: true },
-      { col: 'note',    label: '한줄 설명',      type: 'textarea' },
+      { col: 'menu_id', label: '메뉴 선택', type: 'menu-select', required: true },
+      { col: 'photo',   label: '사진 (선택 — 비우면 메뉴 사진 사용)', type: 'photo' },
+      { col: 'note',    label: '한줄 설명', type: 'textarea' },
     ],
   },
   pick_small: {
@@ -50,11 +48,9 @@ const SCHEMAS = {
     table: 'pick',
     filter: { barista: '작은 사장' },
     fields: [
-      { col: 'photo',   label: '사진',           type: 'photo' },
-      { col: 'name',    label: '메뉴명 (한글)',  type: 'text',     required: true },
-      { col: 'name_en', label: '메뉴명 (영문)',  type: 'text',     placeholder: '비워두면 영문 표시 안 됨' },
-      { col: 'price',   label: '가격',           type: 'text',     placeholder: '6,500', required: true },
-      { col: 'note',    label: '한줄 설명',      type: 'textarea' },
+      { col: 'menu_id', label: '메뉴 선택', type: 'menu-select', required: true },
+      { col: 'photo',   label: '사진 (선택 — 비우면 메뉴 사진 사용)', type: 'photo' },
+      { col: 'note',    label: '한줄 설명', type: 'textarea' },
     ],
   },
   winners: {
@@ -94,8 +90,8 @@ const SCHEMAS = {
       { col: 'photo',        label: '메뉴 사진 (선택)', type: 'photo',
         hint: '업로드 시 메뉴명 왼쪽에 썸네일이 표시됩니다.' },
       { col: 'tag',          label: '뱃지', type: 'tags',
-        options: ['NEW', 'SEASON', 'SIGNATURE'],
-        labels: { NEW: 'NEW', SEASON: 'SEASON', SIGNATURE: 'SIGNATURE' },
+        options: ['NEW', 'SEASON'],
+        labels: { NEW: 'NEW', SEASON: 'SEASON' },
         hint: '원하는 뱃지를 눌러서 선택하세요. 여러 개 동시 선택 가능합니다.' },
     ],
   },
@@ -374,6 +370,28 @@ function buildField(f, row) {
     input.addEventListener('change', () => { row[f.col] = input.checked; });
     checkRow.appendChild(input);
     wrap.appendChild(checkRow);
+    return wrap;
+  }
+
+  if (f.type === 'menu-select') {
+    const sel = document.createElement('select');
+    sel.innerHTML = '<option value="">로딩 중…</option>';
+    sel.addEventListener('change', () => { row[f.col] = sel.value || null; });
+    supabase.from('menu').select('id, name, price').order('sort_order', { ascending: true })
+      .then(({ data }) => {
+        sel.innerHTML = '<option value="">메뉴를 선택하세요</option>';
+        (data || []).forEach((m) => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          const priceStr = m.price
+            ? ` (₩${Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR')})`
+            : '';
+          opt.textContent = m.name + priceStr;
+          if (m.id === row[f.col]) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      });
+    wrap.appendChild(sel);
     return wrap;
   }
 
@@ -826,15 +844,62 @@ async function appendRows(tableName, schema, rows) {
 }
 
 // ─── 저장 로직 ──────────────────────────────
-// 공지의 "오늘의 공지" 핀 단일화
-// 저장 직전에 호출 — payload에 is_today=true 인 행이 있으면, DB의 모든 기존 핀을 일단 해제.
-// 직후 upsert가 payload의 새 핀을 다시 true로 설정하므로 결과적으로 단일 핀 보장.
-async function enforceNewsTodayExclusive(payload) {
+// 공지 핀 단일화 — payload에 is_pinned=true 인 행이 있으면 기존 핀을 모두 해제.
+// 직후 upsert가 payload의 새 핀을 true로 설정하므로 결과적으로 단일 핀 보장.
+async function enforceNewsPinnedExclusive(payload) {
   const arr = Array.isArray(payload) ? payload : [payload];
-  const wantsPin = arr.some((r) => r.is_today === true);
-  if (!wantsPin) return; // 사용자가 모든 핀을 끈 케이스 — 다른 행 건드리지 않음
-  const { error } = await supabase.from('news').update({ is_today: false }).eq('is_today', true);
+  const wantsPin = arr.some((r) => r.is_pinned === true);
+  if (!wantsPin) return;
+  // is_pinned 컬럼이 없으면(마이그레이션 전) 무시
+  const { error } = await supabase.from('news').update({ is_pinned: false }).eq('is_pinned', true);
+  if (error && error.message?.includes('is_pinned')) return;
   if (error) throw error;
+}
+
+// ─── ADR-0002: 영업시간 변경 후 SCHEDULE 공지 생성 모달 ─
+async function promptScheduleNews(newValues, oldValues) {
+  const hoursChanged = (
+    newValues.hours_weekday !== oldValues.hours_weekday ||
+    newValues.hours_weekend !== oldValues.hours_weekend ||
+    newValues.holiday_notice !== oldValues.holiday_notice
+  );
+  if (!hoursChanged) return;
+
+  const autoText = newValues.holiday_notice
+    ? `임시 안내: ${newValues.holiday_notice}`
+    : `영업시간 안내: 평일 ${newValues.hours_weekday || '-'} · 주말 ${newValues.hours_weekend || '-'}`;
+
+  const body = document.createElement('div');
+  body.className = 'tuz-editor';
+  const ta = document.createElement('textarea');
+  ta.rows = 3;
+  ta.style.cssText = 'width:100%;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:14px;resize:vertical';
+  ta.value = autoText;
+  body.innerHTML = '<p style="font-size:14px;color:var(--ink-2);margin-bottom:4px">영업시간이 변경되었습니다. 공지사항에 함께 올리시겠습니까?</p>';
+  body.appendChild(ta);
+
+  openModal({
+    title: '영업시간 변경 공지',
+    body,
+    actions: [
+      { label: '건너뛰기', onClick: ({ close }) => close() },
+      {
+        label: '공지 올리기', primary: true,
+        onClick: async ({ close }) => {
+          const title = ta.value.trim();
+          if (!title) { close(); return; }
+          const today = autoToday();
+          const { error } = await supabase.from('news').insert({
+            tag: 'SCHEDULE', title, date: today, sort_order: 0,
+          });
+          if (error) { toast(`공지 생성 실패: ${error.message}`, { error: true }); return; }
+          toast('공지가 등록되었습니다');
+          await refreshTable('news');
+          close();
+        },
+      },
+    ],
+  });
 }
 
 async function saveRows(tableName, schema, rows, removedIds) {
@@ -849,9 +914,23 @@ async function saveRows(tableName, schema, rows, removedIds) {
     for (const f of schema.fields) {
       if (f.required && !payload[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
     }
-    if (tableName === 'news') await enforceNewsTodayExclusive(payload);
+    if (tableName === 'news') await enforceNewsPinnedExclusive(payload);
+
+    // ADR-0002: 영업시간 변경 감지를 위해 저장 전 현재 값 스냅샷
+    let oldSettings = null;
+    const isHoursSchema = tableName === 'settings' && schema === SCHEMAS.settings_hours;
+    if (isHoursSchema) {
+      const { data } = await supabase.from('settings')
+        .select('hours_weekday, hours_weekend, holiday_notice').eq('id', 1).maybeSingle();
+      oldSettings = data;
+    }
+
     const { error } = await supabase.from(tableName).upsert(payload);
     if (error) throw error;
+
+    if (isHoursSchema && oldSettings) {
+      promptScheduleNews(payload, oldSettings);
+    }
     return;
   }
 
@@ -868,7 +947,7 @@ async function saveRows(tableName, schema, rows, removedIds) {
     });
     if (r.id) out.id = r.id;
     const firstReq = schema.fields.find((f) => f.required);
-    if (firstReq && !out[firstReq.col]) return null; // skip empty draft rows
+    if (firstReq && !out[firstReq.col]) return null;
     for (const f of schema.fields) {
       if (f.required && !out[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
     }
@@ -876,7 +955,7 @@ async function saveRows(tableName, schema, rows, removedIds) {
   }).filter(Boolean);
 
   if (!payload.length) return;
-  if (tableName === 'news') await enforceNewsTodayExclusive(payload);
+  if (tableName === 'news') await enforceNewsPinnedExclusive(payload);
   const { error } = await supabase.from(tableName).upsert(payload);
   if (error) throw error;
 }
@@ -965,7 +1044,7 @@ async function openItemEditor(tableName, itemId) {
             schema.fields.forEach((f) => {
               if (!f.autoDate) payload[f.col] = row[f.col] ?? null;
             });
-            if (tableName === 'news') await enforceNewsTodayExclusive([payload]);
+            if (tableName === 'news') await enforceNewsPinnedExclusive([payload]);
             const { error: upErr } = await supabase.from(tableName).upsert(payload);
             if (upErr) throw upErr;
             toast('저장되었습니다');

@@ -220,18 +220,22 @@ const NEWS_TAG_META = {
   NOTICE:  { label: 'NOTICE',   cls: 'chip--notice',  icon: '📌' },
   EVENT:   { label: 'EVENT',   cls: 'chip--event',   icon: '🎁' },
   NEW:     { label: 'NEW',     cls: 'chip--new',     icon: '✨' },
-  HOURS:   { label: 'HOURS',   cls: 'chip--hours',   icon: '⏰' },
+  SCHEDULE:{ label: 'SCHEDULE',cls: 'chip--hours',   icon: '⏰' },
   SEASON:  { label: 'SEASON',  cls: 'chip--season',  icon: '🌸' },
   SPECIAL: { label: 'SPECIAL', cls: 'chip--special', icon: '⭐' },
 };
 
 // ─── 렌더러 ──────────────────────────────────
 function renderPickCard(p) {
-  const photoUrl = imgUrl(p.photo);
+  const name = p.menu?.name || p.name || '';
+  const nameEn = p.menu?.nameEn || p.nameEn || '';
+  const price = p.menu?.price || p.price || '';
+  const photo = p.photo || p.menu?.photo;
+  const photoUrl = imgUrl(photo);
   const photoHtml = photoUrl
-    ? `<div class="photo-block"><img src="${esc(photoUrl)}" alt="${esc(p.name || 'pick')}"></div>`
+    ? `<div class="photo-block"><img src="${esc(photoUrl)}" alt="${esc(name || 'pick')}"></div>`
     : `<div class="photo-block is-empty"></div>`;
-  const priceStr = p.price ? '₩' + Number(String(p.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
+  const priceStr = price ? '₩' + Number(String(price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
   return `
     <article class="card"${p.id ? ` data-item-id="${esc(p.id)}"` : ''}>
       <div style="margin-bottom:12px">${photoHtml}</div>
@@ -239,12 +243,12 @@ function renderPickCard(p) {
         <span class="chip">${esc(p.barista || '사장 pick')}</span>
         <time>${esc(p.date || todayStr())}</time>
       </div>
-      <div class="display display--md">${esc(p.name || '')}</div>
-      ${p.nameEn ? `<div class="pick__en">${esc(p.nameEn)}</div>` : ''}
+      <div class="display display--md">${esc(name)}</div>
+      ${nameEn ? `<div class="pick__en">${esc(nameEn)}</div>` : ''}
       ${p.note ? `<p class="pick__note">${esc(p.note)}</p>` : ''}
       <div class="pick__price">
         <span class="eyebrow">TODAY'S PRICE</span>
-        <span class="display display--sm">${esc(priceStr || p.price || '')}</span>
+        <span class="display display--sm">${esc(priceStr || price)}</span>
       </div>
     </article>
   `;
@@ -255,8 +259,8 @@ function renderPicks(picks) {
   const smallEl = document.getElementById('pickSmall');
   if (!bigEl && !smallEl) return;
 
-  const big = (picks || []).find((p) => p.barista === '큰 사장' && p.name);
-  const small = (picks || []).find((p) => p.barista === '작은 사장' && p.name);
+  const big = (picks || []).find((p) => p.barista === '큰 사장' && (p.name || p.menuId));
+  const small = (picks || []).find((p) => p.barista === '작은 사장' && (p.name || p.menuId));
 
   if (bigEl) bigEl.innerHTML = big ? renderPickCard(big) : '';
   if (smallEl) smallEl.innerHTML = small ? renderPickCard(small) : '';
@@ -299,11 +303,11 @@ function isNewSince(isoTs, viewName) {
   return seen ? t.getTime() > seen : isRecent(isoTs);
 }
 
-function updateTodayNotice(items) {
+function updatePinnedNotice(items) {
   const ticker = document.getElementById('notice');
   const tickerMirror = document.getElementById('noticeMirror');
   const card = document.getElementById('todayNoticeCard');
-  const pinned = (items || []).filter((n) => n.isToday && n.title);
+  const pinned = (items || []).filter((n) => (n.isPinned || n.isToday) && n.title);
   // 공지 타일 업데이트 표시 — 핀된 공지가 있거나 7일 이내 새 공지가 있으면
   const hasRecent = (items || []).some((n) => isNewSince(n.createdAt, 'news') || isNewSince(n.updatedAt, 'news'));
   const hasPinnedNew = pinned.some((n) => isNewSince(n.createdAt, 'news') || isNewSince(n.updatedAt, 'news'));
@@ -327,7 +331,7 @@ function updateTodayNotice(items) {
 
 function renderNews(items) {
   const list = document.getElementById('newsList');
-  updateTodayNotice(items); // 핀 점도 여기서 처리됨 (markTileUpdate)
+  updatePinnedNotice(items); // 핀 점도 여기서 처리됨 (markTileUpdate)
   if (!list) return;
   if (!items || !items.length) {
     renderEmpty('newsList', 'news');
@@ -344,8 +348,9 @@ function renderNews(items) {
     const chipHtml = meta
       ? `<span class="chip ${meta.cls}"><span class="chip-icon">${meta.icon}</span>${esc(meta.label)}</span>`
       : '';
-    const todayChip = n.isToday
-      ? `<span class="chip chip--pin" title="홈 오늘의 공지">📌 오늘의 공지</span>`
+    const isPinned = n.isPinned || n.isToday;
+    const todayChip = isPinned
+      ? `<span class="chip chip--pin" title="홈 고정 공지">📌 고정 공지</span>`
       : '';
     const photoUrl = imgUrl(n.photo);
     const photoHtml = photoUrl
@@ -353,7 +358,7 @@ function renderNews(items) {
       : '';
     const noticeCls = ['notice'];
     if (tagKey === 'EVENT') noticeCls.push('notice--event');
-    if (n.isToday) noticeCls.push('notice--pinned');
+    if (isPinned) noticeCls.push('notice--pinned');
     return `
     <article class="${noticeCls.join(' ')}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
       ${photoHtml}
@@ -557,20 +562,16 @@ function isToday(isoTs) {
 // 뱃지 CSV → 배열 (선택 기반)
 function resolveBadges(m) {
   const raw = String(m.tag || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const set = new Set(raw.map((s) => s.toUpperCase()));
-  if (m.isSignature) set.add('SIGNATURE'); // 구 데이터 호환
-  return [...set];
+  return [...new Set(raw.map((s) => s.toUpperCase()))];
 }
 
 const BADGE_LABEL = {
   NEW: 'NEW',
   SEASON: 'SEASON',
-  SIGNATURE: 'SIGNATURE',
 };
 const BADGE_CLASS = {
   NEW: 'chip--new',
   SEASON: 'chip--season',
-  SIGNATURE: '',
 };
 
 function renderMenu(items) {
@@ -861,7 +862,41 @@ export const RENDERERS = {
 
 const LOADERS = {
   news:     () => loadTable('news',     renderNews),
-  pick:     () => loadTable('pick',     renderPicks),
+  pick:     () => (async () => {
+    if (loadingFlags.pick) return;
+    const cached = readCache('pick');
+    if (cached?.data) renderPicks(cached.data);
+    if (cached && Date.now() - cached.at < CACHE_MS) return;
+    loadingFlags.pick = true;
+    try {
+      let rows;
+      try {
+        // menu_id FK가 있으면 메뉴 정보 join
+        const { data, error } = await supabase.from('pick')
+          .select('*, menu(name, name_en, price, photo)')
+          .order('sort_order', { ascending: true });
+        if (error) throw error;
+        rows = (data || []).map((r) => {
+          const base = toCamel(r);
+          if (r.menu) base.menu = toCamel(r.menu);
+          return base;
+        });
+      } catch {
+        // menu_id FK 마이그레이션 전 폴백
+        const { data, error } = await supabase.from('pick')
+          .select('*').order('sort_order', { ascending: true });
+        if (error) throw error;
+        rows = (data || []).map(toCamel);
+      }
+      renderPicks(rows);
+      if (rows.length) writeCache('pick', rows);
+    } catch (e) {
+      console.warn('[tuz] pick load failed:', e.message || e);
+      showConnectionToast();
+    } finally {
+      loadingFlags.pick = false;
+    }
+  })(),
   event:    () => loadTable('winners',  renderWinners),
   greeting: () => loadTable('greeting', renderGreeting, { single: true }),
   menu:     () => loadTable('menu',     renderMenu),
@@ -899,4 +934,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=32').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=34').catch((e) => console.warn('[tuz] admin module not loaded:', e));

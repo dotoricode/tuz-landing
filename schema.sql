@@ -177,3 +177,21 @@ ALTER TABLE news ADD COLUMN IF NOT EXISTS is_today BOOLEAN DEFAULT false;
 
 -- ─── 2026-04-19 추가: 공지 사진 ─────────
 ALTER TABLE news ADD COLUMN IF NOT EXISTS photo TEXT;
+
+-- ─── 2026-05 ADR-0001: Pick → Menu FK ─────────
+ALTER TABLE pick ADD COLUMN IF NOT EXISTS menu_id uuid REFERENCES public.menu(id) ON DELETE SET NULL;
+-- menu_id FK 도입으로 name은 optional (메뉴 이름은 menu 테이블에서 join)
+ALTER TABLE pick ALTER COLUMN name DROP NOT NULL;
+
+-- ─── 2026-05 ADR-0003 + 명명 정리 ─────────
+-- is_today → is_pinned (수동 해제 전까지 유지되는 홈 화면 고정 공지)
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'news' AND column_name = 'is_today'
+  ) THEN
+    ALTER TABLE news RENAME COLUMN is_today TO is_pinned;
+  END IF;
+END $$;
+-- is_signature 제거 (카테고리로 통일 — ADR-0003)
+ALTER TABLE menu DROP COLUMN IF EXISTS is_signature;
