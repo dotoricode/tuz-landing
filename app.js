@@ -899,4 +899,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=30').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=32').catch((e) => console.warn('[tuz] admin module not loaded:', e));
