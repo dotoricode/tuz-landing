@@ -6,6 +6,15 @@ function autoToday() {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// ─── 메뉴 옵션 캐시 (menu-select 필드용) ───────
+let _menuOptions = null;
+async function loadMenuOptions() {
+  if (_menuOptions) return _menuOptions;
+  const { data } = await supabase.from('menu').select('id, name, price').order('sort_order', { ascending: true });
+  _menuOptions = data || [];
+  return _menuOptions;
+}
+
 // ─── 테이블 스키마 ──────────────────────────
 // noun: UI에서 부를 자연스러운 이름 (예: "공지" → "+ 공지 추가")
 const SCHEMAS = {
@@ -301,7 +310,7 @@ function renderPageActions() {
 }
 
 // ─── 입력 필드 빌더 (공용) ──────────────────
-function buildField(f, row) {
+function buildField(f, row, { menuOptions = null } = {}) {
   if (f.autoDate) return document.createDocumentFragment();
 
   const wrap = document.createElement('label');
@@ -389,22 +398,18 @@ function buildField(f, row) {
 
   if (f.type === 'menu-select') {
     const sel = document.createElement('select');
-    sel.innerHTML = '<option value="">로딩 중…</option>';
+    sel.innerHTML = '<option value="">메뉴를 선택하세요</option>';
+    (menuOptions || []).forEach((m) => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      const priceStr = m.price
+        ? ` (₩${Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR')})`
+        : '';
+      opt.textContent = m.name + priceStr;
+      if (m.id === row[f.col]) opt.selected = true;
+      sel.appendChild(opt);
+    });
     sel.addEventListener('change', () => { row[f.col] = sel.value || null; });
-    supabase.from('menu').select('id, name, price').order('sort_order', { ascending: true })
-      .then(({ data }) => {
-        sel.innerHTML = '<option value="">메뉴를 선택하세요</option>';
-        (data || []).forEach((m) => {
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          const priceStr = m.price
-            ? ` (₩${Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR')})`
-            : '';
-          opt.textContent = m.name + priceStr;
-          if (m.id === row[f.col]) opt.selected = true;
-          sel.appendChild(opt);
-        });
-      });
     wrap.appendChild(sel);
     return wrap;
   }
@@ -539,6 +544,9 @@ async function openEditor(key, { addOnly = false, manage = false } = {}) {
   const schema = SCHEMAS[key];
   if (!schema) return;
   const tableName = schema.table || key;
+  const menuOptions = schema.fields.some((f) => f.type === 'menu-select')
+    ? await loadMenuOptions()
+    : null;
 
   // fetch current rows
   let rows = [];
@@ -711,7 +719,7 @@ async function openEditor(key, { addOnly = false, manage = false } = {}) {
       const fieldsWrap = document.createElement('div');
       fieldsWrap.className = 'tuz-row-card__fields';
       fieldsWrap.hidden = true;
-      schema.fields.forEach((f) => fieldsWrap.appendChild(buildField(f, row)));
+      schema.fields.forEach((f) => fieldsWrap.appendChild(buildField(f, row, { menuOptions })));
       card.appendChild(fieldsWrap);
 
       head.querySelector('[data-act="edit"]').addEventListener('click', () => {
@@ -759,11 +767,11 @@ async function openEditor(key, { addOnly = false, manage = false } = {}) {
       });
     } else if (schema.mode === 'list') {
       // 추가 모드 — 순수 입력 폼, 순서 조정 없음
-      schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
+      schema.fields.forEach((f) => card.appendChild(buildField(f, row, { menuOptions })));
       return card;
     } else {
       // single 모드
-      schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
+      schema.fields.forEach((f) => card.appendChild(buildField(f, row, { menuOptions })));
     }
     return card;
   }
@@ -972,6 +980,7 @@ async function saveRows(tableName, schema, rows, removedIds) {
   if (tableName === 'news') await enforceNewsPinnedExclusive(payload);
   const { error } = await supabase.from(tableName).upsert(payload);
   if (error) throw error;
+  if (tableName === 'menu') _menuOptions = null;
 }
 
 // ─── 항목별 수정/삭제 오버레이 ──────────────
@@ -1028,7 +1037,10 @@ async function openItemEditor(tableName, itemId) {
   const schema = findSchemaByTable(tableName);
   if (!schema) return;
 
-  const { data, error } = await supabase.from(tableName).select('*').eq('id', itemId).maybeSingle();
+  const [{ data, error }, menuOptions] = await Promise.all([
+    supabase.from(tableName).select('*').eq('id', itemId).maybeSingle(),
+    schema.fields.some((f) => f.type === 'menu-select') ? loadMenuOptions() : Promise.resolve(null),
+  ]);
   if (error || !data) { toast(`불러오기 실패: ${error?.message || '항목 없음'}`, { error: true }); return; }
 
   const row = { ...data };
@@ -1037,7 +1049,7 @@ async function openItemEditor(tableName, itemId) {
   body.className = 'tuz-editor';
   const card = document.createElement('div');
   card.className = 'tuz-row-card';
-  schema.fields.forEach((f) => card.appendChild(buildField(f, row)));
+  schema.fields.forEach((f) => card.appendChild(buildField(f, row, { menuOptions })));
   body.appendChild(card);
 
   openModal({
