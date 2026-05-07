@@ -672,7 +672,8 @@ function openPhotoLightbox(url, caption) {
 function toCamel(row) {
   const out = {};
   for (const [k, v] of Object.entries(row)) {
-    out[k.replace(/_([a-z])/g, (_, c) => c.toUpperCase())] = v;
+    const key = k.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    out[key] = (v && typeof v === 'object' && !Array.isArray(v)) ? toCamel(v) : v;
   }
   return out;
 }
@@ -692,7 +693,7 @@ function writeCache(key, data) {
 
 // ─── Supabase 로더 ────────────────────────────
 const loadingFlags = {};
-async function loadTable(table, renderer, { single = false, order = 'sort_order' } = {}) {
+async function loadTable(table, renderer, { single = false, order = 'sort_order', select = '*' } = {}) {
   if (loadingFlags[table]) return;
 
   const cached = readCache(table);
@@ -701,7 +702,7 @@ async function loadTable(table, renderer, { single = false, order = 'sort_order'
 
   loadingFlags[table] = true;
   try {
-    let query = supabase.from(table).select('*');
+    let query = supabase.from(table).select(select);
     if (!single) query = query.order(order, { ascending: true });
     const { data, error } = single ? await query.maybeSingle() : await query;
     if (error) throw error;
@@ -866,41 +867,7 @@ export const RENDERERS = {
 
 const LOADERS = {
   news:     () => loadTable('news',     renderNews),
-  pick:     () => (async () => {
-    if (loadingFlags.pick) return;
-    const cached = readCache('pick');
-    if (cached?.data) renderPicks(cached.data);
-    if (cached && Date.now() - cached.at < CACHE_MS) return;
-    loadingFlags.pick = true;
-    try {
-      let rows;
-      try {
-        // menu_id FK가 있으면 메뉴 정보 join
-        const { data, error } = await supabase.from('pick')
-          .select('*, menu(name, name_en, price, photo)')
-          .order('sort_order', { ascending: true });
-        if (error) throw error;
-        rows = (data || []).map((r) => {
-          const base = toCamel(r);
-          if (r.menu) base.menu = toCamel(r.menu);
-          return base;
-        });
-      } catch {
-        // menu_id FK 마이그레이션 전 폴백
-        const { data, error } = await supabase.from('pick')
-          .select('*').order('sort_order', { ascending: true });
-        if (error) throw error;
-        rows = (data || []).map(toCamel);
-      }
-      renderPicks(rows);
-      if (rows.length) writeCache('pick', rows);
-    } catch (e) {
-      console.warn('[tuz] pick load failed:', e.message || e);
-      showConnectionToast();
-    } finally {
-      loadingFlags.pick = false;
-    }
-  })(),
+  pick:     () => loadTable('pick', renderPicks, { select: '*, menu(name, name_en, price, photo)' }),
   event:    () => loadTable('winners',  renderWinners),
   greeting: () => loadTable('greeting', renderGreeting, { single: true }),
   menu:     () => loadTable('menu',     renderMenu),
