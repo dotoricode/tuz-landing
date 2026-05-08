@@ -1,0 +1,20 @@
+export const HOURS_SCHEMA = {
+  label: '영업시간',
+  noun: '영업시간',
+  mode: 'single',
+  views: ['hours'],
+  table: 'settings',
+  fields: [
+    { col: 'hours_weekday',  label: '평일 영업시간',        type: 'text', placeholder: '08:00-22:00' },
+    { col: 'hours_weekend',  label: '주말 영업시간',        type: 'text', placeholder: '10:00-23:00' },
+    { col: 'regular_closure_kr', label: '정기휴무 (한글)', type: 'text',
+      placeholder: '예) 매월 마지막 월요일',
+      hint: '예시 · 매월 마지막 월요일 · 매주 일요일 · 매주 월·화 · 비워두면 정기휴무 없음으로 표시됩니다' },
+    { col: 'regular_closure_en', label: '정기휴무 (영문)', type: 'text',
+      placeholder: '예) Last Mon',
+      hint: '예시 · Last Mon · Every Sun · Mon·Tue' },
+    { col: 'holiday_notice', label: '임시휴무 안내 (선택)', type: 'text',
+      placeholder: '예) 5/5 어린이날 10:00-18:00 단축운영',
+      hint: '예시 · 5/5 어린이날 10:00-18:00 단축운영 · 설 연휴(2/9-2/11) 휴무 · 내부 공사로 3/15-3/17 임시휴무 · 비워두면 정상 영업으로 표시됩니다' },
+  ],
+};

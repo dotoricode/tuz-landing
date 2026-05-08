@@ -1,4 +1,11 @@
-import { supabase, refreshTable } from './app.js?v=30';
+import { supabase, refreshTable } from './app.js?v=45';
+import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=45';
+import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=45';
+import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=45';
+import { HOURS_SCHEMA } from './slices/hours/admin.js?v=45';
+import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=45';
+import { NEWS_SCHEMA } from './slices/news/admin.js?v=45';
+import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=45';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -18,134 +25,15 @@ async function loadMenuOptions() {
 // ─── 테이블 스키마 ──────────────────────────
 // noun: UI에서 부를 자연스러운 이름 (예: "공지" → "+ 공지 추가")
 const SCHEMAS = {
-  news: {
-    label: '공지사항',
-    noun: '공지',
-    mode: 'list',
-    views: ['news'],
-    fields: [
-      { col: 'tag',       label: '분류',         type: 'select',
-        options: ['', 'NOTICE', 'EVENT', 'NEW', 'SCHEDULE', 'SEASON', 'SPECIAL'] },
-      { col: 'title',     label: '제목 (한글)',  type: 'text',   required: true },
-      { col: 'title_en',  label: '제목 (영문)',  type: 'text',   placeholder: '비워두면 영문 표시 안 됨' },
-      { col: 'body',      label: '본문',         type: 'textarea' },
-      { col: 'photo',     label: '사진 (선택)',  type: 'photo',
-        hint: '업로드 시 카드 상단에 16:9 배너로 표시됩니다.' },
-      { col: 'is_pinned', label: '홈 화면 상단에 고정', type: 'checkbox',
-        hint: '체크 시 홈 화면 마퀴에 이 공지가 노출됩니다. 수동으로 끄기 전까지 유지됩니다.' },
-      { col: 'date',      autoDate: true },
-    ],
-  },
-  pick_big: {
-    label: '큰 사장 pick',
-    noun: '큰 사장 pick',
-    mode: 'single',
-    views: ['pick'],
-    table: 'pick',
-    filter: { barista: '큰 사장' },
-    fields: [
-      { col: 'menu_id', label: '메뉴 선택', type: 'menu-select', required: true },
-      { col: 'photo',   label: '사진 (선택 — 비우면 메뉴 사진 사용)', type: 'photo' },
-      { col: 'note',    label: '한줄 설명', type: 'textarea' },
-    ],
-  },
-  pick_small: {
-    label: '작은 사장 pick',
-    noun: '작은 사장 pick',
-    mode: 'single',
-    views: ['pick'],
-    table: 'pick',
-    filter: { barista: '작은 사장' },
-    fields: [
-      { col: 'menu_id', label: '메뉴 선택', type: 'menu-select', required: true },
-      { col: 'photo',   label: '사진 (선택 — 비우면 메뉴 사진 사용)', type: 'photo' },
-      { col: 'note',    label: '한줄 설명', type: 'textarea' },
-    ],
-  },
-  winners: {
-    label: '이달의 당첨자',
-    noun: '당첨자',
-    mode: 'list',
-    views: ['event'],
-    fields: [
-      { col: 'nick',    label: '닉네임',                   type: 'text', required: true },
-      { col: 'month',   label: '혜택',                     type: 'text', placeholder: '5월 무료음료' },
-      { col: 'period',  label: '이벤트 기간 (선택)',       type: 'text', placeholder: '2026.04.01 ~ 2026.04.30' },
-    ],
-  },
-  greeting: {
-    label: '사장님 인사말',
-    noun: '인사말',
-    mode: 'single',
-    views: ['greeting'],
-    fields: [
-      { col: 'photo',     label: '사진',         type: 'photo' },
-      { col: 'body',      label: '인사말 본문',  type: 'textarea', rows: 8 },
-      { col: 'sign',      label: '서명',         type: 'text', placeholder: '— TUZ 드림' },
-    ],
-  },
-  menu: {
-    label: '메뉴',
-    noun: '메뉴',
-    mode: 'list',
-    views: ['menu'],
-    groupBy: 'category', // 편집 모드에서 카테고리 탭으로 분리
-    fields: [
-      { col: 'category',     label: '카테고리', type: 'select', required: true,
-        options: ['SIGNATURE · 시그니처', 'COFFEE · 커피', 'NON-COFFEE · 논커피'] },
-      { col: 'name',         label: '메뉴명 (한글)', type: 'text', required: true },
-      { col: 'name_en',      label: '메뉴명 (영문)', type: 'text' },
-      { col: 'price',        label: '가격', type: 'text', placeholder: '4,500' },
-      { col: 'photo',        label: '메뉴 사진 (선택)', type: 'photo',
-        hint: '업로드 시 메뉴명 왼쪽에 썸네일이 표시됩니다.' },
-      { col: 'tag',          label: '뱃지', type: 'tags',
-        options: ['NEW', 'SEASON'],
-        labels: { NEW: 'NEW', SEASON: 'SEASON' },
-        hint: '원하는 뱃지를 눌러서 선택하세요. 여러 개 동시 선택 가능합니다.' },
-    ],
-  },
-  settings_menu_hero: {
-    label: '메뉴 대표 사진',
-    noun: '대표 사진',
-    mode: 'single',
-    views: ['menu'],
-    table: 'settings',
-    fields: [
-      { col: 'menu_hero_photo', label: '대표 사진', type: 'photo',
-        hint: '메뉴 페이지 상단에 표시되는 대표 이미지입니다.' },
-    ],
-  },
-  settings_hours: {
-    label: '영업시간',
-    noun: '영업시간',
-    mode: 'single',
-    views: ['hours'],
-    table: 'settings',
-    fields: [
-      { col: 'hours_weekday',  label: '평일 영업시간',        type: 'text', placeholder: '08:00-22:00' },
-      { col: 'hours_weekend',  label: '주말 영업시간',        type: 'text', placeholder: '10:00-23:00' },
-      { col: 'regular_closure_kr', label: '정기휴무 (한글)', type: 'text',
-        placeholder: '예) 매월 마지막 월요일',
-        hint: '예시 · 매월 마지막 월요일 · 매주 일요일 · 매주 월·화 · 비워두면 정기휴무 없음으로 표시됩니다' },
-      { col: 'regular_closure_en', label: '정기휴무 (영문)', type: 'text',
-        placeholder: '예) Last Mon',
-        hint: '예시 · Last Mon · Every Sun · Mon·Tue' },
-      { col: 'holiday_notice', label: '임시휴무 안내 (선택)', type: 'text',
-        placeholder: '예) 5/5 어린이날 10:00-18:00 단축운영',
-        hint: '예시 · 5/5 어린이날 10:00-18:00 단축운영 · 설 연휴(2/9-2/11) 휴무 · 내부 공사로 3/15-3/17 임시휴무 · 비워두면 정상 영업으로 표시됩니다' },
-    ],
-  },
-  settings_wifi: {
-    label: 'WiFi',
-    noun: 'WiFi',
-    mode: 'single',
-    views: ['wifi'],
-    table: 'settings',
-    fields: [
-      { col: 'wifi_ssid',     label: '네트워크 이름 (SSID)', type: 'text', required: true, placeholder: 'TUZ_Guest' },
-      { col: 'wifi_password', label: '비밀번호',             type: 'text', required: true, placeholder: 'tuz12345' },
-    ],
-  },
+  news: NEWS_SCHEMA,
+  pick_big: PICK_BIG_SCHEMA,
+  pick_small: PICK_SMALL_SCHEMA,
+  winners: WINNERS_SCHEMA,
+  greeting: GREETING_SCHEMA,
+  menu: MENU_SCHEMA,
+  settings_menu_hero: MENU_HERO_SCHEMA,
+  settings_hours: HOURS_SCHEMA,
+  settings_wifi: WIFI_SCHEMA,
 };
 
 let currentUser = null;

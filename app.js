@@ -1,15 +1,52 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+// ─── 외부 모듈 ───────────────────────────────
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './shared/supabase.js?v=45';
+import {
+  renderGreeting,
+  GREETING_LABEL,
+  GREETING_LOADER_SPEC,
+} from './slices/greeting/public.js?v=45';
+import {
+  renderWinners,
+  WINNERS_LABEL,
+  WINNERS_LOADER_SPEC,
+} from './slices/winners/public.js?v=45';
+import {
+  renderWifi,
+  WIFI_LABEL,
+  WIFI_LOADER_SPEC,
+  initWifi,
+} from './slices/wifi/public.js?v=45';
+import {
+  renderHours,
+  HOURS_LABEL,
+  HOURS_LOADER_SPEC,
+} from './slices/hours/public.js?v=45';
+import {
+  LOCATION_LABEL,
+  LOCATION_LOADER,
+  initLocation,
+} from './slices/location/public.js?v=45';
+import {
+  renderMenu,
+  renderMenuSettings,
+  MENU_LABEL,
+  MENU_LOADER_SPEC,
+  initMenu,
+} from './slices/menu/public.js?v=45';
+import {
+  renderNews,
+  NEWS_LABEL,
+  NEWS_LOADER_SPEC,
+} from './slices/news/public.js?v=45';
+import {
+  renderPicks,
+  PICK_LABEL,
+  PICK_LOADER_SPEC,
+} from './slices/pick/public.js?v=45';
 
-// ─── Supabase 연결 ───────────────────────────
-export const SUPABASE_URL = 'https://lwgissxdvemamuybxmxz.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z2lzc3hkdmVtYW11eWJ4bXh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MjMxNjgsImV4cCI6MjA5MjA5OTE2OH0.bslx3DGC2KPKleWo9KejERD10e92OeBEUoQHg2_jPOo';
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true },
-});
+// admin.js 등 외부 import 호환을 위해 re-export
+export { supabase, SUPABASE_URL, SUPABASE_ANON_KEY };
 
-let WIFI_PW = 'tuz12345';  // settings 테이블에서 덮어씀
-let CURRENT_SETTINGS = null; // 최신 settings 공유
-const ADDRESS = '울산광역시 중구 염포로22, 2층';
 const CACHE_MS = 2 * 60 * 1000;
 
 // ─── 연결 오류 토스트 ─────────────────────────
@@ -25,10 +62,6 @@ function showConnectionToast() {
   el.querySelector('button').addEventListener('click', () => el.remove());
   document.body.appendChild(el);
 }
-
-const esc = (s) => String(s == null ? '' : s)
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 // ─── 라우팅 ──────────────────────────────────
 const views = document.querySelectorAll('[data-view]');
@@ -56,8 +89,8 @@ export function showView(name, { pushHistory = true } = {}) {
 
 function titleOf(view) {
   return {
-    wifi: '와이파이', news: '공지 · 이벤트', menu: '메뉴', hours: '영업시간',
-    location: '오시는 길', event: '이달의 당첨자', pick: '오늘의 추천', greeting: '사장님 인사말',
+    wifi: WIFI_LABEL, news: NEWS_LABEL, menu: MENU_LABEL, hours: HOURS_LABEL,
+    location: LOCATION_LABEL, event: WINNERS_LABEL, pick: PICK_LABEL, greeting: GREETING_LABEL,
   }[view] || '';
 }
 
@@ -72,62 +105,9 @@ window.addEventListener('popstate', (e) => {
   showView(name, { pushHistory: false });
 });
 
-// ─── WiFi 비밀번호 복사 ─────────────────────
-const pwBtn = document.getElementById('pwBtn');
-const pwToast = document.getElementById('pwToast');
-let toastTimer = null;
-
-async function copyText(text) {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch (_) { /* fall through */ }
-  try {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.setAttribute('readonly', '');
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    return ok;
-  } catch (_) { return false; }
-}
-
-function flashToast(el, msg) {
-  if (!el) return;
-  if (msg) el.textContent = msg;
-  el.hidden = false;
-  el.style.animation = 'none';
-  void el.offsetWidth;
-  el.style.animation = '';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 1400);
-}
-
-if (pwBtn) {
-  pwBtn.addEventListener('click', async () => {
-    const ok = await copyText(WIFI_PW);
-    flashToast(pwToast, ok ? '비밀번호 복사됨 ✓' : '복사 실패 · 길게 눌러 복사');
-  });
-}
-
-// ─── 위치 버튼 ───────────────────────────────
-const btnCopyAddr = document.getElementById('btnCopyAddr');
-if (btnCopyAddr) {
-  btnCopyAddr.addEventListener('click', async () => {
-    const ok = await copyText(ADDRESS);
-    btnCopyAddr.textContent = ok ? '복사됨 ✓' : '복사 실패';
-    setTimeout(() => { btnCopyAddr.textContent = '주소 복사'; }, 1400);
-  });
-}
-const btnRoute = document.getElementById('btnRoute');
-if (btnRoute) {
-  btnRoute.addEventListener('click', () => {
-    window.open(`https://map.kakao.com/?q=${encodeURIComponent(ADDRESS)}`, '_blank', 'noopener');
-  });
-}
+initWifi();
+initLocation();
+initMenu();
 
 // ─── 테마 ─────────────────────────────────────
 const themeBtn = document.getElementById('themeToggle');
@@ -147,525 +127,11 @@ if (themeBtn) {
   });
 }
 
-// ─── 이미지 URL 변환 + 안전 가드 ───────────────
-export function imgUrl(url) {
-  if (!url) return '';
-  const u = String(url).trim();
-  if (!/^https?:\/\//i.test(u)) return '';
-  let m = u.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
-  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
-  m = u.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/);
-  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
-  m = u.match(/[?&]id=([A-Za-z0-9_-]+)/);
-  if (m && /drive\.google\.com/.test(u)) return `https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
-  return u;
-}
-
-function photoOrPh(url, placeholder, height = 140) {
-  const u = imgUrl(url);
-  return u
-    ? `<div class="photo-block"><img src="${esc(u)}" alt="${esc(placeholder)}" loading="lazy"></div>`
-    : `<div class="photo-block is-empty"></div>`;
-}
-
-// ─── empty state ──────────────────────────────
-const EMPTY_COPY = {
-  news:    { title: '등록된 공지사항이 없습니다',         sub: '새 공지가 올라오면 이 자리에 표시됩니다' },
-  menu:    { title: '메뉴 등록 준비 중입니다',           sub: '매장 내 메뉴판을 참고해주세요' },
-  pick:    { title: '이번 주 추천 메뉴가 등록되지 않았습니다', sub: null },
-  winners: { title: '이번 달 이벤트 발표 전입니다',       sub: '매달 1일 발표됩니다' },
-};
-function renderEmpty(containerId, key) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const { title, sub } = EMPTY_COPY[key] || { title: '준비 중입니다', sub: null };
-  el.innerHTML = `<div class="card empty-state"><p class="empty-state__title">${esc(title)}</p>${sub ? `<p class="empty-state__sub">${esc(sub)}</p>` : ''}</div>`;
-}
-
-function renderSkeleton(containerId) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = `
-    <div class="sk-card">
-      <div class="sk sk--photo"></div>
-      <div class="sk sk--line"></div>
-      <div class="sk sk--line is-short"></div>
-    </div>
-  `;
-}
-
-function todayStr() {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}.${mm}.${dd}`;
-}
-
-function relativeTime(dateStr) {
-  if (!dateStr) return '';
-  const m = String(dateStr).match(/^(\d{4})[.-](\d{1,2})[.-](\d{1,2})/);
-  if (!m) return dateStr;
-  const target = new Date(+m[1], +m[2] - 1, +m[3]);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diff = Math.round((today - target) / 86400000);
-  if (diff === 0) return '오늘';
-  if (diff === 1) return '어제';
-  if (diff > 1 && diff <= 7) return `${diff}일 전`;
-  if (diff > 7 && diff <= 14) return '지난주';
-  if (diff > 14 && diff <= 30) return `${Math.floor(diff / 7)}주 전`;
-  return `${m[1]}.${m[2].padStart(2, '0')}.${m[3].padStart(2, '0')}`;
-}
-
-const NEWS_TAG_META = {
-  NOTICE:  { label: 'NOTICE',   cls: 'chip--notice',  icon: '📌' },
-  EVENT:   { label: 'EVENT',   cls: 'chip--event',   icon: '🎁' },
-  NEW:     { label: 'NEW',     cls: 'chip--new',     icon: '✨' },
-  SCHEDULE:{ label: 'SCHEDULE',cls: 'chip--hours',   icon: '⏰' },
-  SEASON:  { label: 'SEASON',  cls: 'chip--season',  icon: '🌸' },
-  SPECIAL: { label: 'SPECIAL', cls: 'chip--special', icon: '⭐' },
-};
-
-// ─── 렌더러 ──────────────────────────────────
-function renderPickCard(p) {
-  const name = p.menu?.name || p.name || '';
-  const nameEn = p.menu?.nameEn || p.nameEn || '';
-  const price = p.menu?.price || p.price || '';
-  const photo = p.photo || p.menu?.photo;
-  const photoUrl = imgUrl(photo);
-  const photoHtml = photoUrl
-    ? `<div class="photo-block"><img src="${esc(photoUrl)}" alt="${esc(name || 'pick')}"></div>`
-    : `<div class="photo-block is-empty"></div>`;
-  const priceStr = price ? '₩' + Number(String(price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
-  return `
-    <article class="card"${p.id ? ` data-item-id="${esc(p.id)}"` : ''}>
-      <div style="margin-bottom:12px">${photoHtml}</div>
-      <div class="pick__meta">
-        <span class="chip">${esc(p.barista || '사장 pick')}</span>
-        <time>${esc(p.date || todayStr())}</time>
-      </div>
-      <div class="display display--md">${esc(name)}</div>
-      ${nameEn ? `<div class="pick__en">${esc(nameEn)}</div>` : ''}
-      ${p.note ? `<p class="pick__note">${esc(p.note)}</p>` : ''}
-      <div class="pick__price">
-        <span class="eyebrow">TODAY'S PRICE</span>
-        <span class="display display--sm">${esc(priceStr || price)}</span>
-      </div>
-    </article>
-  `;
-}
-
-function renderPicks(picks) {
-  const bigEl = document.getElementById('pickBig');
-  const smallEl = document.getElementById('pickSmall');
-  if (!bigEl && !smallEl) return;
-
-  const big = (picks || []).find((p) => p.barista === '큰 사장' && (p.name || p.menuId));
-  const small = (picks || []).find((p) => p.barista === '작은 사장' && (p.name || p.menuId));
-
-  if (bigEl) bigEl.innerHTML = big ? renderPickCard(big) : '';
-  if (smallEl) smallEl.innerHTML = small ? renderPickCard(small) : '';
-
-  // 최근 7일 이내 추가/수정된 pick이 있으면 타일에 점
-  const recent = (picks || []).some((p) => isNewSince(p.createdAt, 'pick') || isNewSince(p.updatedAt, 'pick'));
-  markTileUpdate('pick', recent);
-}
-
-// 타일에 "업데이트 있음" 표시 — 빨간 점 + 딥레드 테두리 (.has-update 클래스)
-// .tile[data-go=...] 로 한정해 마퀴/카드 버튼 같은 다른 [data-go] 요소를 제외
-function markTileUpdate(viewName, hasUpdate) {
-  const tile = document.querySelector(`.tile[data-go="${viewName}"]`);
-  if (!tile) return;
-  tile.classList.toggle('has-update', !!hasUpdate);
-  const existing = tile.querySelector('.tile__dot');
-  if (hasUpdate && !existing) {
-    const dot = document.createElement('span');
-    dot.className = 'tile__dot';
-    dot.setAttribute('aria-label', '새 업데이트');
-    tile.appendChild(dot);
-  } else if (!hasUpdate && existing) {
-    existing.remove();
-  }
-}
-
-// "최근 N일 이내" 판정 — createdAt 기준
-function isRecent(isoTs, days = 7) {
-  if (!isoTs) return false;
-  const t = new Date(isoTs);
-  if (isNaN(t.getTime())) return false;
-  return (Date.now() - t.getTime()) <= days * 86400000;
-}
-
-function isNewSince(isoTs, viewName) {
-  if (!isoTs) return false;
-  const t = new Date(isoTs);
-  if (isNaN(t.getTime())) return false;
-  const seen = parseInt(localStorage.getItem(`tuz_seen_${viewName}`) || '0', 10);
-  return seen ? t.getTime() > seen : isRecent(isoTs);
-}
-
-function updatePinnedNotice(items) {
-  const ticker = document.getElementById('notice');
-  const tickerMirror = document.getElementById('noticeMirror');
-  const card = document.getElementById('todayNoticeCard');
-  const pinned = (items || []).filter((n) => (n.isPinned || n.isToday) && n.title);
-  // 공지 타일 업데이트 표시 — 핀된 공지가 있거나 7일 이내 새 공지가 있으면
-  const hasRecent = (items || []).some((n) => isNewSince(n.createdAt, 'news') || isNewSince(n.updatedAt, 'news'));
-  const hasPinnedNew = pinned.some((n) => isNewSince(n.createdAt, 'news') || isNewSince(n.updatedAt, 'news'));
-  markTileUpdate('news', hasPinnedNew || hasRecent);
-  if (!card) return;
-  if (!pinned.length) {
-    card.hidden = true;
-    return;
-  }
-  // 가장 최근 항목 (date desc, 동일 날짜면 created_at desc)
-  pinned.sort((a, b) => {
-    const da = String(a.date || ''); const db = String(b.date || '');
-    if (da !== db) return db.localeCompare(da);
-    return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
-  });
-  const top = pinned[0];
-  if (ticker) ticker.textContent = top.title;
-  if (tickerMirror) tickerMirror.textContent = top.title;
-  card.hidden = false;
-}
-
-function renderNews(items) {
-  const list = document.getElementById('newsList');
-  updatePinnedNotice(items); // 핀 점도 여기서 처리됨 (markTileUpdate)
-  if (!list) return;
-  if (!items || !items.length) {
-    renderEmpty('newsList', 'news');
-    return;
-  }
-  const valid = items.filter((n) => n.title);
-  if (!valid.length) {
-    renderEmpty('newsList', 'news');
-    return;
-  }
-  list.innerHTML = valid.map((n) => {
-    const tagKey = String(n.tag || '').toUpperCase();
-    const meta = NEWS_TAG_META[tagKey];
-    const chipHtml = meta
-      ? `<span class="chip ${meta.cls}"><span class="chip-icon">${meta.icon}</span>${esc(meta.label)}</span>`
-      : '';
-    const isPinned = n.isPinned || n.isToday;
-    const todayChip = isPinned
-      ? `<span class="chip chip--pin" title="홈 고정 공지">📌 고정 공지</span>`
-      : '';
-    const photoUrl = imgUrl(n.photo);
-    const photoHtml = photoUrl
-      ? `<img class="notice__photo" src="${esc(photoUrl)}" alt="${esc(n.title || '')}" loading="lazy">`
-      : '';
-    const noticeCls = ['notice'];
-    if (tagKey === 'EVENT') noticeCls.push('notice--event');
-    if (isPinned) noticeCls.push('notice--pinned');
-    return `
-    <article class="${noticeCls.join(' ')}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
-      ${photoHtml}
-      <div class="notice__body">
-        <header class="notice__head">
-          ${chipHtml}${todayChip}
-          <time>${esc(relativeTime(n.date))}</time>
-        </header>
-        <div class="notice__title">${esc(n.title || '')}</div>
-        ${n.titleEn ? `<div class="notice__title-en">${esc(n.titleEn)}</div>` : ''}
-        ${n.body ? `<p>${esc(n.body)}</p>` : ''}
-      </div>
-    </article>
-    `;
-  }).join('');
-}
-
-function renderWinners(items) {
-  const list = document.getElementById('winnerList');
-  if (!list) return;
-  if (!items || !items.length) { renderEmpty('winnerList', 'winners'); return; }
-  const valid = items.filter((w) => w.nick);
-  if (!valid.length) { renderEmpty('winnerList', 'winners'); return; }
-  list.innerHTML = valid.map((w, i) => `
-    <div class="winner"${w.id ? ` data-item-id="${esc(w.id)}"` : ''}>
-      <span class="winner__num">${i + 1}</span>
-      <span class="winner__nick">${esc(w.nick || '')}</span>
-      <span class="chip">${esc(w.month || '무료음료')}</span>
-      ${w.period ? `<span class="winner__period">${esc(w.period)}</span>` : ''}
-    </div>
-  `).join('');
-}
-
-function updateStatusBar(settings) {
-  const bar = document.querySelector('.status-bar');
-  const textEl = bar && bar.querySelector('.status-text');
-  if (!bar || !textEl) return;
-
-  const now = new Date();
-  const day = now.getDay(); // 0=일, 6=토
-  const hhmm = now.getHours() * 60 + now.getMinutes();
-
-  if (settings.holidayNotice) {
-    bar.className = 'status-bar is-closed';
-    textEl.textContent = settings.holidayNotice;
-    return;
-  }
-
-  const hoursStr = (day === 0 || day === 6)
-    ? (settings.hoursWeekend || '10:00-23:00')
-    : (settings.hoursWeekday || '08:00-22:00');
-
-  const [openStr, closeStr] = hoursStr.split('-');
-  const toMin = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + (m || 0); };
-  const open = toMin(openStr);
-  const close = toMin(closeStr);
-
-  if (hhmm >= open && hhmm < close) {
-    bar.className = 'status-bar';
-    textEl.textContent = `지금 영업 중 · ${hoursStr.replace('-', ' – ')}`;
-  } else if (hhmm < open) {
-    bar.className = 'status-bar is-soon';
-    textEl.textContent = `곧 오픈 · ${openStr}부터`;
-  } else {
-    bar.className = 'status-bar is-closed';
-    textEl.textContent = `오늘 영업 종료 · 내일 다시 오세요`;
-  }
-}
-
-function updateHoursPage(settings) {
-  const weekdayEl = document.getElementById('hoursWeekdayTime');
-  const weekendEl = document.getElementById('hoursWeekendTime');
-  if (weekdayEl && settings.hoursWeekday) weekdayEl.textContent = settings.hoursWeekday.replace('-', ' – ');
-  if (weekendEl && settings.hoursWeekend) weekendEl.textContent = settings.hoursWeekend.replace('-', ' – ');
-
-  // 정기휴무 행 — 비어있으면 숨김, 값 있으면 표시 + 텍스트 교체
-  const closureRow = document.getElementById('hoursRegularClosureRow');
-  const closureKrEl = document.getElementById('hoursRegularClosureKr');
-  const closureEnEl = document.getElementById('hoursRegularClosureEn');
-  if (closureRow) {
-    const kr = settings.regularClosureKr;
-    const en = settings.regularClosureEn;
-    // column이 없던(null) 경우엔 하드코딩 기본값 유지, 명시적 빈 문자열은 숨김
-    const hasKr = typeof kr === 'string';
-    const hasEn = typeof en === 'string';
-    if (hasKr && kr === '' && (!hasEn || en === '')) {
-      closureRow.hidden = true;
-    } else {
-      closureRow.hidden = false;
-      if (hasKr && closureKrEl) closureKrEl.textContent = kr || '';
-      if (hasEn && closureEnEl) closureEnEl.textContent = en || '';
-    }
-  }
-
-  const card = document.getElementById('hoursOpenNow');
-  if (!card) return;
-
-  const now = new Date();
-  const day = now.getDay();
-  const hhmm = now.getHours() * 60 + now.getMinutes();
-
-  if (settings.holidayNotice) {
-    card.innerHTML = `<span class="dot-red"></span><div><b>임시휴무</b> · ${esc(settings.holidayNotice)}</div>`;
-    return;
-  }
-
-  const hoursStr = (day === 0 || day === 6)
-    ? (settings.hoursWeekend || '10:00-23:00')
-    : (settings.hoursWeekday || '08:00-22:00');
-  const [openStr, closeStr] = hoursStr.split('-');
-  const toMin = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + (m || 0); };
-  const openMin = toMin(openStr);
-  const closeMin = toMin(closeStr);
-
-  if (hhmm >= openMin && hhmm < closeMin) {
-    card.innerHTML = `<span class="dot-green"></span><div><b>지금 영업 중</b> · ${esc(closeStr)}에 마감합니다</div>`;
-  } else if (hhmm < openMin) {
-    card.innerHTML = `<span class="dot-yellow"></span><div><b>영업 준비 중</b> · ${esc(openStr)}에 오픈합니다</div>`;
-  } else {
-    card.innerHTML = `<span class="dot-red"></span><div><b>오늘 영업 종료</b> · 내일 다시 오세요</div>`;
-  }
-}
-
-function renderSettings(items) {
-  const s = items && items[0];
-  if (!s) return;
-  CURRENT_SETTINGS = s;
-  if (s.wifiSsid) {
-    const el = document.getElementById('wifiSsid');
-    if (el) el.textContent = s.wifiSsid;
-    const tile = document.querySelector('[data-wifi-ssid-tile]');
-    if (tile) tile.textContent = s.wifiSsid;
-  }
-  if (s.wifiPassword) {
-    WIFI_PW = s.wifiPassword;
-    const el = document.getElementById('pwText');
-    if (el) el.textContent = s.wifiPassword;
-  }
-  updateStatusBar(s);
-  updateHoursPage(s);
-  updateMenuHero(s);
-}
-
-function updateMenuHero(settings) {
-  const heroEl = document.getElementById('menuHero');
-  if (!heroEl) return;
-  const heroUrl = imgUrl(settings?.menuHeroPhoto);
-  if (heroUrl) {
-    const block = document.createElement('div');
-    block.className = 'photo-block';
-    block.id = 'menuHero';
-    block.innerHTML = `<img src="${esc(heroUrl)}" alt="menu hero">`;
-    heroEl.replaceWith(block);
-  } else {
-    // 빈 상태 복원
-    if (!heroEl.classList.contains('is-empty')) {
-      const block = document.createElement('div');
-      block.className = 'photo-block is-empty';
-      block.id = 'menuHero';
-      heroEl.replaceWith(block);
-    }
-  }
-}
-
-function renderGreeting(items) {
-  const g = items && items[0];
-  if (!g) return;
-  if (!g.body && !g.photo && !g.sign) return;
-  const photoEl = document.getElementById('greetPhoto');
-  if (photoEl) {
-    const photoUrl = imgUrl(g.photo);
-    if (photoUrl) {
-      const block = document.createElement('div');
-      block.className = 'photo-block';
-      block.id = 'greetPhoto';
-      block.innerHTML = `<img src="${esc(photoUrl)}" alt="owner portrait">`;
-      photoEl.replaceWith(block);
-    }
-    // if no photo, leave existing .photo-block.is-empty
-  }
-  if (g.body) {
-    const body = document.getElementById('greetBody');
-    if (body) body.textContent = String(g.body).replace(/\\n/g, '\n');
-  }
-  if (g.sign) {
-    const sign = document.getElementById('greetSign');
-    if (sign) sign.textContent = g.sign;
-  }
-}
-
-function isToday(isoTs) {
-  if (!isoTs) return false;
-  const d = new Date(isoTs);
-  if (isNaN(d.getTime())) return false;
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear()
-    && d.getMonth() === now.getMonth()
-    && d.getDate() === now.getDate();
-}
-
-// 뱃지 CSV → 배열 (선택 기반)
-function resolveBadges(m) {
-  const raw = String(m.tag || '').split(',').map((s) => s.trim()).filter(Boolean);
-  return [...new Set(raw.map((s) => s.toUpperCase()))];
-}
-
-const BADGE_LABEL = {
-  NEW: 'NEW',
-  SEASON: 'SEASON',
-};
-const BADGE_CLASS = {
-  NEW: 'chip--new',
-  SEASON: 'chip--season',
-};
-
-function renderMenu(items) {
-  // 대표 사진은 settings에서 가져옴 (setting이 이미 로드되어 있으면 적용)
-  if (CURRENT_SETTINGS) updateMenuHero(CURRENT_SETTINGS);
-
-  // 최근 7일 이내 추가/수정된 메뉴가 있으면 타일에 점
-  const recent = (items || []).some((m) => isNewSince(m.createdAt, 'menu') || isNewSince(m.updatedAt, 'menu'));
-  markTileUpdate('menu', recent);
-
-  if (!items || !items.length) { renderEmpty('menuCategories', 'menu'); return; }
-
-  const CATEGORY_ORDER = ['SIGNATURE · 시그니처', 'COFFEE · 커피', 'NON-COFFEE · 논커피'];
-  const groups = new Map();
-  for (const r of items) {
-    if (!r.name) continue;
-    const cat = (r.category || '메뉴').trim();
-    if (!groups.has(cat)) groups.set(cat, []);
-    groups.get(cat).push(r);
-  }
-  const order = [
-    ...CATEGORY_ORDER.filter((c) => groups.has(c)),
-    ...[...groups.keys()].filter((c) => !CATEGORY_ORDER.includes(c)),
-  ];
-  if (!order.length) { renderEmpty('menuCategories', 'menu'); return; }
-
-  const container = document.getElementById('menuCategories');
-  if (!container) return;
-  container.innerHTML = order.map((cat, idx) => {
-    const rows = groups.get(cat);
-    // 카테고리 내에 사진 있는 항목이 하나라도 있으면 모든 행에 썸네일 슬롯 예약
-    const categoryHasThumb = rows.some((m) => imgUrl(m.photo));
-    return `
-    <div class="card"${idx > 0 ? ' style="margin-top:14px"' : ''}>
-      <div class="eyebrow">${esc(cat)}</div>
-      ${rows.map((m) => {
-        const priceStr = m.price ? '₩' + Number(String(m.price).replace(/[^0-9]/g, '')).toLocaleString('ko-KR') : '';
-        const photoUrl = imgUrl(m.photo);
-        const badges = resolveBadges(m);
-        const badgesHtml = badges.map((b) => {
-          const label = BADGE_LABEL[b] || b;
-          const cls = BADGE_CLASS[b] || '';
-          return ` <span class="chip chip--sm ${cls}">${esc(label)}</span>`;
-        }).join('');
-        const thumbHtml = photoUrl
-          ? `<button type="button" class="menu-thumb" data-menu-photo="${esc(photoUrl)}" data-menu-name="${esc(m.name)}" aria-label="${esc(m.name)} 사진 보기"><img src="${esc(photoUrl)}" alt="${esc(m.name)}" loading="lazy"/></button>`
-          : (categoryHasThumb ? `<span class="menu-thumb menu-thumb--empty" aria-hidden="true"></span>` : '');
-        return `
-        <div class="menu-row${categoryHasThumb ? ' has-thumb' : ''}"${m.id ? ` data-item-id="${esc(m.id)}"` : ''}>
-          ${thumbHtml}
-          <div class="menu-row__l">
-            <div class="name">${esc(m.name)}${badgesHtml}</div>
-            ${m.nameEn ? `<div class="name-en">${esc(m.nameEn)}</div>` : ''}
-          </div>
-          <div class="dots"></div>
-          <div class="price">${esc(priceStr || m.price || '')}</div>
-        </div>
-        `;
-      }).join('')}
-    </div>
-    `;
-  }).join('');
-}
-
-// ─── 메뉴 사진 라이트박스 ──────────────────
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-menu-photo]');
-  if (!btn) return;
-  e.preventDefault();
-  openPhotoLightbox(btn.dataset.menuPhoto, btn.dataset.menuName || '');
-});
-
-function openPhotoLightbox(url, caption) {
-  const existing = document.getElementById('tuz-lightbox');
-  if (existing) existing.remove();
-  const box = document.createElement('div');
-  box.id = 'tuz-lightbox';
-  box.className = 'tuz-lightbox';
-  box.setAttribute('role', 'dialog');
-  box.setAttribute('aria-modal', 'true');
-  box.innerHTML = `
-    <button type="button" class="tuz-lightbox__close" aria-label="닫기">×</button>
-    <figure class="tuz-lightbox__fig">
-      <img src="${esc(url)}" alt="${esc(caption)}"/>
-      ${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}
-    </figure>
-  `;
-  const close = () => box.remove();
-  box.querySelector('.tuz-lightbox__close').addEventListener('click', close);
-  box.addEventListener('click', (e) => { if (e.target === box) close(); });
-  document.addEventListener('keydown', function onKey(e) {
-    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
-  });
-  document.body.appendChild(box);
+// settings 테이블 fetch 후 모든 derived renderer 를 호출
+function renderAllSettings(items) {
+  renderWifi(items);
+  renderHours(items);
+  renderMenuSettings(items);
 }
 
 // ─── DB 컬럼(snake_case) → JS(camelCase) 변환 ──
@@ -718,165 +184,51 @@ async function loadTable(table, renderer, { single = false, order = 'sort_order'
   }
 }
 
-// ─── 지도 초기화 (Kakao → Leaflet → 링크 카드 3단 폴백) ─
-// 울산광역시 중구 염포로 22 — Nominatim 지오코딩 기준 반구1동 염포로 시작점
-const TUZ_LAT = 35.5596;
-const TUZ_LNG = 129.3443;
-
-function clearMapEl(mapEl) {
-  mapEl.innerHTML = '';
-  mapEl.classList.remove('is-empty');
-  mapEl.removeAttribute('title');
-}
-
-function renderLinkCardFallback(mapEl, reason) {
-  clearMapEl(mapEl);
-  mapEl.classList.add('is-empty');
-  const q = encodeURIComponent(ADDRESS);
-  mapEl.innerHTML = `
-    <a class="map-fallback" href="https://map.kakao.com/?q=${q}" target="_blank" rel="noopener">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
-      <span class="map-fallback__title">카카오맵에서 보기</span>
-      <span class="map-fallback__sub">${esc(ADDRESS)}</span>
-    </a>
-  `;
-  if (reason) mapEl.title = reason;
-}
-
-// Leaflet + OpenStreetMap 폴백 — 어떤 도메인에서도 동작
-function renderLeafletMap(mapEl) {
-  if (mapEl.dataset.mapDrawn === 'leaflet') return;
-
-  const loadCss = () => new Promise((resolve) => {
-    if (document.querySelector('link[data-tuz-leaflet]')) return resolve();
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
-    link.crossOrigin = '';
-    link.dataset.tuzLeaflet = '1';
-    link.onload = resolve;
-    link.onerror = resolve;
-    document.head.appendChild(link);
-  });
-
-  const loadJs = () => new Promise((resolve, reject) => {
-    if (window.L) return resolve();
-    const s = document.createElement('script');
-    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
-    s.crossOrigin = '';
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('leaflet js load failed'));
-    document.head.appendChild(s);
-  });
-
-  Promise.all([loadCss(), loadJs()]).then(() => {
-    clearMapEl(mapEl);
-    mapEl.dataset.mapDrawn = 'leaflet';
-    const map = window.L.map(mapEl, { zoomControl: true, attributionControl: true })
-      .setView([TUZ_LAT, TUZ_LNG], 16);
-    window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
-    window.L.marker([TUZ_LAT, TUZ_LNG])
-      .addTo(map)
-      .bindPopup(`<b>Tuz</b><br>${esc(ADDRESS)}`)
-      .openPopup();
-  }).catch((e) => {
-    console.warn('[tuz] leaflet fallback failed:', e);
-    renderLinkCardFallback(mapEl, 'Leaflet 로드 실패 — 네트워크 확인');
-  });
-}
-
-function initKakaoMap() {
-  const mapEl = document.getElementById('map');
-  if (!mapEl) return;
-  // 중복 실행 방지 (dual-module 방어)
-  if (mapEl.dataset.mapInit === '1') return;
-  mapEl.dataset.mapInit = '1';
-
-  // 키가 없으면 바로 Leaflet로
-  if (!window.KAKAO_APP_KEY) {
-    renderLeafletMap(mapEl);
-    return;
-  }
-
-  let kakaoSucceeded = false;
-  const drawKakao = () => {
-    try {
-      clearMapEl(mapEl);
-      const map = new window.kakao.maps.Map(mapEl, {
-        center: new window.kakao.maps.LatLng(TUZ_LAT, TUZ_LNG),
-        level: 3,
-      });
-      new window.kakao.maps.Marker({
-        map,
-        position: new window.kakao.maps.LatLng(TUZ_LAT, TUZ_LNG),
-        title: 'Tuz',
-      });
-      kakaoSucceeded = true;
-      mapEl.dataset.mapDrawn = 'kakao';
-    } catch (e) {
-      console.warn('[tuz] kakao map init failed, using leaflet:', e);
-      renderLeafletMap(mapEl);
-    }
-  };
-
-  const tryLoad = () => {
-    if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === 'function') {
-      window.kakao.maps.load(drawKakao);
-      return true;
-    }
-    return false;
-  };
-
-  if (tryLoad()) return;
-
-  const existing = document.querySelector('script[data-tuz-kakao]');
-  if (existing) {
-    existing.addEventListener('load', tryLoad);
-    existing.addEventListener('error', () => renderLeafletMap(mapEl));
-  } else {
-    const script = document.createElement('script');
-    script.dataset.tuzKakao = '1';
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${window.KAKAO_APP_KEY}&autoload=false`;
-    script.onload = tryLoad;
-    script.onerror = () => renderLeafletMap(mapEl);
-    document.head.appendChild(script);
-  }
-
-  // 안전망: 3.5초 안에 Kakao가 window.kakao를 정의하지 않으면 Leaflet로 전환
-  // (도메인 whitelist 미등록 시 Kakao는 빈 응답을 보내 SDK가 초기화되지 않음)
-  setTimeout(() => {
-    if (!kakaoSucceeded && !(window.kakao && window.kakao.maps)) {
-      renderLeafletMap(mapEl);
-    }
-  }, 3500);
-}
-
 export const RENDERERS = {
   news: renderNews,
   pick: renderPicks,
   winners: renderWinners,
   greeting: renderGreeting,
   menu: renderMenu,
-  settings: renderSettings,
+  wifi: renderWifi,
+  hours: renderHours,
 };
 
 const LOADERS = {
-  news:     { table: 'news',     fn: () => loadTable('news',     renderNews) },
-  pick:     { table: 'pick',     fn: () => loadTable('pick', renderPicks, { select: '*, menu(name, name_en, price, photo)' }) },
-  event:    { table: 'winners',  fn: () => loadTable('winners',  renderWinners) },
-  greeting: { table: 'greeting', fn: () => loadTable('greeting', renderGreeting, { single: true }) },
-  menu:     { table: 'menu',     fn: () => loadTable('menu',     renderMenu) },
-  wifi:     { table: 'settings', fn: () => loadTable('settings', renderSettings, { single: true }) },
-  hours:    { table: 'settings', fn: () => loadTable('settings', renderSettings, { single: true }) },
-  location: { table: null,       fn: () => initKakaoMap() },
+  [NEWS_LOADER_SPEC.view]: {
+    table: NEWS_LOADER_SPEC.table,
+    fn: () => loadTable(NEWS_LOADER_SPEC.table, renderNews, NEWS_LOADER_SPEC.options),
+  },
+  [PICK_LOADER_SPEC.view]: {
+    table: PICK_LOADER_SPEC.table,
+    fn: () => loadTable(PICK_LOADER_SPEC.table, renderPicks, PICK_LOADER_SPEC.options),
+  },
+  [WINNERS_LOADER_SPEC.view]: {
+    table: WINNERS_LOADER_SPEC.table,
+    fn: () => loadTable(WINNERS_LOADER_SPEC.table, renderWinners, WINNERS_LOADER_SPEC.options),
+  },
+  [GREETING_LOADER_SPEC.view]: {
+    table: GREETING_LOADER_SPEC.table,
+    fn: () => loadTable(GREETING_LOADER_SPEC.table, renderGreeting, GREETING_LOADER_SPEC.options),
+  },
+  [MENU_LOADER_SPEC.view]: {
+    table: MENU_LOADER_SPEC.table,
+    fn: () => loadTable(MENU_LOADER_SPEC.table, renderMenu, MENU_LOADER_SPEC.options),
+  },
+  // settings 테이블은 wifi/hours/menu_hero 가 공유. 한 번 fetch 후 모든 renderer 호출.
+  // (loadTable 의 loadingFlag 가 동시 호출을 막으므로 단일 콜백이 필요)
+  [WIFI_LOADER_SPEC.view]: {
+    table: WIFI_LOADER_SPEC.table,
+    fn: () => loadTable(WIFI_LOADER_SPEC.table, renderAllSettings, WIFI_LOADER_SPEC.options),
+  },
+  [HOURS_LOADER_SPEC.view]: {
+    table: HOURS_LOADER_SPEC.table,
+    fn: () => loadTable(HOURS_LOADER_SPEC.table, renderAllSettings, HOURS_LOADER_SPEC.options),
+  },
+  [LOCATION_LOADER.view]: { table: LOCATION_LOADER.table, fn: LOCATION_LOADER.fn },
 };
 
-// settings는 항상 먼저 로드 — 모든 페이지에서 WiFi 정보가 필요할 수 있음
+// settings 첫 로드 — renderAllSettings 가 wifi/hours/menu_hero 한 번에 처리
 LOADERS.wifi.fn();
 // news도 먼저 로드 — 홈의 "오늘의 공지"가 필요
 LOADERS.news.fn();
@@ -894,4 +246,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=36').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=45').catch((e) => console.warn('[tuz] admin module not loaded:', e));
