@@ -1,5 +1,5 @@
-import { copyText } from '../../shared/dom.js?v=48';
-import { subscribeSettings } from '../../shared/settings.js?v=48';
+import { copyText } from '../../shared/dom.js?v=52';
+import { subscribeSettings } from '../../shared/settings.js?v=52';
 
 export const WIFI_LABEL = '와이파이';
 

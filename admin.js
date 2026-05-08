@@ -1,11 +1,11 @@
-import { supabase, refreshTable } from './app.js?v=48';
-import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=48';
-import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=48';
-import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=48';
-import { HOURS_SCHEMA } from './slices/hours/admin.js?v=48';
-import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=48';
-import { NEWS_SCHEMA, enforceNewsPinnedExclusive } from './slices/news/admin.js?v=48';
-import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=48';
+import { supabase, refreshTable } from './app.js?v=52';
+import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=52';
+import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=52';
+import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=52';
+import { HOURS_SCHEMA } from './slices/hours/admin.js?v=52';
+import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=52';
+import { NEWS_SCHEMA, enforceNewsPinnedExclusive } from './slices/news/admin.js?v=52';
+import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=52';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -994,23 +994,28 @@ function attachReorder(container, spec, tableName) {
   if (reorderAttached.has(container)) return;
   reorderAttached.add(container);
 
+  // getGroupKey 가 있으면 그룹 간 이동을 허용한다 (예: 메뉴 카테고리 변경).
+  const allowCrossGroup = typeof spec.getGroupKey === 'function' && !!spec.groupField;
+
   container.addEventListener('pointerdown', (e) => {
     const handle = e.target.closest('.tuz-drag-handle');
     if (!handle) return;
     const card = handle.closest('[data-item-id]');
     if (!card) return;
-    const group = spec.groupSelector ? card.closest(spec.groupSelector) : container;
-    if (!group) return;
+    const startGroup = spec.groupSelector ? card.closest(spec.groupSelector) : container;
+    if (!startGroup) return;
 
     e.preventDefault();
-    handle.setPointerCapture(e.pointerId);
+    // setPointerCapture 미사용: target.before/after(card) 로 DOM 이 재배치될 때
+    // capture 타깃이 일시 분리되면 lostpointercapture 가 발생해 드래그가 끊김.
+    // 대신 window 레벨 리스너를 사용하면 DOM 이동과 무관하게 이벤트를 계속 받는다.
 
     const startX = e.clientX, startY = e.clientY;
     const rect = card.getBoundingClientRect();
 
     const ghost = card.cloneNode(true);
     ghost.querySelectorAll('.tuz-item-actions').forEach((el) => el.remove());
-    ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;pointer-events:none;opacity:0.85;z-index:9999;transform:none;transition:none;`;
+    ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;pointer-events:none;z-index:9999;transform:none;transition:none;`;
     ghost.classList.add('tuz-dragging');
     document.body.appendChild(ghost);
 
@@ -1018,35 +1023,99 @@ function attachReorder(container, spec, tableName) {
     let moved = false;
 
     function onMove(ev) {
+      ev.preventDefault(); // 스크롤 방지
       ghost.style.transform = `translate(${ev.clientX - startX}px, ${ev.clientY - startY}px)`;
-      const elBelow = document.elementFromPoint(ev.clientX, ev.clientY);
-      if (!elBelow) return;
-      const target = elBelow.closest('[data-item-id]');
-      if (!target || target === card) return;
-      const targetGroup = spec.groupSelector ? target.closest(spec.groupSelector) : container;
-      if (targetGroup !== group) return; // 다른 그룹은 무시
-      const targetRect = target.getBoundingClientRect();
-      const before = ev.clientY < targetRect.top + targetRect.height / 2;
-      if (before) target.before(card); else target.after(card);
+
+      const allRows = [...container.querySelectorAll('[data-item-id]')].filter((r) => r !== card);
+      if (!allRows.length) return;
+
+      const y = ev.clientY;
+
+      if (spec.groupSelector) {
+        // cursor 가 어느 .card 안에 있는지 판별 — gap 구간이면 현재 위치 유지.
+        // 이렇게 하면 "마지막 항목을 같은 카테고리 끝에 두려다 인접 카테고리로 빠지는"
+        // 문제가 사라진다.
+        const groups = [...container.querySelectorAll(spec.groupSelector)];
+        const hoveredGroup = groups.find((g) => {
+          const gr = g.getBoundingClientRect();
+          return y >= gr.top && y <= gr.bottom;
+        });
+        if (!hoveredGroup) return; // gap 구간 — 현재 위치 유지
+
+        if (!allowCrossGroup && hoveredGroup !== startGroup) return;
+
+        const groupRows = allRows.filter((r) => hoveredGroup.contains(r));
+        if (groupRows.length === 0) {
+          // 이 그룹엔 source 외 항목이 없음 → 그룹 끝에 append (빈 카테고리로 이동)
+          if (card.parentElement !== hoveredGroup) {
+            hoveredGroup.appendChild(card);
+            moved = true;
+          }
+          return;
+        }
+
+        let targetRow = null;
+        let insertBefore = false;
+        for (const row of groupRows) {
+          const rowRect = row.getBoundingClientRect();
+          if (y < rowRect.top + rowRect.height / 2) { targetRow = row; insertBefore = true; break; }
+        }
+        if (!targetRow) { targetRow = groupRows[groupRows.length - 1]; insertBefore = false; }
+
+        if (insertBefore && card.nextElementSibling === targetRow) return;
+        if (!insertBefore && card.previousElementSibling === targetRow) return;
+        if (insertBefore) targetRow.before(card); else targetRow.after(card);
+        moved = true;
+        return;
+      }
+
+      // groupSelector 없는 flat 리스트 — 전체 nearest-row
+      let targetRow = null;
+      let insertBefore = false;
+      for (const row of allRows) {
+        const rowRect = row.getBoundingClientRect();
+        if (y < rowRect.top + rowRect.height / 2) { targetRow = row; insertBefore = true; break; }
+      }
+      if (!targetRow) { targetRow = allRows[allRows.length - 1]; insertBefore = false; }
+      if (insertBefore && card.nextElementSibling === targetRow) return;
+      if (!insertBefore && card.previousElementSibling === targetRow) return;
+      if (insertBefore) targetRow.before(card); else targetRow.after(card);
       moved = true;
     }
 
     async function onUp() {
-      handle.removeEventListener('pointermove', onMove);
-      handle.removeEventListener('pointerup', onUp);
-      handle.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
       ghost.remove();
       card.classList.remove('tuz-dragging-source');
 
       if (!moved) return;
 
-      const cards = [...group.querySelectorAll(':scope [data-item-id]')];
       try {
-        for (let i = 0; i < cards.length; i++) {
-          const id = cards[i].dataset.itemId;
-          const { error } = await supabase.from(tableName)
-            .update({ [spec.col]: i + 1 }).eq('id', id);
-          if (error) throw error;
+        if (allowCrossGroup) {
+          // 모든 그룹의 아이템을 DOM 순서로 순회하며 sort_order 를 글로벌하게 재할당하고,
+          // 현재 속한 그룹의 key 를 groupField 로 함께 저장한다.
+          const allItems = [...container.querySelectorAll('[data-item-id]')];
+          for (let i = 0; i < allItems.length; i++) {
+            const el = allItems[i];
+            const id = el.dataset.itemId;
+            const groupEl = spec.groupSelector ? el.closest(spec.groupSelector) : container;
+            const groupKey = groupEl ? spec.getGroupKey(groupEl) : null;
+            const payload = { [spec.col]: i + 1 };
+            if (groupKey != null) payload[spec.groupField] = groupKey;
+            const { error } = await supabase.from(tableName).update(payload).eq('id', id);
+            if (error) throw error;
+          }
+        } else {
+          const finalGroup = spec.groupSelector ? card.closest(spec.groupSelector) : container;
+          const cards = [...finalGroup.querySelectorAll(':scope [data-item-id]')];
+          for (let i = 0; i < cards.length; i++) {
+            const id = cards[i].dataset.itemId;
+            const { error } = await supabase.from(tableName)
+              .update({ [spec.col]: i + 1 }).eq('id', id);
+            if (error) throw error;
+          }
         }
         toast('순서가 저장되었습니다');
       } catch (err) {
@@ -1055,9 +1124,9 @@ function attachReorder(container, spec, tableName) {
       await refreshTable(tableName);
     }
 
-    handle.addEventListener('pointermove', onMove);
-    handle.addEventListener('pointerup', onUp);
-    handle.addEventListener('pointercancel', onUp);
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
   });
 }
 

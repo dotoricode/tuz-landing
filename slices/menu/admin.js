@@ -5,8 +5,15 @@ export const MENU_SCHEMA = {
   views: ['menu'],
   table: 'menu',
   itemContainer: '#menuCategories', // 카드는 카테고리 그룹 안에 nested
-  // ADR-0006 Phase B: 카테고리(.card) 안에서만 sort_order 드래그
-  reorder: { col: 'sort_order', groupSelector: '.card' },
+  // ADR-0006 Phase B: 카테고리(.card) 별로 묶이지만 카테고리 간 이동도 허용.
+  // getGroupKey 가 있으면 admin.js 의 reorder dispatcher 가 cross-group drop 을
+  // 허용하고, 드롭된 그룹의 eyebrow 텍스트(category) 를 groupField 로 함께 저장한다.
+  reorder: {
+    col: 'sort_order',
+    groupSelector: '.card',
+    groupField: 'category',
+    getGroupKey: (groupEl) => groupEl.querySelector('.eyebrow')?.textContent?.trim() || null,
+  },
   groupBy: 'category', // 편집 모드에서 카테고리 탭으로 분리
   fields: [
     { col: 'category', label: '카테고리', type: 'select', required: true,
