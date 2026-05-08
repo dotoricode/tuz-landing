@@ -1,48 +1,48 @@
 // ─── 외부 모듈 ───────────────────────────────
-import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './shared/supabase.js?v=46';
-import { showConnectionToast } from './shared/conn-toast.js?v=46';
-import { bootSettings, refreshSettings } from './shared/settings.js?v=46';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './shared/supabase.js?v=47';
+import { showConnectionToast } from './shared/conn-toast.js?v=47';
+import { bootSettings, refreshSettings } from './shared/settings.js?v=47';
 import {
   renderGreeting,
   GREETING_LABEL,
   GREETING_LOADER_SPEC,
-} from './slices/greeting/public.js?v=46';
+} from './slices/greeting/public.js?v=47';
 import {
   renderWinners,
   WINNERS_LABEL,
   WINNERS_LOADER_SPEC,
-} from './slices/winners/public.js?v=46';
+} from './slices/winners/public.js?v=47';
 import {
   renderWifi,
   WIFI_LABEL,
   initWifi,
-} from './slices/wifi/public.js?v=46';
+} from './slices/wifi/public.js?v=47';
 import {
   renderHours,
   HOURS_LABEL,
   initHours,
-} from './slices/hours/public.js?v=46';
+} from './slices/hours/public.js?v=47';
 import {
   LOCATION_LABEL,
   LOCATION_LOADER,
   initLocation,
-} from './slices/location/public.js?v=46';
+} from './slices/location/public.js?v=47';
 import {
   renderMenu,
   MENU_LABEL,
   MENU_LOADER_SPEC,
   initMenu,
-} from './slices/menu/public.js?v=46';
+} from './slices/menu/public.js?v=47';
 import {
   renderNews,
   NEWS_LABEL,
   NEWS_LOADER_SPEC,
-} from './slices/news/public.js?v=46';
+} from './slices/news/public.js?v=47';
 import {
   renderPicks,
   PICK_LABEL,
   PICK_LOADER_SPEC,
-} from './slices/pick/public.js?v=46';
+} from './slices/pick/public.js?v=47';
 
 // admin.js 등 외부 import 호환을 위해 re-export
 export { supabase, SUPABASE_URL, SUPABASE_ANON_KEY };
@@ -225,4 +225,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=46').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=47').catch((e) => console.warn('[tuz] admin module not loaded:', e));

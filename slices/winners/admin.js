@@ -3,6 +3,8 @@ export const WINNERS_SCHEMA = {
   noun: '당첨자',
   mode: 'list',
   views: ['event'],
+  table: 'winners',
+  itemContainer: '#winnerList',
   fields: [
     { col: 'nick',   label: '닉네임',              type: 'text', required: true },
     { col: 'month',  label: '혜택',                type: 'text', placeholder: '5월 무료음료' },

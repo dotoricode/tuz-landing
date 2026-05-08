@@ -1,7 +1,7 @@
-import { esc, imgUrl } from '../../shared/dom.js?v=46';
-import { renderEmpty } from '../../shared/empty.js?v=46';
-import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=46';
-import { subscribeSettings } from '../../shared/settings.js?v=46';
+import { esc, imgUrl } from '../../shared/dom.js?v=47';
+import { renderEmpty } from '../../shared/empty.js?v=47';
+import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=47';
+import { subscribeSettings } from '../../shared/settings.js?v=47';
 
 export const MENU_LABEL = '메뉴';
 

@@ -1,4 +1,4 @@
-import { esc, copyText } from '../../shared/dom.js?v=46';
+import { esc, copyText } from '../../shared/dom.js?v=47';
 
 export const LOCATION_LABEL = '오시는 길';
 export const ADDRESS = '울산광역시 중구 염포로22, 2층';

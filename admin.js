@@ -1,11 +1,11 @@
-import { supabase, refreshTable } from './app.js?v=46';
-import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=46';
-import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=46';
-import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=46';
-import { HOURS_SCHEMA } from './slices/hours/admin.js?v=46';
-import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=46';
-import { NEWS_SCHEMA } from './slices/news/admin.js?v=46';
-import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=46';
+import { supabase, refreshTable } from './app.js?v=47';
+import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=47';
+import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=47';
+import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=47';
+import { HOURS_SCHEMA } from './slices/hours/admin.js?v=47';
+import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=47';
+import { NEWS_SCHEMA, enforceNewsPinnedExclusive } from './slices/news/admin.js?v=47';
+import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=47';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -754,17 +754,8 @@ async function appendRows(tableName, schema, rows) {
 }
 
 // ─── 저장 로직 ──────────────────────────────
-// 공지 핀 단일화 — payload에 is_pinned=true 인 행이 있으면 기존 핀을 모두 해제.
-// 직후 upsert가 payload의 새 핀을 true로 설정하므로 결과적으로 단일 핀 보장.
-async function enforceNewsPinnedExclusive(payload) {
-  const arr = Array.isArray(payload) ? payload : [payload];
-  const wantsPin = arr.some((r) => r.is_pinned === true);
-  if (!wantsPin) return;
-  // is_pinned 컬럼이 없으면(마이그레이션 전) 무시
-  const { error } = await supabase.from('news').update({ is_pinned: false }).eq('is_pinned', true);
-  if (error && error.message?.includes('is_pinned')) return;
-  if (error) throw error;
-}
+// (enforceNewsPinnedExclusive 는 ADR-0006 에 따라 slices/news/admin.js 로 이전.
+// 이 모듈은 import 해서 News 도메인 invariant 를 호출한다.)
 
 // ─── ADR-0002: 영업시간 변경 후 SCHEDULE 공지 생성 모달 ─
 async function promptScheduleNews(newValues, oldValues) {
@@ -824,7 +815,7 @@ async function saveRows(tableName, schema, rows, removedIds) {
     for (const f of schema.fields) {
       if (f.required && !payload[f.col]) throw new Error(`${f.label}을(를) 입력해주세요`);
     }
-    if (tableName === 'news') await enforceNewsPinnedExclusive(payload);
+    if (tableName === 'news') await enforceNewsPinnedExclusive(supabase, payload);
 
     // ADR-0002: 영업시간 변경 감지를 위해 저장 전 현재 값 스냅샷
     let oldSettings = null;
@@ -865,59 +856,100 @@ async function saveRows(tableName, schema, rows, removedIds) {
   }).filter(Boolean);
 
   if (!payload.length) return;
-  if (tableName === 'news') await enforceNewsPinnedExclusive(payload);
+  if (tableName === 'news') await enforceNewsPinnedExclusive(supabase, payload);
   const { error } = await supabase.from(tableName).upsert(payload);
   if (error) throw error;
   if (tableName === 'menu') _menuOptions = null;
 }
 
-// ─── 항목별 수정/삭제 오버레이 ──────────────
-const VIEW_TO_TABLE = { news: 'news', pick: 'pick', event: 'winners', menu: 'menu' };
+// ─── 항목별 수정/삭제 오버레이 (ADR-0006) ──────
+// 슬라이스 schema 의 itemActions 와 default edit/delete 를 합쳐 카드에 주입.
+// admin.js 는 dispatcher — 도메인 인지 없음.
+
+const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+const DELETE_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>';
+
+const DEFAULT_ITEM_ACTIONS = [
+  {
+    key: 'edit', label: '수정', icon: EDIT_ICON,
+    handler: (itemEl, ctx) => ctx.openItemEditor(ctx.tableName, itemEl.dataset.itemId),
+  },
+  {
+    key: 'delete', label: '삭제', variant: 'danger', icon: DELETE_ICON,
+    handler: async (itemEl, ctx) => {
+      if (!confirm('이 항목을 삭제할까요? 되돌릴 수 없습니다.')) return;
+      const { error } = await ctx.supabase.from(ctx.tableName).delete().eq('id', itemEl.dataset.itemId);
+      if (error) { ctx.toast(`삭제 실패: ${error.message}`, { error: true }); return; }
+      ctx.toast('삭제되었습니다');
+      await ctx.refreshTable(ctx.tableName);
+    },
+  },
+];
+
+function viewToTable(view) {
+  for (const [key, schema] of Object.entries(SCHEMAS)) {
+    if (schema.views?.includes(view)) return schema.table || key;
+  }
+  return null;
+}
 
 function findSchemaByTable(tableName) {
-  return Object.values(SCHEMAS).find((s, i, arr) => {
-    const key = Object.keys(SCHEMAS)[i];
-    return (s.table || key) === tableName;
-  });
+  for (const [key, schema] of Object.entries(SCHEMAS)) {
+    if ((schema.table || key) === tableName) return schema;
+  }
+  return null;
+}
+
+function getSliceActions(view) {
+  const actions = [];
+  for (const schema of Object.values(SCHEMAS)) {
+    if (schema.views?.includes(view) && Array.isArray(schema.itemActions)) {
+      actions.push(...schema.itemActions);
+    }
+  }
+  return actions;
 }
 
 function renderItemActions() {
   document.querySelectorAll('.tuz-item-actions').forEach((el) => el.remove());
   if (!currentUser) return;
 
+  const baseCtx = { supabase, refreshTable, toast, openItemEditor };
+
   document.querySelectorAll('[data-item-id]').forEach((item) => {
-    const view = item.closest('[data-view]');
-    const tableName = VIEW_TO_TABLE[view?.dataset.view];
+    const view = item.closest('[data-view]')?.dataset.view;
+    if (!view) return;
+    const tableName = viewToTable(view);
     const id = item.dataset.itemId;
     if (!tableName || !id) return;
 
-    if (getComputedStyle(item).position === 'static') {
-      item.style.position = 'relative';
-    }
+    if (getComputedStyle(item).position === 'static') item.style.position = 'relative';
 
-    const actions = document.createElement('div');
-    actions.className = 'tuz-item-actions';
-    actions.innerHTML = `
-      <button type="button" class="tuz-item-btn" data-act="edit" aria-label="수정">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      </button>
-      <button type="button" class="tuz-item-btn is-danger" data-act="del" aria-label="삭제">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-      </button>
-    `;
-    actions.querySelector('[data-act="edit"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openItemEditor(tableName, id);
-    });
-    actions.querySelector('[data-act="del"]').addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (!confirm('이 항목을 삭제할까요? 되돌릴 수 없습니다.')) return;
-      const { error } = await supabase.from(tableName).delete().eq('id', id);
-      if (error) { toast(`삭제 실패: ${error.message}`, { error: true }); return; }
-      toast('삭제되었습니다');
-      await refreshTable(tableName);
-    });
-    item.appendChild(actions);
+    const actions = [...getSliceActions(view), ...DEFAULT_ITEM_ACTIONS];
+    const ctx = { ...baseCtx, tableName };
+
+    const container = document.createElement('div');
+    container.className = 'tuz-item-actions';
+
+    for (const a of actions) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      let cls = 'tuz-item-btn';
+      if (a.variant === 'danger') cls += ' is-danger';
+      if (typeof a.state === 'function') {
+        cls += a.state(item) === 'on' ? ' is-on' : ' is-off';
+      }
+      btn.className = cls;
+      btn.setAttribute('aria-label', a.label || a.key);
+      btn.innerHTML = a.icon;
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try { await a.handler(item, ctx); }
+        catch (err) { toast(`작업 실패: ${err.message || err}`, { error: true }); }
+      });
+      container.appendChild(btn);
+    }
+    item.appendChild(container);
   });
 }
 
@@ -958,7 +990,7 @@ async function openItemEditor(tableName, itemId) {
             schema.fields.forEach((f) => {
               if (!f.autoDate) payload[f.col] = row[f.col] ?? null;
             });
-            if (tableName === 'news') await enforceNewsPinnedExclusive([payload]);
+            if (tableName === 'news') await enforceNewsPinnedExclusive(supabase, [payload]);
             const { error: upErr } = await supabase.from(tableName).upsert(payload);
             if (upErr) throw upErr;
             toast('저장되었습니다');
@@ -994,10 +1026,16 @@ function scheduleItemActions() {
 }
 
 function observeContentMutations() {
-  const targets = ['newsList', 'pickBig', 'pickSmall', 'winnerList', 'menuCategories'];
+  // 슬라이스 schema 의 itemContainer 를 모두 수집 (ADR-0006)
+  const selectors = new Set();
+  for (const schema of Object.values(SCHEMAS)) {
+    const c = schema.itemContainer;
+    if (Array.isArray(c)) c.forEach((s) => selectors.add(s));
+    else if (c) selectors.add(c);
+  }
   const observer = new MutationObserver(scheduleItemActions);
-  targets.forEach((id) => {
-    const el = document.getElementById(id);
+  selectors.forEach((sel) => {
+    const el = document.querySelector(sel);
     if (el) observer.observe(el, { childList: true, subtree: false });
   });
 }

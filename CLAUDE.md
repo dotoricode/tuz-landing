@@ -60,6 +60,11 @@ git push origin main
 ### Vertical Slice 추가 패턴
 `slices/<name>/public.js` 는 다음을 export: `XXX_LABEL`, `XXX_LOADER_SPEC = {view, table, options}` (또는 fetch 없는 경우 `XXX_LOADER = {view, table:null, fn}`), `renderXxx`, 선택 `initXxx` (DOM 핸들러). admin schema 는 `slices/<name>/admin.js`. app.js 의 `LOADERS` / `RENDERERS` / `titleOf` 에 등록.
 
+list-mode 슬라이스의 admin schema 추가 키 (ADR-0006):
+- `table`: 명시 (없으면 SCHEMAS 키 사용)
+- `itemContainer`: 카드 컨테이너 selector(s) — `[data-item-id]` 자식을 가진 요소. admin.js dispatcher 가 자동 observe.
+- `itemActions`: 카드 위 추가 버튼 배열 `{key, label, icon, variant?, state?(itemEl), handler(itemEl, ctx)}`. default edit/delete 는 admin 이 자동 주입. ctx = `{tableName, supabase, refreshTable, toast, openItemEditor}`.
+
 ### settings 데이터는 shared/settings.js 가 own (ADR-0005)
 `settings` 단일 행은 `shared/settings.js` 가 fetch · 캐시 · 변경 알림을 전담. wifi/hours/menu 슬라이스는 자기 `init` 함수에서 `subscribeSettings(renderXxx)` 한 줄로 자기 facet 구독. 새 settings-파생 facet 추가 시 슬라이스에서 `subscribeSettings` 호출만 하면 됨 — `app.js` 손대지 않음. admin 저장 후 `refreshTable('settings')` 는 자동으로 `refreshSettings()` 로 우회됨.
 

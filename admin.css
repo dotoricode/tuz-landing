@@ -616,6 +616,16 @@
   background: #c0392b;
   border-color: #c0392b;
 }
+/* ADR-0006: itemActions 토글 시각 (예: News 핀 토글 ON 상태) */
+.tuz-item-btn.is-on {
+  background: #c98920;
+  color: #fff7ee;
+  border-color: #c98920;
+}
+.tuz-item-btn.is-on:hover {
+  background: #b27818;
+  border-color: #b27818;
+}
 
 /* 좁은 행(winner/menu-row)은 내용이 겹치지 않도록 오른쪽 여백 확보 */
 body.is-admin .winner[data-item-id],

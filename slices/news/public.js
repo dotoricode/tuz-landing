@@ -1,6 +1,6 @@
-import { esc, imgUrl } from '../../shared/dom.js?v=46';
-import { renderEmpty } from '../../shared/empty.js?v=46';
-import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=46';
+import { esc, imgUrl } from '../../shared/dom.js?v=47';
+import { renderEmpty } from '../../shared/empty.js?v=47';
+import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=47';
 
 export const NEWS_LABEL = '공지 · 이벤트';
 
@@ -97,7 +97,7 @@ export function renderNews(items) {
     if (tagKey === 'EVENT') noticeCls.push('notice--event');
     if (isPinned) noticeCls.push('notice--pinned');
     return `
-    <article class="${noticeCls.join(' ')}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''}>
+    <article class="${noticeCls.join(' ')}"${n.id ? ` data-item-id="${esc(n.id)}"` : ''} data-pinned="${isPinned ? 'true' : 'false'}">
       ${photoHtml}
       <div class="notice__body">
         <header class="notice__head">

@@ -12,6 +12,7 @@ export const PICK_BIG_SCHEMA = {
   views: ['pick'],
   table: 'pick',
   filter: { barista: '큰 사장' },
+  itemContainer: ['#pickBig', '#pickSmall'], // 두 사장 카드 모두 동일 view 안
   fields: PICK_FIELDS,
 };
 

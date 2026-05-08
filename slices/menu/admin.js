@@ -3,6 +3,8 @@ export const MENU_SCHEMA = {
   noun: '메뉴',
   mode: 'list',
   views: ['menu'],
+  table: 'menu',
+  itemContainer: '#menuCategories', // 카드는 카테고리 그룹 안에 nested
   groupBy: 'category', // 편집 모드에서 카테고리 탭으로 분리
   fields: [
     { col: 'category', label: '카테고리', type: 'select', required: true,
