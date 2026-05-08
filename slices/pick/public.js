@@ -1,5 +1,5 @@
-import { esc, imgUrl } from '../../shared/dom.js?v=52';
-import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=52';
+import { esc, imgUrl } from '../../shared/dom.js?v=53';
+import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=53';
 
 export const PICK_LABEL = '오늘의 추천';
 

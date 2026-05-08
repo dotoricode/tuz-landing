@@ -1,11 +1,11 @@
-import { supabase, refreshTable } from './app.js?v=52';
-import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=52';
-import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=52';
-import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=52';
-import { HOURS_SCHEMA } from './slices/hours/admin.js?v=52';
-import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=52';
-import { NEWS_SCHEMA, enforceNewsPinnedExclusive } from './slices/news/admin.js?v=52';
-import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=52';
+import { supabase, refreshTable } from './app.js?v=53';
+import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=53';
+import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=53';
+import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=53';
+import { HOURS_SCHEMA } from './slices/hours/admin.js?v=53';
+import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=53';
+import { NEWS_SCHEMA, enforceNewsPinnedExclusive } from './slices/news/admin.js?v=53';
+import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=53';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {

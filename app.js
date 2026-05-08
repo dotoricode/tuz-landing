@@ -1,48 +1,48 @@
 // ─── 외부 모듈 ───────────────────────────────
-import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './shared/supabase.js?v=52';
-import { showConnectionToast } from './shared/conn-toast.js?v=52';
-import { bootSettings, refreshSettings } from './shared/settings.js?v=52';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './shared/supabase.js?v=53';
+import { showConnectionToast } from './shared/conn-toast.js?v=53';
+import { bootSettings, refreshSettings } from './shared/settings.js?v=53';
 import {
   renderGreeting,
   GREETING_LABEL,
   GREETING_LOADER_SPEC,
-} from './slices/greeting/public.js?v=52';
+} from './slices/greeting/public.js?v=53';
 import {
   renderWinners,
   WINNERS_LABEL,
   WINNERS_LOADER_SPEC,
-} from './slices/winners/public.js?v=52';
+} from './slices/winners/public.js?v=53';
 import {
   renderWifi,
   WIFI_LABEL,
   initWifi,
-} from './slices/wifi/public.js?v=52';
+} from './slices/wifi/public.js?v=53';
 import {
   renderHours,
   HOURS_LABEL,
   initHours,
-} from './slices/hours/public.js?v=52';
+} from './slices/hours/public.js?v=53';
 import {
   LOCATION_LABEL,
   LOCATION_LOADER,
   initLocation,
-} from './slices/location/public.js?v=52';
+} from './slices/location/public.js?v=53';
 import {
   renderMenu,
   MENU_LABEL,
   MENU_LOADER_SPEC,
   initMenu,
-} from './slices/menu/public.js?v=52';
+} from './slices/menu/public.js?v=53';
 import {
   renderNews,
   NEWS_LABEL,
   NEWS_LOADER_SPEC,
-} from './slices/news/public.js?v=52';
+} from './slices/news/public.js?v=53';
 import {
   renderPicks,
   PICK_LABEL,
   PICK_LOADER_SPEC,
-} from './slices/pick/public.js?v=52';
+} from './slices/pick/public.js?v=53';
 
 // admin.js 등 외부 import 호환을 위해 re-export
 export { supabase, SUPABASE_URL, SUPABASE_ANON_KEY };
@@ -55,7 +55,19 @@ const validViews = new Set([...views].map((v) => v.dataset.view));
 
 export function showView(name, { pushHistory = true } = {}) {
   const target = validViews.has(name) ? name : 'home';
+  const prev = [...views].find(v => !v.hidden)?.dataset.view || 'home';
   views.forEach((v) => { v.hidden = v.dataset.view !== target; });
+
+  if (target !== prev) {
+    const el = [...views].find(v => v.dataset.view === target);
+    if (el) {
+      const cls = target === 'home' ? 'view--back' : 'view--entering';
+      el.classList.remove('view--entering', 'view--back');
+      void el.offsetWidth;
+      el.classList.add(cls);
+    }
+  }
+
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 
   const hash = target === 'home' ? '' : `#${target}`;
@@ -225,4 +237,4 @@ const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=52').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=53').catch((e) => console.warn('[tuz] admin module not loaded:', e));

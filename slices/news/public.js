@@ -1,6 +1,6 @@
-import { esc, imgUrl } from '../../shared/dom.js?v=52';
-import { renderEmpty } from '../../shared/empty.js?v=52';
-import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=52';
+import { esc, imgUrl } from '../../shared/dom.js?v=53';
+import { renderEmpty } from '../../shared/empty.js?v=53';
+import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=53';
 
 export const NEWS_LABEL = '공지 · 이벤트';
 

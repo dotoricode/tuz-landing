@@ -1,5 +1,5 @@
-import { esc } from '../../shared/dom.js?v=52';
-import { subscribeSettings } from '../../shared/settings.js?v=52';
+import { esc } from '../../shared/dom.js?v=53';
+import { subscribeSettings } from '../../shared/settings.js?v=53';
 
 export const HOURS_LABEL = '영업시간';
 

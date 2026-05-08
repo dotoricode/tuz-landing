@@ -133,23 +133,35 @@ body {
 }
 
 /* ─── hero ─── */
+@keyframes tuzMarkReveal {
+  from { opacity: 0; transform: scale(0.94) translateY(6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+@keyframes tuzTagReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .hero {
   padding: calc(env(safe-area-inset-top) + 48px) 22px 48px;
   text-align: center;
+  border-bottom: 1px solid var(--tuz-red);
 }
 .hero .mark {
   font-family: 'Puradak Gentle Gothic', var(--font-display);
   font-weight: normal;
   letter-spacing: -0.02em;
-  font-size: 68px;
+  font-size: 80px;
   line-height: 0.9;
   color: var(--tuz-red);
+  animation: tuzMarkReveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .hero__tag {
   margin-top: 8px;
-  font-size: 14px;
+  font-size: 12px;
   font-family: 'Puradak Gentle Gothic', var(--font-display);
   color: var(--ink-2);
+  animation: tuzTagReveal 0.4s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .hero__tag-en {
   font-size: 11px;
@@ -318,14 +330,27 @@ body {
   transition: transform 0.12s ease;
   overflow: hidden;
 }
-.tile:active { transform: scale(0.97); }
+.tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.tile:active { transform: scale(0.97) translateY(0); }
+
+@keyframes tuzTileIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tile-grid .tile { animation: tuzTileIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tile-grid .tile:nth-child(1) { animation-delay: 0.08s; }
+.tile-grid .tile:nth-child(2) { animation-delay: 0.13s; }
+.tile-grid .tile:nth-child(3) { animation-delay: 0.18s; }
+.tile-grid .tile:nth-child(4) { animation-delay: 0.23s; }
+.tile-grid .tile:nth-child(5) { animation-delay: 0.28s; }
+.tile-grid .tile:nth-child(6) { animation-delay: 0.33s; }
+.tile-grid .tile:nth-child(7) { animation-delay: 0.38s; }
 .tile--red {
-  background: var(--tuz-red-soft);
-  color: var(--tuz-red);
-  border-color: var(--tuz-red);
+  background: var(--tuz-red);
+  color: #fff7ee;
+  border-color: var(--tuz-red-deep);
   box-shadow: var(--shadow-sm);
 }
-.tile--red .eyebrow--white { color: var(--tuz-red); opacity: 0.75; }
 .tile--ivory { background: var(--ivory-2); }
 .tile--wide {
   grid-column: 1 / span 3;
@@ -345,6 +370,7 @@ body {
 .tile--red .tile__title {
   font-family: 'Puradak Gentle Gothic', var(--font-display);
   font-weight: normal;
+  color: #fff7ee;
 }
 .tile__k {
   font-size: 12.5px;
@@ -370,9 +396,9 @@ body {
 .tile__k { color: var(--ink); }
 .tile__e { color: var(--tuz-red); font-weight: 700; }
 .tile svg { color: var(--ink-2); flex-shrink: 0; }
-.tile--red svg { color: var(--tuz-red); }
-.tile--red .tile__k { color: var(--tuz-red); }
-.tile--red .tile__e { color: rgba(165, 42, 26, 0.78); }
+.tile--red svg { color: rgba(255, 247, 238, 0.9); }
+.tile--red .tile__k { color: #fff7ee; }
+.tile--red .tile__e { color: rgba(255, 247, 238, 0.7); }
 
 /* 업데이트 알림 점 (notification dot) */
 .tile__dot {
@@ -496,7 +522,7 @@ body {
   font-family: var(--font-display);
   font-variation-settings: 'opsz' 144;
   font-weight: 500;
-  font-size: 30px;
+  font-size: 36px;
   letter-spacing: -0.02em;
   margin: 0;
   line-height: 1.05;
@@ -1120,6 +1146,10 @@ body {
 .mb-3 { margin-bottom: var(--space-3); }
 
 /* ─── status bar dot ─── */
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.5); opacity: 0.6; }
+}
 .status-bar .dot {
   display: inline-block;
   width: 7px; height: 7px;
@@ -1127,9 +1157,10 @@ body {
   background: var(--tuz-green);
   margin-right: 5px;
   vertical-align: middle;
+  animation: dotPulse 2.4s ease-in-out infinite;
 }
-.status-bar.is-closed .dot { background: var(--tuz-red); }
-.status-bar.is-soon .dot { background: var(--ink-4); }
+.status-bar.is-closed .dot { background: var(--tuz-red); animation: none; }
+.status-bar.is-soon .dot  { background: var(--ink-4);   animation: none; }
 
 /* ─── prefers-color-scheme dark — 수동 토글 시에만 적용 ─── */
 @media (prefers-color-scheme: dark) {
@@ -1246,6 +1277,18 @@ body {
   text-align: center;
   letter-spacing: -0.01em;
 }
+
+/* ─── view transition ─── */
+@keyframes viewSlideIn {
+  from { opacity: 0; transform: translateX(22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes viewSlideBack {
+  from { opacity: 0; transform: translateX(-22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.view--entering { animation: viewSlideIn  0.2s cubic-bezier(0.25, 0, 0.1, 1) both; }
+.view--back     { animation: viewSlideBack 0.2s cubic-bezier(0.25, 0, 0.1, 1) both; }
 
 /* Admin-only UI: hidden until admin.js toggles body.is-admin on session */
 body:not(.is-admin) .admin-only { display: none !important; }
