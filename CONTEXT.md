@@ -58,6 +58,20 @@ News 태그 `SCHEDULE` (구 `HOURS`). 영업시간 변경을 방문객에게 안
 실제 영업시간 계산은 `settings` 테이블이 담당하며, Schedule Notice는 그와 독립적인 안내 텍스트다.
 `settings` 저장 시 변경이 감지되면 Schedule Notice 생성 모달이 자동으로 뜬다 (ADR-0002).
 
+### Settings (운영 설정)
+
+가게 운영에 필요한 파라미터 묶음. DB는 단일 행으로 강제됨 (`settings` 테이블, `id int primary key default 1 check (id = 1)`).
+
+데이터로는 한 덩어리지만, 사장의 편집 UX와 방문객의 표현은 **facet 단위**로 나뉜다. 각 facet은 자기 view에 attach 되어 그 view에서만 편집된다.
+
+현재 facet:
+- **WiFi** — `wifi_ssid`, `wifi_password`. View: `#wifi`. 비밀번호 복사 토스트 같은 표현 로직은 WiFi 슬라이스가 가짐.
+- **영업시간** — `hours_weekday`, `hours_weekend`, `regular_closure_kr`, `regular_closure_en`, `holiday_notice`. View: `#hours`. status bar 실시간 계산 + 정기/임시 휴무 표시는 Hours 슬라이스가 가짐.
+- **메뉴 대표 사진** — `menu_hero_photo`. View: `#menu` 상단. Menu 슬라이스가 hero를 그림.
+- **Kakao 키 오버라이드** — `kakao_app_key`. 운영 중 키 회전을 코드 변경 없이 가능하게 하는 escape hatch (CLAUDE.md 참조).
+
+새 facet 추가 시 schema.sql에 컬럼 + `slices/<name>/admin.js`에 facet schema (`mode: 'single'`, `table: 'settings'`, `views: ['<view>']`)를 등록한다.
+
 ### Pick (오늘의 추천)
 
 각 Owner가 수동으로 선정하는 오늘의 메뉴 추천. 항상 Menu에 실제로 존재하는 항목이어야 한다.
