@@ -351,6 +351,10 @@ body {
   border-color: var(--tuz-red-deep);
   box-shadow: var(--shadow-sm);
 }
+[data-theme='dark'] .tile--red {
+  background: var(--tuz-red-deep);
+  border-color: var(--tuz-red);
+}
 .tile--ivory { background: var(--ivory-2); }
 .tile--wide {
   grid-column: 1 / span 3;
