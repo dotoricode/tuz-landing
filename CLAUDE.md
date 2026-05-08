@@ -60,8 +60,8 @@ git push origin main
 ### Vertical Slice 추가 패턴
 `slices/<name>/public.js` 는 다음을 export: `XXX_LABEL`, `XXX_LOADER_SPEC = {view, table, options}` (또는 fetch 없는 경우 `XXX_LOADER = {view, table:null, fn}`), `renderXxx`, 선택 `initXxx` (DOM 핸들러). admin schema 는 `slices/<name>/admin.js`. app.js 의 `LOADERS` / `RENDERERS` / `titleOf` 에 등록.
 
-### settings 테이블 다중 renderer 트랩
-`settings` 테이블은 wifi/hours/menu_hero 가 공유. `loadTable` 의 `loadingFlags` 가 동시 호출을 막으므로, **한 번 fetch 후 모든 renderer 를 호출하는 단일 콜백** (`renderAllSettings`) 패턴 필수. 새 settings-파생 slice 추가 시 `renderAllSettings` 에 한 줄 추가.
+### settings 데이터는 shared/settings.js 가 own (ADR-0005)
+`settings` 단일 행은 `shared/settings.js` 가 fetch · 캐시 · 변경 알림을 전담. wifi/hours/menu 슬라이스는 자기 `init` 함수에서 `subscribeSettings(renderXxx)` 한 줄로 자기 facet 구독. 새 settings-파생 facet 추가 시 슬라이스에서 `subscribeSettings` 호출만 하면 됨 — `app.js` 손대지 않음. admin 저장 후 `refreshTable('settings')` 는 자동으로 `refreshSettings()` 로 우회됨.
 
 ### 자동 회귀 검증 (playwright MCP)
 프론트 변경 후 `browser_navigate` → `browser_evaluate` (모든 view 를 hashchange 로 순회하며 핵심 DOM 확인) → `browser_console_messages` (level: warning) 로 자동 회귀 확인. 정적 서버는 보통 사용자가 이미 띄워둠 (`lsof -i:8000` 으로 확인).

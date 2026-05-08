@@ -1,67 +1,53 @@
 // ─── 외부 모듈 ───────────────────────────────
-import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './shared/supabase.js?v=45';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './shared/supabase.js?v=46';
+import { showConnectionToast } from './shared/conn-toast.js?v=46';
+import { bootSettings, refreshSettings } from './shared/settings.js?v=46';
 import {
   renderGreeting,
   GREETING_LABEL,
   GREETING_LOADER_SPEC,
-} from './slices/greeting/public.js?v=45';
+} from './slices/greeting/public.js?v=46';
 import {
   renderWinners,
   WINNERS_LABEL,
   WINNERS_LOADER_SPEC,
-} from './slices/winners/public.js?v=45';
+} from './slices/winners/public.js?v=46';
 import {
   renderWifi,
   WIFI_LABEL,
-  WIFI_LOADER_SPEC,
   initWifi,
-} from './slices/wifi/public.js?v=45';
+} from './slices/wifi/public.js?v=46';
 import {
   renderHours,
   HOURS_LABEL,
-  HOURS_LOADER_SPEC,
-} from './slices/hours/public.js?v=45';
+  initHours,
+} from './slices/hours/public.js?v=46';
 import {
   LOCATION_LABEL,
   LOCATION_LOADER,
   initLocation,
-} from './slices/location/public.js?v=45';
+} from './slices/location/public.js?v=46';
 import {
   renderMenu,
-  renderMenuSettings,
   MENU_LABEL,
   MENU_LOADER_SPEC,
   initMenu,
-} from './slices/menu/public.js?v=45';
+} from './slices/menu/public.js?v=46';
 import {
   renderNews,
   NEWS_LABEL,
   NEWS_LOADER_SPEC,
-} from './slices/news/public.js?v=45';
+} from './slices/news/public.js?v=46';
 import {
   renderPicks,
   PICK_LABEL,
   PICK_LOADER_SPEC,
-} from './slices/pick/public.js?v=45';
+} from './slices/pick/public.js?v=46';
 
 // admin.js 등 외부 import 호환을 위해 re-export
 export { supabase, SUPABASE_URL, SUPABASE_ANON_KEY };
 
 const CACHE_MS = 2 * 60 * 1000;
-
-// ─── 연결 오류 토스트 ─────────────────────────
-let _connToastShown = false;
-function showConnectionToast() {
-  if (_connToastShown) return;
-  _connToastShown = true;
-  const el = document.createElement('div');
-  el.className = 'tuz-conn-toast';
-  el.setAttribute('role', 'alert');
-  el.setAttribute('aria-live', 'assertive');
-  el.innerHTML = `<span>네트워크 연결을 확인해주세요</span><button type="button" aria-label="닫기">×</button>`;
-  el.querySelector('button').addEventListener('click', () => el.remove());
-  document.body.appendChild(el);
-}
 
 // ─── 라우팅 ──────────────────────────────────
 const views = document.querySelectorAll('[data-view]');
@@ -106,6 +92,7 @@ window.addEventListener('popstate', (e) => {
 });
 
 initWifi();
+initHours();
 initLocation();
 initMenu();
 
@@ -127,12 +114,8 @@ if (themeBtn) {
   });
 }
 
-// settings 테이블 fetch 후 모든 derived renderer 를 호출
-function renderAllSettings(items) {
-  renderWifi(items);
-  renderHours(items);
-  renderMenuSettings(items);
-}
+// settings 데이터 흐름은 shared/settings.js로 이전 (ADR-0005).
+// wifi/hours/menu 슬라이스는 자기 init 함수에서 subscribeSettings 호출.
 
 // ─── DB 컬럼(snake_case) → JS(camelCase) 변환 ──
 function toCamel(row) {
@@ -215,35 +198,31 @@ const LOADERS = {
     table: MENU_LOADER_SPEC.table,
     fn: () => loadTable(MENU_LOADER_SPEC.table, renderMenu, MENU_LOADER_SPEC.options),
   },
-  // settings 테이블은 wifi/hours/menu_hero 가 공유. 한 번 fetch 후 모든 renderer 호출.
-  // (loadTable 의 loadingFlag 가 동시 호출을 막으므로 단일 콜백이 필요)
-  [WIFI_LOADER_SPEC.view]: {
-    table: WIFI_LOADER_SPEC.table,
-    fn: () => loadTable(WIFI_LOADER_SPEC.table, renderAllSettings, WIFI_LOADER_SPEC.options),
-  },
-  [HOURS_LOADER_SPEC.view]: {
-    table: HOURS_LOADER_SPEC.table,
-    fn: () => loadTable(HOURS_LOADER_SPEC.table, renderAllSettings, HOURS_LOADER_SPEC.options),
-  },
+  // wifi/hours view 는 LOADERS entry 가 없다 — settings 데이터는
+  // shared/settings.js 가 own. 슬라이스 init 에서 subscribeSettings 등록.
   [LOCATION_LOADER.view]: { table: LOCATION_LOADER.table, fn: LOCATION_LOADER.fn },
 };
 
-// settings 첫 로드 — renderAllSettings 가 wifi/hours/menu_hero 한 번에 처리
-LOADERS.wifi.fn();
+// settings 첫 로드 — bootSettings 가 캐시 즉시 publish + 백그라운드 fetch
+bootSettings();
 // news도 먼저 로드 — 홈의 "오늘의 공지"가 필요
 LOADERS.news.fn();
 
 // 관리자가 저장한 후 현재 보이는 화면의 데이터를 강제 새로고침
 export async function refreshTable(table) {
+  if (table === 'settings') { await refreshSettings(); return; }
   try { localStorage.removeItem(`tuz-cache-v5:${table}`); } catch (_) { /* ignore */ }
   for (const { table: t, fn } of Object.values(LOADERS)) {
     if (t === table) await fn();
   }
 }
 
+// admin.js 등에서 직접 사용할 수 있도록 re-export
+export { refreshSettings };
+
 // ─── 초기 라우트 ──────────────────────────────
 const initial = window.location.hash.slice(1) || 'home';
 showView(initial, { pushHistory: false });
 
 // admin module boot
-import('./admin.js?v=45').catch((e) => console.warn('[tuz] admin module not loaded:', e));
+import('./admin.js?v=46').catch((e) => console.warn('[tuz] admin module not loaded:', e));

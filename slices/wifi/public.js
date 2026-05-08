@@ -1,15 +1,9 @@
-import { copyText } from '../../shared/dom.js?v=45';
+import { copyText } from '../../shared/dom.js?v=46';
+import { subscribeSettings } from '../../shared/settings.js?v=46';
 
 export const WIFI_LABEL = '와이파이';
 
-export const WIFI_LOADER_SPEC = {
-  view: 'wifi',
-  table: 'settings',
-  rendererKey: 'wifi',
-  options: { single: true },
-};
-
-let WIFI_PW = 'tuz12345'; // settings 테이블 로드 시 갱신
+let WIFI_PW = 'tuz12345'; // settings facet 구독으로 갱신
 
 let toastTimer = null;
 function flashToast(el, msg) {
@@ -23,8 +17,7 @@ function flashToast(el, msg) {
   toastTimer = setTimeout(() => { el.hidden = true; }, 1400);
 }
 
-export function renderWifi(items) {
-  const s = items && items[0];
+export function renderWifi(s) {
   if (!s) return;
   if (s.wifiSsid) {
     const el = document.getElementById('wifiSsid');
@@ -40,6 +33,8 @@ export function renderWifi(items) {
 }
 
 export function initWifi() {
+  subscribeSettings(renderWifi);
+
   const pwBtn = document.getElementById('pwBtn');
   const pwToast = document.getElementById('pwToast');
   if (!pwBtn) return;

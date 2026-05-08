@@ -1,6 +1,7 @@
-import { esc, imgUrl } from '../../shared/dom.js?v=45';
-import { renderEmpty } from '../../shared/empty.js?v=45';
-import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=45';
+import { esc, imgUrl } from '../../shared/dom.js?v=46';
+import { renderEmpty } from '../../shared/empty.js?v=46';
+import { isNewSince, markTileUpdate } from '../../shared/tiles.js?v=46';
+import { subscribeSettings } from '../../shared/settings.js?v=46';
 
 export const MENU_LABEL = '메뉴';
 
@@ -25,9 +26,6 @@ function resolveBadges(m) {
   return [...new Set(raw.map((s) => s.toUpperCase()))];
 }
 
-// 최신 settings 행 — settings fetch 후 갱신, menu 페이지 진입 시 hero 적용에 사용
-let latestSettingsRow = null;
-
 function updateMenuHero(settings) {
   const heroEl = document.getElementById('menuHero');
   if (!heroEl) return;
@@ -49,17 +47,9 @@ function updateMenuHero(settings) {
   }
 }
 
-// settings 테이블 fetch 시 호출 — menu hero 사진 적용
-export function renderMenuSettings(items) {
-  const s = items && items[0];
-  if (!s) return;
-  latestSettingsRow = s;
-  updateMenuHero(s);
-}
-
 export function renderMenu(items) {
-  // 대표 사진은 settings에서 가져옴 (이미 로드되어 있으면 적용)
-  if (latestSettingsRow) updateMenuHero(latestSettingsRow);
+  // 대표 사진(hero)은 shared/settings.js subscribeSettings 로 별도 갱신
+  // (initMenu 에서 등록). renderMenu 는 카테고리만 그림.
 
   // 최근 7일 이내 추가/수정된 메뉴가 있으면 타일에 점
   const recent = (items || []).some((m) => isNewSince(m.createdAt, 'menu') || isNewSince(m.updatedAt, 'menu'));
@@ -144,6 +134,9 @@ function openPhotoLightbox(url, caption) {
 }
 
 export function initMenu() {
+  // 메뉴 hero 사진은 settings facet 으로 구독
+  subscribeSettings((row) => updateMenuHero(row || {}));
+
   // 메뉴 사진 라이트박스 — 카테고리별 썸네일 클릭
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-menu-photo]');

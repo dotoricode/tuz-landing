@@ -1,5 +1,5 @@
-import { esc } from '../../shared/dom.js?v=45';
-import { renderEmpty } from '../../shared/empty.js?v=45';
+import { esc } from '../../shared/dom.js?v=46';
+import { renderEmpty } from '../../shared/empty.js?v=46';
 
 export const WINNERS_LABEL = '이달의 당첨자';
 

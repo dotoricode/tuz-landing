@@ -1,11 +1,11 @@
-import { supabase, refreshTable } from './app.js?v=45';
-import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=45';
-import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=45';
-import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=45';
-import { HOURS_SCHEMA } from './slices/hours/admin.js?v=45';
-import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=45';
-import { NEWS_SCHEMA } from './slices/news/admin.js?v=45';
-import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=45';
+import { supabase, refreshTable } from './app.js?v=46';
+import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=46';
+import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=46';
+import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=46';
+import { HOURS_SCHEMA } from './slices/hours/admin.js?v=46';
+import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=46';
+import { NEWS_SCHEMA } from './slices/news/admin.js?v=46';
+import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=46';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {

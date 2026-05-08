@@ -1,4 +1,4 @@
-import { esc, imgUrl } from '../../shared/dom.js?v=45';
+import { esc, imgUrl } from '../../shared/dom.js?v=46';
 
 export const GREETING_LABEL = '사장님 인사말';
 

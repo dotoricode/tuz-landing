@@ -1,13 +1,7 @@
-import { esc } from '../../shared/dom.js?v=45';
+import { esc } from '../../shared/dom.js?v=46';
+import { subscribeSettings } from '../../shared/settings.js?v=46';
 
 export const HOURS_LABEL = '영업시간';
-
-export const HOURS_LOADER_SPEC = {
-  view: 'hours',
-  table: 'settings',
-  rendererKey: 'hours',
-  options: { single: true },
-};
 
 function toMin(s) {
   const [h, m] = s.split(':').map(Number);
@@ -102,9 +96,12 @@ function updateHoursPage(settings) {
   }
 }
 
-export function renderHours(items) {
-  const s = items && items[0];
+export function renderHours(s) {
   if (!s) return;
   updateStatusBar(s);
   updateHoursPage(s);
+}
+
+export function initHours() {
+  subscribeSettings(renderHours);
 }
