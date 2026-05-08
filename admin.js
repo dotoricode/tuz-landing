@@ -1,11 +1,11 @@
-import { supabase, refreshTable } from './app.js?v=47';
-import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=47';
-import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=47';
-import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=47';
-import { HOURS_SCHEMA } from './slices/hours/admin.js?v=47';
-import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=47';
-import { NEWS_SCHEMA, enforceNewsPinnedExclusive } from './slices/news/admin.js?v=47';
-import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=47';
+import { supabase, refreshTable } from './app.js?v=48';
+import { GREETING_SCHEMA } from './slices/greeting/admin.js?v=48';
+import { WINNERS_SCHEMA } from './slices/winners/admin.js?v=48';
+import { WIFI_SCHEMA } from './slices/wifi/admin.js?v=48';
+import { HOURS_SCHEMA } from './slices/hours/admin.js?v=48';
+import { MENU_SCHEMA, MENU_HERO_SCHEMA } from './slices/menu/admin.js?v=48';
+import { NEWS_SCHEMA, enforceNewsPinnedExclusive } from './slices/news/admin.js?v=48';
+import { PICK_BIG_SCHEMA, PICK_SMALL_SCHEMA } from './slices/pick/admin.js?v=48';
 
 // ─── 날짜 헬퍼 ──────────────────────────────
 function autoToday() {
@@ -868,6 +868,7 @@ async function saveRows(tableName, schema, rows, removedIds) {
 
 const EDIT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
 const DELETE_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>';
+const GRIP_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>';
 
 const DEFAULT_ITEM_ACTIONS = [
   {
@@ -910,6 +911,13 @@ function getSliceActions(view) {
   return actions;
 }
 
+function findReorderForView(view) {
+  for (const schema of Object.values(SCHEMAS)) {
+    if (schema.views?.includes(view) && schema.reorder) return schema.reorder;
+  }
+  return null;
+}
+
 function renderItemActions() {
   document.querySelectorAll('.tuz-item-actions').forEach((el) => el.remove());
   if (!currentUser) return;
@@ -931,6 +939,16 @@ function renderItemActions() {
     const container = document.createElement('div');
     container.className = 'tuz-item-actions';
 
+    // reorder capability — drag handle 을 첫 자리에 주입 (실 dnd 는 attachReorder 가 delegation)
+    if (findReorderForView(view)) {
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'tuz-item-btn tuz-drag-handle';
+      handle.setAttribute('aria-label', '순서 변경 (드래그)');
+      handle.innerHTML = GRIP_ICON;
+      container.appendChild(handle);
+    }
+
     for (const a of actions) {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -950,6 +968,96 @@ function renderItemActions() {
       container.appendChild(btn);
     }
     item.appendChild(container);
+  });
+}
+
+// ─── ADR-0006 Phase B: reorder dispatcher ───────────
+// schema.reorder 가 있는 itemContainer 마다 pointer 기반 dnd 부착.
+// 컨테이너에 한 번만 delegation — 카드가 재렌더돼도 이벤트는 살아있음.
+const reorderAttached = new WeakSet();
+
+function initReorder() {
+  if (!currentUser) return;
+  for (const [key, schema] of Object.entries(SCHEMAS)) {
+    if (!schema.reorder) continue;
+    const containers = Array.isArray(schema.itemContainer)
+      ? schema.itemContainer : [schema.itemContainer];
+    const tableName = schema.table || key;
+    for (const sel of containers) {
+      const el = document.querySelector(sel);
+      if (el) attachReorder(el, schema.reorder, tableName);
+    }
+  }
+}
+
+function attachReorder(container, spec, tableName) {
+  if (reorderAttached.has(container)) return;
+  reorderAttached.add(container);
+
+  container.addEventListener('pointerdown', (e) => {
+    const handle = e.target.closest('.tuz-drag-handle');
+    if (!handle) return;
+    const card = handle.closest('[data-item-id]');
+    if (!card) return;
+    const group = spec.groupSelector ? card.closest(spec.groupSelector) : container;
+    if (!group) return;
+
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+
+    const startX = e.clientX, startY = e.clientY;
+    const rect = card.getBoundingClientRect();
+
+    const ghost = card.cloneNode(true);
+    ghost.querySelectorAll('.tuz-item-actions').forEach((el) => el.remove());
+    ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;pointer-events:none;opacity:0.85;z-index:9999;transform:none;transition:none;`;
+    ghost.classList.add('tuz-dragging');
+    document.body.appendChild(ghost);
+
+    card.classList.add('tuz-dragging-source');
+    let moved = false;
+
+    function onMove(ev) {
+      ghost.style.transform = `translate(${ev.clientX - startX}px, ${ev.clientY - startY}px)`;
+      const elBelow = document.elementFromPoint(ev.clientX, ev.clientY);
+      if (!elBelow) return;
+      const target = elBelow.closest('[data-item-id]');
+      if (!target || target === card) return;
+      const targetGroup = spec.groupSelector ? target.closest(spec.groupSelector) : container;
+      if (targetGroup !== group) return; // 다른 그룹은 무시
+      const targetRect = target.getBoundingClientRect();
+      const before = ev.clientY < targetRect.top + targetRect.height / 2;
+      if (before) target.before(card); else target.after(card);
+      moved = true;
+    }
+
+    async function onUp() {
+      handle.removeEventListener('pointermove', onMove);
+      handle.removeEventListener('pointerup', onUp);
+      handle.removeEventListener('pointercancel', onUp);
+      ghost.remove();
+      card.classList.remove('tuz-dragging-source');
+
+      if (!moved) return;
+
+      const cards = [...group.querySelectorAll(':scope [data-item-id]')];
+      try {
+        for (let i = 0; i < cards.length; i++) {
+          const id = cards[i].dataset.itemId;
+          const { error } = await supabase.from(tableName)
+            .update({ [spec.col]: i + 1 }).eq('id', id);
+          if (error) throw error;
+        }
+        toast('순서가 저장되었습니다');
+      } catch (err) {
+        toast(`순서 저장 실패: ${err.message || err}`, { error: true });
+      }
+      await refreshTable(tableName);
+    }
+
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+    handle.addEventListener('pointercancel', onUp);
   });
 }
 
@@ -1012,6 +1120,7 @@ function applyAdminState() {
   renderFab();
   renderPageActions();
   renderItemActions();
+  initReorder();
 }
 
 // 컨텐츠 컨테이너가 바뀔 때마다 (새 데이터 렌더링 등) 아이템 액션 재주입

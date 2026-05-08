@@ -5,6 +5,8 @@ export const MENU_SCHEMA = {
   views: ['menu'],
   table: 'menu',
   itemContainer: '#menuCategories', // 카드는 카테고리 그룹 안에 nested
+  // ADR-0006 Phase B: 카테고리(.card) 안에서만 sort_order 드래그
+  reorder: { col: 'sort_order', groupSelector: '.card' },
   groupBy: 'category', // 편집 모드에서 카테고리 탭으로 분리
   fields: [
     { col: 'category', label: '카테고리', type: 'select', required: true,

@@ -626,6 +626,19 @@
   background: #b27818;
   border-color: #b27818;
 }
+/* ADR-0006 Phase B: drag handle + dnd 시각 */
+.tuz-drag-handle {
+  cursor: grab;
+  touch-action: none; /* 모바일 스크롤과 분리 */
+}
+.tuz-drag-handle:active { cursor: grabbing; }
+.tuz-dragging-source { opacity: 0.3; }
+.tuz-dragging {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  border-radius: var(--r-sm, 6px);
+  background: rgba(255, 255, 255, 0.98);
+  transition: none !important;
+}
 
 /* 좁은 행(winner/menu-row)은 내용이 겹치지 않도록 오른쪽 여백 확보 */
 body.is-admin .winner[data-item-id],

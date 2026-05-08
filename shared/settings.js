@@ -1,8 +1,8 @@
 // ADR-0005: Settings 데이터 모듈.
 // 인터페이스 3 entry — bootSettings / subscribeSettings / refreshSettings.
 
-import { supabase } from './supabase.js?v=47';
-import { showConnectionToast } from './conn-toast.js?v=47';
+import { supabase } from './supabase.js?v=48';
+import { showConnectionToast } from './conn-toast.js?v=48';
 
 const CACHE_KEY = 'tuz-cache-v5:settings';
 const CACHE_MS = 2 * 60 * 1000;

@@ -1,4 +1,4 @@
-import { esc } from './dom.js?v=47';
+import { esc } from './dom.js?v=48';
 
 export function renderEmpty(containerId, { title, sub }) {
   const el = document.getElementById(containerId);
