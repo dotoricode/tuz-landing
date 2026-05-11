@@ -129,7 +129,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--gap-stack);
-  padding-bottom: 34px;
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
 }
 
 /* ─── hero ─── */
@@ -146,6 +146,7 @@ body {
   padding: calc(env(safe-area-inset-top) + 48px) 22px 48px;
   text-align: center;
   border-bottom: 1px solid var(--tuz-red);
+  background: radial-gradient(ellipse 100% 80% at 50% -10%, rgba(165, 42, 26, 0.07), transparent 70%);
 }
 .hero .mark {
   font-family: 'Puradak Gentle Gothic', var(--font-display);
@@ -285,6 +286,15 @@ body {
 }
 .status-bar:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .status-bar:active { transform: scale(0.99); }
+.status-bar:not(.is-closed):not(.is-soon) {
+  background: linear-gradient(to right, rgba(31, 122, 50, 0.04), transparent);
+}
+.status-bar.is-soon {
+  background: linear-gradient(to right, rgba(176, 125, 0, 0.05), transparent);
+}
+.status-bar.is-closed {
+  background: linear-gradient(to right, rgba(165, 42, 26, 0.05), transparent);
+}
 .status-bar__left {
   display: flex;
   align-items: center;
@@ -356,6 +366,19 @@ body {
 .view--home .status-bar { animation: tuzFadeUp 0.4s 0.18s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .view--home .greet__sns { animation: tuzFadeUp 0.4s 0.42s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .view--home .sig { animation: tuzFadeUp 0.35s 0.48s cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* ─── slice view card stagger ─── */
+.view--entering .stack > *:nth-child(1) { animation: tuzFadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.view--entering .stack > *:nth-child(2) { animation: tuzFadeUp 0.3s 0.06s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.view--entering .stack > *:nth-child(3) { animation: tuzFadeUp 0.3s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.view--entering .stack > *:nth-child(4) { animation: tuzFadeUp 0.3s 0.18s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.view--entering .stack > *:nth-child(5) { animation: tuzFadeUp 0.3s 0.24s cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* ─── page-head entrance ─── */
+.view--entering .page-head h1 {
+  animation: tuzFadeUp 0.3s 0.05s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.view--entering .page-head__en {
+  animation: tuzFadeUp 0.3s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 @media (prefers-reduced-motion: reduce) {
   .view--home .status-bar,
   .view--home .greet__sns,
@@ -439,6 +462,10 @@ body {
   box-shadow: 0 4px 14px rgba(165, 42, 26, 0.12), var(--shadow-sm);
 }
 .tile--red.has-update { border-color: var(--tuz-red-deep); }
+.tile--accent {
+  background: var(--tuz-red-soft);
+  border-color: rgba(165, 42, 26, 0.2);
+}
 
 /* ─── notice ticker (ink card on home) ─── */
 .notice-ticker {
@@ -1201,7 +1228,13 @@ body {
   animation: dotPulse 2.4s ease-in-out infinite;
 }
 .status-bar.is-closed .dot { background: var(--tuz-red); animation: none; }
-.status-bar.is-soon .dot  { background: var(--ink-4);   animation: none; }
+.status-bar.is-soon .dot {
+  background: #b07d00;
+  animation: dotPulse 0.9s ease-in-out infinite;
+}
+[data-theme='dark'] .status-bar.is-soon .dot {
+  background: #f0c040;
+}
 
 /* ─── prefers-color-scheme dark — 수동 토글 시에만 적용 ─── */
 @media (prefers-color-scheme: dark) {
@@ -1230,6 +1263,9 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .view--entering .stack > *,
+  .view--entering .page-head h1,
+  .view--entering .page-head__en { animation: none !important; }
 }
 
 /* ─── menu row 사진 보기 버튼 ─── */
