@@ -8,6 +8,23 @@ function toMin(s) {
   return h * 60 + (m || 0);
 }
 
+function updateStatusSub(settings) {
+  const el = document.querySelector('.status-bar__sub');
+  if (!el) return;
+
+  const day = new Date().getDay(); // 0=일, 6=토
+  const isWeekend = day === 0 || day === 6;
+  const hoursStr = isWeekend
+    ? (settings.hoursWeekend || '')
+    : (settings.hoursWeekday || '');
+  if (!hoursStr) return;
+
+  const [open, close] = hoursStr.split('-');
+  if (open && close) {
+    el.textContent = `오늘: ${open} – ${close}`;
+  }
+}
+
 function updateStatusBar(settings) {
   const bar = document.querySelector('.status-bar');
   const textEl = bar && bar.querySelector('.status-text');
@@ -98,6 +115,7 @@ function updateHoursPage(settings) {
 
 export function renderHours(s) {
   if (!s) return;
+  updateStatusSub(s);
   updateStatusBar(s);
   updateHoursPage(s);
 }
