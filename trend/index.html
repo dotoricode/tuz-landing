@@ -31,7 +31,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--line);
     position: sticky;
     top: 0;
@@ -51,9 +51,9 @@
     border: 0;
     text-decoration: none;
     font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 400;
+    padding: 6px 8px;
     border-radius: var(--r-sm);
     cursor: pointer;
     transition: background 150ms;
@@ -63,33 +63,25 @@
     color: var(--tuz-red);
   }
   .trend-back svg, .trend-logout svg { width: 14px; height: 14px; }
+  .trend-logout[hidden] { display: none; }
 
-  .trend-mark {
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--tuz-red);
-  }
+  .trend-topbar__spacer { width: 1px; height: 1px; }
 
-  .trend-hero {
-    padding: 36px 24px 24px;
-    border-bottom: 1px solid var(--line);
-  }
+  .trend-hero { display: none; }
   .trend-eyebrow {
     font-size: 11px;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--tuz-red);
-    font-weight: 600;
+    font-weight: 500;
     margin: 0 0 10px;
   }
   .trend-title {
-    font-family: var(--font-display);
-    font-size: clamp(28px, 6vw, 40px);
-    font-weight: 600;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
+    font-family: var(--font-sans);
+    font-size: clamp(26px, 5.5vw, 36px);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
     margin: 0 0 12px;
     color: var(--ink);
   }
@@ -114,7 +106,7 @@
     font-size: 13px;
     line-height: 1.55;
   }
-  .trend-scope strong { color: var(--tuz-red-deep); font-weight: 600; }
+  .trend-scope strong { color: var(--tuz-red-deep); font-weight: 500; }
 
   /* Auth gate */
   .trend-gate {
@@ -149,7 +141,7 @@
     flex-direction: column;
     gap: 6px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--ink-2);
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -178,7 +170,7 @@
     border-radius: var(--r-sm);
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: background 150ms;
   }
@@ -192,29 +184,30 @@
 
   /* Article body */
   .trend-content {
-    padding: 28px 24px 64px;
+    padding: 22px 20px 56px;
     color: var(--ink);
     font-size: 16px;
-    line-height: 1.7;
+    line-height: 1.72;
+    font-weight: 400;
   }
   .trend-content > * + * { margin-top: 18px; }
   .trend-content h1, .trend-content h2, .trend-content h3, .trend-content h4 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.25;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    letter-spacing: -0.012em;
+    line-height: 1.3;
     color: var(--ink);
   }
-  .trend-content h1 { font-size: 28px; margin-top: 36px; }
+  .trend-content h1 { font-size: 26px; margin-top: 30px; }
   .trend-content h2 {
-    font-size: 22px;
-    margin-top: 36px;
-    padding-top: 18px;
-    border-top: 2px solid var(--tuz-red);
+    font-size: 21px;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--tuz-red);
     display: inline-block;
   }
-  .trend-content h3 { font-size: 18px; margin-top: 28px; color: var(--tuz-red-deep); }
-  .trend-content h4 { font-size: 15px; margin-top: 22px; }
+  .trend-content h3 { font-size: 18px; margin-top: 26px; color: var(--tuz-red-deep); }
+  .trend-content h4 { font-size: 15px; margin-top: 20px; }
   .trend-content p { margin: 0; }
   .trend-content ul, .trend-content ol { padding-left: 22px; margin: 0; }
   .trend-content li + li { margin-top: 6px; }
@@ -226,7 +219,7 @@
     text-underline-offset: 2px;
   }
   .trend-content a:hover { color: var(--tuz-red-deep); }
-  .trend-content strong { color: var(--ink); font-weight: 600; }
+  .trend-content strong { color: var(--ink); font-weight: 500; }
   .trend-content em { font-style: italic; color: var(--ink-2); }
   .trend-content blockquote {
     margin: 0;
@@ -264,9 +257,9 @@
   .trend-content th {
     background: var(--tuz-red-soft);
     color: var(--tuz-red-deep);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 12px;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
   .trend-content hr {
@@ -283,7 +276,7 @@
     color: var(--ink-3);
   }
   .trend-status__title {
-    font-family: var(--font-display);
+    font-family: var(--font-sans);
     font-size: 18px;
     color: var(--ink-2);
     margin: 0 0 6px;
@@ -300,14 +293,16 @@
   }
   @keyframes trend-spin { to { transform: rotate(360deg); } }
 
-  .trend-footer {
-    padding: 22px 24px 32px;
-    border-top: 1px solid var(--line);
-    color: var(--ink-4);
-    font-size: 12px;
-    text-align: center;
+  .trend-content :is(.app-header, .site-header, .topbar, .navbar, .nav, .cta, .hero-actions, .brief-header, .brand-header, [data-acorn-brand], [data-report-cta]) {
+    display: none !important;
   }
-  .trend-footer a { color: var(--tuz-red); text-decoration: none; }
+  .trend-content :is(h1, h2, h3, h4, strong, b, th, .stat-number, .metric-number, .headline, .title) {
+    font-weight: 500 !important;
+  }
+
+  .trend-footer {
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -317,7 +312,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>
       홈
     </a>
-    <span class="trend-mark">TUZ</span>
+    <span class="trend-topbar__spacer" aria-hidden="true"></span>
     <button class="trend-logout" type="button" id="logoutBtn" hidden aria-label="로그아웃">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
       로그아웃
@@ -325,19 +320,7 @@
   </header>
 
   <!-- Authenticated: hero + report -->
-  <section class="trend-hero" id="hero" hidden>
-    <p class="trend-eyebrow">Cafe Menu Trend Report</p>
-    <h1 class="trend-title">이번 주 카페 트렌드 리포트</h1>
-    <div class="trend-meta">
-      <span>TUZ · 음료 / 디저트 / 베이커리</span>
-      <span class="trend-dot" aria-hidden="true">·</span>
-      <span id="updatedAt">업데이트 확인 중…</span>
-    </div>
-    <div class="trend-scope" aria-label="리포트 범위 안내">
-      <div><strong>범위:</strong> TUZ 운영 참고용 카페 메뉴 트렌드만 다룹니다.</div>
-      <div><strong>원칙:</strong> 검증 가능한 신호를 우선하고, 확인이 약한 항목은 보류로 표시합니다.</div>
-    </div>
-  </section>
+  <section class="trend-hero" id="hero" hidden aria-hidden="true"></section>
 
   <main class="trend-content" id="report" aria-live="polite" hidden></main>
 
@@ -386,7 +369,7 @@ const els = {
   loginForm: document.getElementById('loginForm'),
   loginBtn: document.getElementById('loginBtn'),
   loginError: document.getElementById('loginError'),
-  updatedAt: document.getElementById('updatedAt'),
+  updatedAt: null,
 };
 
 let isLoadingReport = false;
@@ -423,11 +406,26 @@ function formatUpdatedAt(iso) {
   return `업데이트 ${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function pruneReportChrome(root) {
+  const blockedText = ['acorn AI Briefs', '내 카페용 노트 만들기'];
+  const selectors = [
+    'header', 'nav', '.app-header', '.site-header', '.topbar', '.navbar', '.nav',
+    '.cta', '.hero-actions', '.brief-header', '.brand-header',
+    '[data-acorn-brand]', '[data-report-cta]', 'a', 'button',
+  ].join(',');
+
+  root.querySelectorAll(selectors).forEach((node) => {
+    const text = (node.textContent || '').replace(/\s+/g, ' ').trim();
+    if (blockedText.some((blocked) => text.includes(blocked))) {
+      node.remove();
+    }
+  });
+}
+
 async function loadReport() {
   if (isLoadingReport) return;
   isLoadingReport = true;
   els.report.innerHTML = statusHTML('리포트 불러오는 중…', '잠시만 기다려 주세요.', true);
-  els.updatedAt.textContent = '업데이트 확인 중…';
 
   try {
     const { data: blob, error: dlErr } = await supabase
@@ -446,7 +444,6 @@ async function loadReport() {
       } else {
         els.report.innerHTML = statusHTML('리포트를 불러오지 못했어요.', dlErr.message || '', false);
       }
-      els.updatedAt.textContent = '업데이트 정보 없음';
       return;
     }
 
@@ -457,15 +454,11 @@ async function loadReport() {
       FORBID_ATTR: ['onerror', 'onload', 'onclick'],
     });
     els.report.innerHTML = clean;
-
-    // Best-effort: read updated_at from listing
-    const { data: list } = await supabase.storage.from(BUCKET).list('', { limit: 100 });
-    const meta = list?.find((o) => o.name === REPORT_FILE);
-    els.updatedAt.textContent = formatUpdatedAt(meta?.updated_at || meta?.created_at);
+    pruneReportChrome(els.report);
   } catch (err) {
     console.error('[trend] load failed', err);
     els.report.innerHTML = statusHTML('리포트를 불러오지 못했어요.', '네트워크 상태를 확인 후 새로고침해 주세요.', false);
-    els.updatedAt.textContent = '업데이트 정보 없음';
+
   } finally {
     isLoadingReport = false;
   }
