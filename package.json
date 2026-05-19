@@ -1,0 +1,9 @@
+{
+  "name": "tuz-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static landing page for Tuz cafe",
+  "scripts": {
+    "test:syntax": "node --input-type=module --check < app.js && node --check admin.js"
+  }
+}

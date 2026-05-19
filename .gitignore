@@ -5,6 +5,13 @@
 .idea/
 *.log
 
+# Local/env/build artifacts
+.env.local
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
 # OS
 .DS_Store
 Thumbs.db
