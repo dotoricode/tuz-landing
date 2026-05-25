@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <base href="/inventory/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -110,16 +111,19 @@
 
     #pin-toggle {
       position: absolute;
-      right: 14px;
+      right: 12px;
       top: 50%;
       transform: translateY(-50%);
       background: none;
       border: none;
-      color: rgba(255,255,255,.6);
-      font-size: 1.1rem;
+      color: rgba(255,255,255,.55);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .02em;
       cursor: pointer;
-      padding: 4px;
+      padding: 4px 2px;
       line-height: 1;
+      font-family: inherit;
     }
 
     #pin-submit {
@@ -953,7 +957,7 @@
         placeholder="● ● ● ●" maxlength="20"
         autocomplete="current-password"
       >
-      <button type="button" id="pin-toggle" aria-label="PIN 보기/숨기기">👁</button>
+      <button type="button" id="pin-toggle" aria-label="PIN 보기/숨기기">보기</button>
     </div>
     <button id="pin-submit">확인</button>
     <p id="pin-error" hidden>PIN이 올바르지 않습니다.</p>
@@ -1339,7 +1343,7 @@
     document.getElementById('pin-toggle').addEventListener('click', () => {
       const isPassword = pinInput.type === 'password';
       pinInput.type = isPassword ? 'text' : 'password';
-      document.getElementById('pin-toggle').textContent = isPassword ? '🙈' : '👁';
+      document.getElementById('pin-toggle').textContent = isPassword ? '숨기기' : '보기';
     });
 
     document.getElementById('logout-btn')
