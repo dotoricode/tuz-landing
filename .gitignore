@@ -20,7 +20,13 @@ Thumbs.db
 # Original design bundle (handoff reference, not part of the shipped site)
 _design_source/
 .gstack/
+inventory/tuz-inven-handoff/
 
 # Local design audit / preview scratchpads
 .design-audit/
 .design-preview/
+
+# Tink runtime state
+.tink/current/
+.tink/runs/
+.tink/cache/
