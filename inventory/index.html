@@ -125,6 +125,19 @@
       border-radius: 10px;
     }
 
+    #pin-input.shake {
+      animation: pinShake .35s ease;
+      border: 2px solid rgba(255,255,255,.7);
+    }
+
+    @keyframes pinShake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-6px); }
+      80%      { transform: translateX(6px); }
+    }
+
     /* ── MAIN APP ─────────────────────────────────────────────── */
     #app {
       position: fixed;
@@ -1257,22 +1270,41 @@
     // ──────────────────────────────────────────────────────────────
     // PIN SUBMIT
     // ──────────────────────────────────────────────────────────────
+    const pinSubmitBtn = document.getElementById('pin-submit');
+
     async function handlePinSubmit() {
       const pin = pinInput.value.trim();
-      if (!pin) return;
-      const hash = await tuzHashPin(pin);
-      if (PIN_HASHES.includes(hash)) {
-        setAuth(hash);
-        showApp();
-      } else {
-        pinError.hidden = false;
-        pinInput.value  = '';
+      if (!pin) {
+        pinInput.classList.remove('shake');
+        void pinInput.offsetWidth; // reflow to restart animation
+        pinInput.classList.add('shake');
+        setTimeout(() => pinInput.classList.remove('shake'), 400);
         pinInput.focus();
+        return;
+      }
+      pinSubmitBtn.disabled = true;
+      pinSubmitBtn.textContent = '확인 중…';
+      try {
+        const hash = await tuzHashPin(pin);
+        if (PIN_HASHES.includes(hash)) {
+          setAuth(hash);
+          showApp();
+        } else {
+          pinError.textContent = 'PIN이 올바르지 않습니다.';
+          pinError.hidden = false;
+          pinInput.value  = '';
+          pinInput.focus();
+        }
+      } catch (err) {
+        pinError.textContent = '오류가 발생했습니다. 다시 시도해 주세요.';
+        pinError.hidden = false;
+      } finally {
+        pinSubmitBtn.disabled = false;
+        pinSubmitBtn.textContent = '확인';
       }
     }
 
-    document.getElementById('pin-submit')
-            .addEventListener('click', handlePinSubmit);
+    pinSubmitBtn.addEventListener('click', handlePinSubmit);
     pinInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') handlePinSubmit();
     });
