@@ -85,10 +85,15 @@
       margin-bottom: 6px;
     }
 
-    #pin-input {
+    .pin-wrap {
+      position: relative;
       width: 100%;
       max-width: 300px;
-      padding: 16px 20px;
+    }
+
+    #pin-input {
+      width: 100%;
+      padding: 16px 48px 16px 20px;
       border: none;
       border-radius: 16px;
       background: rgba(255,255,255,.15);
@@ -102,6 +107,20 @@
 
     #pin-input::placeholder { color: rgba(255,255,255,.4); letter-spacing: 0; }
     #pin-input:focus { background: rgba(255,255,255,.22); }
+
+    #pin-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.6);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
 
     #pin-submit {
       width: 100%;
@@ -928,11 +947,14 @@
   <div id="gate">
     <div class="gate-logo">Tuz<small>INVEN</small></div>
     <p class="gate-sub">접근하려면 PIN을 입력하세요.</p>
-    <input
-      id="pin-input" type="password" inputmode="numeric"
-      placeholder="● ● ● ●" maxlength="20"
-      autocomplete="current-password"
-    >
+    <div class="pin-wrap">
+      <input
+        id="pin-input" type="password" inputmode="numeric"
+        placeholder="● ● ● ●" maxlength="20"
+        autocomplete="current-password"
+      >
+      <button type="button" id="pin-toggle" aria-label="PIN 보기/숨기기">👁</button>
+    </div>
     <button id="pin-submit">확인</button>
     <p id="pin-error" hidden>PIN이 올바르지 않습니다.</p>
   </div>
@@ -1285,18 +1307,22 @@
       pinSubmitBtn.disabled = true;
       pinSubmitBtn.textContent = '확인 중…';
       try {
+        if (!crypto?.subtle) {
+          throw new Error('crypto.subtle 미지원 브라우저');
+        }
         const hash = await tuzHashPin(pin);
         if (PIN_HASHES.includes(hash)) {
           setAuth(hash);
           showApp();
         } else {
-          pinError.textContent = 'PIN이 올바르지 않습니다.';
+          pinError.textContent = 'PIN이 올바르지 않습니다. 👁 버튼으로 입력 내용을 확인하세요.';
           pinError.hidden = false;
           pinInput.value  = '';
           pinInput.focus();
         }
       } catch (err) {
-        pinError.textContent = '오류가 발생했습니다. 다시 시도해 주세요.';
+        console.error('[PIN]', err);
+        pinError.textContent = `오류: ${err.message || '알 수 없는 오류'}. HTTPS 접속인지 확인하세요.`;
         pinError.hidden = false;
       } finally {
         pinSubmitBtn.disabled = false;
@@ -1308,6 +1334,14 @@
     pinInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') handlePinSubmit();
     });
+
+    // PIN 보기/숨기기 토글
+    document.getElementById('pin-toggle').addEventListener('click', () => {
+      const isPassword = pinInput.type === 'password';
+      pinInput.type = isPassword ? 'text' : 'password';
+      document.getElementById('pin-toggle').textContent = isPassword ? '🙈' : '👁';
+    });
+
     document.getElementById('logout-btn')
             .addEventListener('click', () => { clearAuth(); showGate(); });
 
