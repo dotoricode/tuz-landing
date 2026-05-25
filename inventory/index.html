@@ -1301,6 +1301,8 @@
     async function handlePinSubmit() {
       const pin = pinInput.value.trim();
       if (!pin) {
+        pinError.textContent = 'PIN을 입력해주세요.';
+        pinError.hidden = false;
         pinInput.classList.remove('shake');
         void pinInput.offsetWidth; // reflow to restart animation
         pinInput.classList.add('shake');
@@ -1308,6 +1310,7 @@
         pinInput.focus();
         return;
       }
+      pinError.hidden = true;
       pinSubmitBtn.disabled = true;
       pinSubmitBtn.textContent = '확인 중…';
       try {
