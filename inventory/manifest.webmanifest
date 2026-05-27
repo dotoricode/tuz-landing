@@ -1,0 +1,24 @@
+{
+  "name": "Tuz 재고 관리",
+  "short_name": "Tuz 재고",
+  "description": "Tuz inventory management",
+  "start_url": "/inventory/",
+  "scope": "/inventory/",
+  "display": "standalone",
+  "background_color": "#A82A1F",
+  "theme_color": "#A82A1F",
+  "icons": [
+    {
+      "src": "/inventory/apple-touch-icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/inventory/assets/tuz-inven-icon.png?v=20260525",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
