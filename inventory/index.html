@@ -3144,6 +3144,128 @@
       white-space: normal;
     }
 
+    .hadong-msg.has-briefing {
+      width: 100%;
+      max-width: 100%;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      white-space: normal;
+    }
+
+    .hadong-briefing-card {
+      width: 100%;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--manager-card, #fff) 0%, var(--manager-soft, #fff8ec) 100%);
+      color: var(--manager-ink, var(--ink));
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.055);
+      border-top-left-radius: 6px;
+    }
+
+    .hadong-briefing-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .96rem;
+      font-weight: 950;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .hadong-briefing-subtitle {
+      margin-top: 6px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .8rem;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .hadong-briefing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .hadong-briefing-metric {
+      min-width: 0;
+      min-height: 70px;
+      border: 1px solid var(--metric-border, var(--manager-border, var(--bone)));
+      border-radius: 14px;
+      background: var(--metric-bg, #fff);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hadong-briefing-metric.is-expired {
+      --metric-bg: #fff0ed;
+      --metric-border: #ffd2cc;
+      --metric-ink: #b42318;
+    }
+
+    .hadong-briefing-metric.is-today {
+      --metric-bg: #fff7e6;
+      --metric-border: #fed7aa;
+      --metric-ink: #b54708;
+    }
+
+    .hadong-briefing-metric.is-week {
+      --metric-bg: #edf6ff;
+      --metric-border: #bfdbfe;
+      --metric-ink: #175cd3;
+    }
+
+    .hadong-briefing-metric.is-low {
+      --metric-bg: #ecfdf3;
+      --metric-border: #bbf7d0;
+      --metric-ink: #166534;
+    }
+
+    .hadong-briefing-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.66);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .hadong-briefing-count {
+      display: block;
+      color: var(--metric-ink, var(--manager-ink, var(--ink)));
+      font-size: 1.35rem;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .hadong-briefing-label {
+      display: block;
+      margin-top: 4px;
+      color: var(--metric-ink, var(--manager-muted, var(--g1)));
+      font-size: .72rem;
+      font-weight: 900;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .hadong-briefing-note {
+      margin-top: 12px;
+      padding-top: 11px;
+      border-top: 1px solid var(--manager-border, var(--bone));
+      color: var(--manager-muted, var(--g1));
+      font-size: .8rem;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+
     .hadong-rich {
       display: flex;
       flex-direction: column;
@@ -7365,22 +7487,47 @@
       return JSON.stringify(rows.slice(0, 80));
     }
 
-    function hadongOpeningText() {
-      const profile = getManagerProfile();
+    function hadongBriefingStats() {
       const withDday = items
         .map(i => ({ ...i, dday: calcDDay(i.expiry_date) }))
         .filter(i => i.dday !== null);
-      const expired = withDday.filter(i => i.dday < 0).length;
-      const today = withDday.filter(i => i.dday === 0).length;
-      const week = withDday.filter(i => i.dday >= 0 && i.dday <= 6).length;
-      const low = items.filter(i => i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity)).length;
+      return {
+        expired: withDday.filter(i => i.dday < 0).length,
+        today: withDday.filter(i => i.dday === 0).length,
+        week: withDday.filter(i => i.dday >= 0 && i.dday <= 6).length,
+        low: items.filter(i => i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity)).length
+      };
+    }
+
+    function hadongOpeningText() {
+      const profile = getManagerProfile();
+      const stats = hadongBriefingStats();
       const parts = [];
-      if (expired) parts.push(`기한 지난 재료 ${expired}개`);
-      if (today) parts.push(`오늘 마감 ${today}개`);
-      if (week) parts.push(`이번 주 마감 ${week}개`);
-      if (low) parts.push(`부족 재고 ${low}개`);
+      if (stats.expired) parts.push(`기한 지난 재료 ${stats.expired}개`);
+      if (stats.today) parts.push(`오늘 마감 ${stats.today}개`);
+      if (stats.week) parts.push(`이번 주 마감 ${stats.week}개`);
+      if (stats.low) parts.push(`부족 재고 ${stats.low}개`);
       const summary = parts.length ? parts.join(', ') : '급한 재고 알림은 없어요';
-      return `${profile.opening}\n지금 ${summary}.\n\n마감 전에 한 번에 보기에서 오늘 정리할 일부터 같이 볼 수 있다멍.`;
+      const hasWork = parts.length > 0;
+      return {
+        text: `${profile.opening}\n지금 ${summary}.\n마감 전에 한 번에 보기에서 오늘 정리할 일부터 같이 볼 수 있다멍.`,
+        briefing: {
+          title: `${profile.name} 마감 브리핑`,
+          icon: profile.id === 'cookie' ? '🐾' : '🐶',
+          subtitle: hasWork
+            ? '지금 먼저 볼 재고만 숫자로 정리했어요.'
+            : '지금 크게 걸리는 재고는 없어 보여요.',
+          metrics: [
+            { kind: 'expired', icon: '🚨', label: '기한 지남', count: stats.expired },
+            { kind: 'today', icon: '⏰', label: '오늘 마감', count: stats.today },
+            { kind: 'week', icon: '📅', label: '이번 주', count: stats.week },
+            { kind: 'low', icon: '📦', label: '부족 재고', count: stats.low }
+          ],
+          note: hasWork
+            ? '아래 예상 질문이나 한 번에 보기에서 오늘 정리할 일부터 보면 된다멍.'
+            : '그래도 마감 전에는 오늘 수량이 바뀐 재고만 한 번 훑어보면 좋다멍.'
+        }
+      };
     }
 
     function hadongDdayIcon(dday) {
@@ -7825,6 +7972,7 @@
 
     function renderHadongRichMessage(el, rich) {
       el.classList.add('has-rich');
+      el.classList.remove('has-briefing');
       el.innerHTML = '';
       const wrap = document.createElement('div');
       wrap.className = 'hadong-rich';
@@ -7886,8 +8034,63 @@
       enableHadongCardDrag(track);
     }
 
+    function renderHadongBriefingMessage(el, briefing) {
+      el.classList.add('has-briefing');
+      el.classList.remove('has-rich');
+      el.innerHTML = '';
+
+      const card = document.createElement('div');
+      card.className = 'hadong-briefing-card';
+
+      const title = document.createElement('div');
+      title.className = 'hadong-briefing-title';
+      const icon = document.createElement('span');
+      icon.textContent = briefing.icon || '🐶';
+      const titleText = document.createElement('span');
+      titleText.textContent = briefing.title || '마감 브리핑';
+      title.append(icon, titleText);
+
+      const subtitle = document.createElement('div');
+      subtitle.className = 'hadong-briefing-subtitle';
+      subtitle.textContent = briefing.subtitle || '';
+
+      const grid = document.createElement('div');
+      grid.className = 'hadong-briefing-grid';
+      (briefing.metrics || []).forEach(metric => {
+        const metricEl = document.createElement('div');
+        metricEl.className = `hadong-briefing-metric is-${metric.kind || 'normal'}`;
+        const metricIcon = document.createElement('span');
+        metricIcon.className = 'hadong-briefing-icon';
+        metricIcon.textContent = metric.icon || '•';
+        const copy = document.createElement('span');
+        const count = document.createElement('span');
+        count.className = 'hadong-briefing-count';
+        count.textContent = Number(metric.count || 0).toLocaleString('ko-KR');
+        const label = document.createElement('span');
+        label.className = 'hadong-briefing-label';
+        label.textContent = metric.label || '';
+        copy.append(count, label);
+        metricEl.append(metricIcon, copy);
+        grid.appendChild(metricEl);
+      });
+
+      const note = document.createElement('div');
+      note.className = 'hadong-briefing-note';
+      note.textContent = briefing.note || '';
+
+      card.append(title, subtitle, grid, note);
+      el.appendChild(card);
+    }
+
     function renderHadongMessageContent(el, payload) {
       const text = typeof payload === 'object' && payload ? payload.text : String(payload || '');
+      const briefing = el.classList.contains('bot') && typeof payload === 'object' && payload?.briefing
+        ? payload.briefing
+        : null;
+      if (briefing) {
+        renderHadongBriefingMessage(el, briefing);
+        return;
+      }
       const rich = el.classList.contains('bot')
         ? (typeof payload === 'object' && payload?.rich ? payload.rich : parseHadongRichReply(text))
         : null;
@@ -7896,6 +8099,7 @@
         return;
       }
       el.classList.remove('has-rich');
+      el.classList.remove('has-briefing');
       el.textContent = text;
       if (el.classList.contains('bot') && typeof payload === 'object' && Array.isArray(payload.actions) && payload.actions.length) {
         const panel = document.createElement('div');
@@ -8173,7 +8377,7 @@
       }
 
       if (wantsBriefing) {
-        return { text: `${profile.opening}\n한 번에 보기 탭에 마감 브리핑을 정리해뒀다멍.\n오늘 정리할 일부터 내일 오픈 준비 순서로 보면 된다멍.`, overviewFilter: 'all' };
+        return { ...hadongOpeningText(), overviewFilter: 'all' };
       }
 
       if (wantsLow) {
