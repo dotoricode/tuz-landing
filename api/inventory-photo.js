@@ -1,204 +1,230 @@
-const DEFAULT_MODEL = process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
-const MAX_IMAGE_BASE64_LENGTH = 7_500_000;
-const DEV_ORIGINS = new Set([
-  'http://localhost:4173',
-  'http://127.0.0.1:4173'
-]);
+const DEFAULT_MODEL = 'gemini-2.5-flash';
+const MAX_IMAGE_BASE64_CHARS = 7_000_000;
 
-const CATEGORY_OPTIONS = [
-  '과일/토핑', '시럽/소스', '유제품', '커피', '디저트', '브런치', '청/베이스',
-  '티', '베이커리', '소모품', '일회용품', '컵/뚜껑', '빨대/스틱', '포장재'
+const ALLOWED_ORIGINS = [
+  /^https:\/\/(www\.)?tuz\.kr$/,
+  /^https:\/\/[a-z0-9-]+\.vercel\.app$/,
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
+  /^http:\/\/\[::1\](:\d+)?$/
 ];
 
-const STORAGE_OPTIONS = ['냉장', '냉동', '실온', '상온', '기타'];
-const UNIT_OPTIONS = ['개', '봉', '팩', '박스', '롤', '묶음', '병', '캔', 'kg', 'g', 'L', 'ml'];
+function requestId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `photo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
-function sendJson(res, status, payload) {
-  res.statusCode = status;
-  res.setHeader('content-type', 'application/json; charset=utf-8');
+function isAllowedOrigin(origin = '') {
+  return !origin || ALLOWED_ORIGINS.some(pattern => pattern.test(origin));
+}
+
+function setCors(req, res) {
+  const origin = req.headers.origin || '';
+  if (origin && isAllowedOrigin(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function sendJson(res, statusCode, payload) {
+  res.statusCode = statusCode;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(payload));
 }
 
-function allowedOrigin(req) {
-  const origin = req.headers.origin;
-  if (!origin) return '';
-  try {
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
-    if (new URL(origin).host === host || DEV_ORIGINS.has(origin)) return origin;
-    return null;
-  } catch {
-    return null;
+async function readJsonBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
+
+  let raw = '';
+  for await (const chunk of req) {
+    raw += chunk;
+    if (raw.length > MAX_IMAGE_BASE64_CHARS + 2000) {
+      throw Object.assign(new Error('이미지 요청이 너무 큽니다.'), { statusCode: 413 });
+    }
   }
+  return raw ? JSON.parse(raw) : {};
 }
 
-function applyCors(req, res, origin) {
-  if (!origin) return;
-  res.setHeader('access-control-allow-origin', origin);
-  res.setHeader('access-control-allow-methods', 'POST, OPTIONS');
-  res.setHeader('access-control-allow-headers', 'content-type');
-  res.setHeader('vary', 'Origin');
-}
-
-function cleanText(value, maxLength = 80) {
-  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
-}
-
-function cleanNumber(value) {
-  const num = Number(String(value ?? '').replace(/,/g, ''));
-  return Number.isFinite(num) && num >= 0 ? num : null;
-}
-
-function cleanDate(value) {
-  const text = String(value || '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
-  const date = new Date(`${text}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? null : text;
-}
-
-function normalizeImage(body) {
-  const dataUrl = String(body?.image || '');
-  const match = dataUrl.match(/^data:(image\/(?:png|jpe?g|webp|heic|heif));base64,([A-Za-z0-9+/=]+)$/i);
-  const mimeType = cleanText(body?.mimeType, 40) || match?.[1] || 'image/jpeg';
-  const base64 = match?.[2] || String(body?.base64 || '').replace(/\s+/g, '');
-  if (!base64) return null;
-  if (base64.length > MAX_IMAGE_BASE64_LENGTH) {
-    const err = new Error('사진 용량이 큽니다. 조금 더 작게 촬영하거나 다시 시도해 주세요.');
-    err.statusCode = 413;
-    throw err;
+function parseDataUrl(dataUrl) {
+  const match = String(dataUrl || '').match(/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) {
+    throw Object.assign(new Error('지원하지 않는 이미지 형식입니다.'), { statusCode: 400, code: 'INVALID_IMAGE' });
   }
-  return { mimeType, base64 };
+  if (match[2].length > MAX_IMAGE_BASE64_CHARS) {
+    throw Object.assign(new Error('이미지 용량이 너무 큽니다.'), { statusCode: 413, code: 'IMAGE_TOO_LARGE' });
+  }
+  return { mimeType: match[1], data: match[2] };
 }
 
-function buildPrompt(currentDate) {
-  return [
-    '너는 카페 재고 앱의 사진 분석 도우미다.',
-    '사진 전체를 보고 재고 추가 폼에 넣을 값을 추정한다.',
-    '라벨 글자만 보지 말고 포장 모양, 수량 표기, 보관 문구, 원산지 문구를 함께 판단한다.',
-    '확실하지 않은 값은 빈 문자열이나 null로 둔다. 추측을 과하게 하지 않는다.',
-    `오늘 날짜는 ${currentDate || '알 수 없음'}이다. 연도 없는 기한은 오늘 이후 가장 가까운 날짜로 YYYY-MM-DD 형식으로 추정한다.`,
-    `category는 가능하면 다음 중 하나를 쓴다: ${CATEGORY_OPTIONS.join(', ')}`,
-    `unit은 가능하면 다음 중 하나를 쓴다: ${UNIT_OPTIONS.join(', ')}`,
-    `storage_method는 가능하면 다음 중 하나를 쓴다: ${STORAGE_OPTIONS.join(', ')}`,
-    'expiry_type은 날짜가 있으면 "SELL-BY", 기한이 없는 소모품이면 "NONE"을 쓴다.',
-    'quantity는 사진 속 묶음/개수 표기가 보이면 그 수량, 모르겠으면 1이다.',
-    'min_quantity는 사진만으로 알기 어려우면 null이다.',
-    '반드시 JSON만 출력한다. 마크다운 코드블록을 쓰지 않는다.',
-    '형식: {"name":"","quantity":1,"unit":"","category":"","min_quantity":null,"expiry_date":null,"expiry_type":"SELL-BY","storage_method":"","origin":"","confidence":"low|medium|high","notes":""}'
-  ].join('\n');
-}
-
-function extractOutputText(data) {
+function textFromGemini(data) {
   return (data?.candidates || [])
     .flatMap(candidate => candidate?.content?.parts || [])
     .map(part => part?.text || '')
-    .filter(Boolean)
     .join('\n')
     .trim();
 }
 
-function parseJsonText(text) {
-  const raw = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/i, '').trim();
+function extractJsonObject(text) {
+  const raw = String(text || '').trim();
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1].trim() : raw;
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return {};
   try {
-    return JSON.parse(raw);
+    return JSON.parse(candidate.slice(start, end + 1));
   } catch {
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) return {};
-    try {
-      return JSON.parse(match[0]);
-    } catch {
-      return {};
-    }
+    return {};
   }
 }
 
-function normalizeFields(raw) {
-  raw = raw && typeof raw === 'object' ? raw : {};
-  const quantity = cleanNumber(raw.quantity);
-  const minQuantity = cleanNumber(raw.min_quantity);
-  const expiryDate = cleanDate(raw.expiry_date);
-  const expiryType = raw.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY';
+function normalizeFields(fields = {}) {
   return {
-    name: cleanText(raw.name, 80),
-    quantity: quantity === null ? 1 : quantity,
-    unit: cleanText(raw.unit, 20),
-    category: cleanText(raw.category, 40),
-    min_quantity: minQuantity,
-    expiry_date: expiryType === 'NONE' ? null : expiryDate,
-    expiry_type: expiryType === 'NONE' ? 'NONE' : (expiryDate ? 'SELL-BY' : cleanText(raw.expiry_type, 20) || 'SELL-BY'),
-    storage_method: cleanText(raw.storage_method, 30),
-    origin: cleanText(raw.origin, 50),
-    confidence: ['low', 'medium', 'high'].includes(raw.confidence) ? raw.confidence : 'low',
-    notes: cleanText(raw.notes, 180)
+    name: String(fields.name || '').trim(),
+    quantity: fields.quantity === undefined || fields.quantity === null ? '' : String(fields.quantity).trim(),
+    unit: String(fields.unit || '').trim(),
+    category: String(fields.category || '').trim(),
+    min_quantity: fields.min_quantity === undefined || fields.min_quantity === null ? '' : String(fields.min_quantity).trim(),
+    storage_method: String(fields.storage_method || '').trim(),
+    origin: String(fields.origin || '').trim(),
+    expiry_date: /^\d{4}-\d{2}-\d{2}$/.test(String(fields.expiry_date || '')) ? String(fields.expiry_date) : '',
+    expiry_type: fields.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY',
+    notes: String(fields.notes || '').trim()
   };
 }
 
-module.exports = async function handler(req, res) {
-  const origin = allowedOrigin(req);
-  if (origin === null) {
-    return sendJson(res, 403, { error: '허용된 도메인에서만 사용할 수 있습니다.' });
+async function callGeminiVision({ image, currentDate }) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+  const model = process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || DEFAULT_MODEL;
+  if (!apiKey) {
+    throw Object.assign(new Error('서버에 GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.'), {
+      statusCode: 503,
+      code: 'MISSING_GEMINI_API_KEY',
+      model
+    });
   }
-  applyCors(req, res, origin);
+
+  const prompt = [
+    'Tuz 카페 재고 등록용 사진을 분석한다.',
+    '사진에서 읽을 수 있는 제품명, 수량, 단위, 분류, 보관 방식, 원산지, 날짜를 추출한다.',
+    `오늘 날짜는 ${currentDate || new Date().toISOString().slice(0, 10)}이다.`,
+    '유통기한/소비기한/폐기일처럼 날짜가 보이면 expiry_date를 YYYY-MM-DD로 쓴다.',
+    '확실하지 않은 값은 빈 문자열로 둔다.',
+    '응답은 설명 없이 JSON 객체만 출력한다.',
+    '형식: {"fields":{"name":"","quantity":"","unit":"","category":"","min_quantity":"","storage_method":"","origin":"","expiry_date":"","expiry_type":"SELL-BY","notes":""}}'
+  ].join('\n');
+
+  const payload = {
+    contents: [{
+      role: 'user',
+      parts: [
+        { text: prompt },
+        {
+          inline_data: {
+            mime_type: image.mimeType,
+            data: image.data
+          }
+        }
+      ]
+    }],
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: 320,
+      thinkingConfig: { thinkingBudget: 0 }
+    }
+  };
+
+  const upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const raw = await upstream.text();
+  let data = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
+  }
+
+  if (!upstream.ok) {
+    throw Object.assign(new Error(data?.error?.message || raw.slice(0, 500) || 'Gemini API 요청이 실패했습니다.'), {
+      statusCode: upstream.status,
+      code: 'GEMINI_UPSTREAM_ERROR',
+      model
+    });
+  }
+
+  const text = textFromGemini(data);
+  if (!text) {
+    throw Object.assign(new Error('Gemini 응답에 텍스트가 없습니다.'), {
+      statusCode: 502,
+      code: 'EMPTY_GEMINI_RESPONSE',
+      model
+    });
+  }
+
+  return { model, text, usageMetadata: data?.usageMetadata || null };
+}
+
+module.exports = async function handler(req, res) {
+  const id = requestId();
+  setCors(req, res);
 
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
-    return res.end();
+    res.end();
+    return;
   }
 
   if (req.method !== 'POST') {
-    res.setHeader('allow', 'POST');
-    return sendJson(res, 405, { error: 'POST만 지원합니다.' });
+    sendJson(res, 405, { error: 'POST만 지원합니다.', requestId: id });
+    return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return sendJson(res, 501, { error: 'Vercel 환경변수 GEMINI_API_KEY가 필요합니다.' });
+  if (!isAllowedOrigin(req.headers.origin || '')) {
+    sendJson(res, 403, { error: '허용되지 않은 호출 출처입니다.', requestId: id });
+    return;
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const image = normalizeImage(body);
-    if (!image) return sendJson(res, 400, { error: '사진 데이터가 비어 있습니다.' });
+    const body = await readJsonBody(req);
+    const image = parseDataUrl(body.image);
+    const startedAt = Date.now();
+    const result = await callGeminiVision({ image, currentDate: body.currentDate });
+    const parsed = extractJsonObject(result.text);
+    const fields = normalizeFields(parsed.fields || parsed);
 
-    const upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_MODEL}:generateContent`, {
-      method: 'POST',
-      headers: {
-        'x-goog-api-key': apiKey,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: buildPrompt(cleanText(body.currentDate, 20)) }]
-        },
-        contents: [{
-          role: 'user',
-          parts: [
-            { text: '이 사진으로 재고 추가 폼을 채울 JSON을 만들어줘.' },
-            {
-              inlineData: {
-                mimeType: image.mimeType,
-                data: image.base64
-              }
-            }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 600,
-          responseMimeType: 'application/json'
-        }
-      })
+    console.log('[inventory-photo]', JSON.stringify({
+      requestId: id,
+      model: result.model,
+      latencyMs: Date.now() - startedAt,
+      usageMetadata: result.usageMetadata
+    }));
+
+    sendJson(res, 200, {
+      fields,
+      requestId: id,
+      model: result.model,
+      usageMetadata: result.usageMetadata
     });
-
-    const data = await upstream.json().catch(() => ({}));
-    if (!upstream.ok) {
-      const detail = data?.error?.message || '사진 분석 응답을 받지 못했습니다.';
-      return sendJson(res, upstream.status, { error: detail });
-    }
-
-    const text = extractOutputText(data);
-    const fields = normalizeFields(parseJsonText(text));
-    return sendJson(res, 200, { fields });
   } catch (err) {
-    return sendJson(res, err?.statusCode || 500, { error: err?.message || '사진 분석 중 오류가 났습니다.' });
+    const statusCode = err.statusCode || 500;
+    console.error('[inventory-photo]', JSON.stringify({
+      requestId: id,
+      code: err.code || 'HANDLER_ERROR',
+      message: err.message || String(err)
+    }));
+    sendJson(res, statusCode, {
+      error: err.message || 'Gemini 사진 분석 중 오류가 발생했습니다.',
+      requestId: id,
+      code: err.code || 'HANDLER_ERROR'
+    });
   }
 };

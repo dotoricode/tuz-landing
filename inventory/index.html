@@ -6833,12 +6833,8 @@
     };
     const WEBLLM_PACKAGE_URL = 'https://esm.run/@mlc-ai/web-llm@0.2.83';
     const USE_CLOUD_AI = true;
-    const CLOUD_AI_CHAT_ENDPOINT = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
-      ? 'https://tuz.kr/api/inventory-chat'
-      : '/api/inventory-chat';
-    const CLOUD_AI_PHOTO_ENDPOINT = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
-      ? 'https://tuz.kr/api/inventory-photo'
-      : '/api/inventory-photo';
+    const CLOUD_AI_CHAT_ENDPOINT = '/api/inventory-chat';
+    const CLOUD_AI_PHOTO_ENDPOINT = '/api/inventory-photo';
     const CLOUD_AI_TIMEOUT_MS = 18000;
     let _aiRunToken = 0;
 

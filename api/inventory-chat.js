@@ -1,180 +1,216 @@
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
-const MAX_MESSAGE_LENGTH = 800;
-const MAX_HISTORY_ITEMS = 8;
-const MAX_INVENTORY_ITEMS = 80;
-const DEV_ORIGINS = new Set([
-  'http://localhost:4173',
-  'http://127.0.0.1:4173'
-]);
+const DEFAULT_MODEL = 'gemini-2.5-flash';
+const MAX_PROMPT_CHARS = 14000;
+const MAX_HISTORY = 8;
 
-function sendJson(res, status, payload) {
-  res.statusCode = status;
-  res.setHeader('content-type', 'application/json; charset=utf-8');
+const ALLOWED_ORIGINS = [
+  /^https:\/\/(www\.)?tuz\.kr$/,
+  /^https:\/\/[a-z0-9-]+\.vercel\.app$/,
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
+  /^http:\/\/\[::1\](:\d+)?$/
+];
+
+function requestId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `chat_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function isAllowedOrigin(origin = '') {
+  return !origin || ALLOWED_ORIGINS.some(pattern => pattern.test(origin));
+}
+
+function setCors(req, res) {
+  const origin = req.headers.origin || '';
+  if (origin && isAllowedOrigin(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function sendJson(res, statusCode, payload) {
+  res.statusCode = statusCode;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(payload));
 }
 
-function allowedOrigin(req) {
-  const origin = req.headers.origin;
-  if (!origin) return '';
-  try {
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
-    if (new URL(origin).host === host || DEV_ORIGINS.has(origin)) return origin;
-    return null;
-  } catch {
-    return null;
+async function readJsonBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
+
+  let raw = '';
+  for await (const chunk of req) {
+    raw += chunk;
+    if (raw.length > MAX_PROMPT_CHARS * 2) {
+      throw Object.assign(new Error('요청이 너무 큽니다.'), { statusCode: 413 });
+    }
   }
+  return raw ? JSON.parse(raw) : {};
 }
 
-function applyCors(req, res, origin) {
-  if (!origin) return;
-  res.setHeader('access-control-allow-origin', origin);
-  res.setHeader('access-control-allow-methods', 'POST, OPTIONS');
-  res.setHeader('access-control-allow-headers', 'content-type');
-  res.setHeader('vary', 'Origin');
-}
-
-function cleanText(value, maxLength = MAX_MESSAGE_LENGTH) {
-  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
-}
-
-function sanitizePublicText(value) {
-  return String(value || '')
-    .replace(/gemini(?:[-\s]*\d+(?:\.\d+)?(?:[-\s]*(?:flash|lite|pro))*)?/gi, 'AI')
-    .replace(/제미나이/g, 'AI')
-    .trim();
-}
-
-function normalizeManager(raw) {
-  const id = raw?.id === 'cookie' ? 'cookie' : 'hadong';
-  return id === 'cookie'
-    ? { id, name: '쿠키', fullName: '쿠키 매니저' }
-    : { id, name: '하동이', fullName: '하동이 매니저' };
-}
-
-function normalizeHistory(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw.slice(-MAX_HISTORY_ITEMS).map(entry => {
-    const role = entry?.role === 'assistant' ? 'model' : 'user';
-    const content = cleanText(entry?.content, 900);
-    return content ? { role, content } : null;
-  }).filter(Boolean);
-}
-
-function normalizeInventory(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw.slice(0, MAX_INVENTORY_ITEMS).map(item => ({
-    name: cleanText(item?.name, 80),
-    quantity: cleanText(item?.quantity, 40),
-    category: cleanText(item?.category, 60),
-    storage: cleanText(item?.storage, 60),
-    origin: cleanText(item?.origin, 60),
-    expiryType: cleanText(item?.expiryType, 60),
-    expiryDate: cleanText(item?.expiryDate, 40),
-    dday: cleanText(item?.dday, 40),
-    lowStock: cleanText(item?.lowStock, 40)
-  })).filter(item => item.name);
-}
-
-function buildInstructions(manager, inventory) {
-  const persona = manager.id === 'cookie'
-    ? '장난스럽고 약간 차갑지만 일은 똑부러지게 잘하는 성격'
-    : '귀엽고 친절하지만 살짝 어설픈 성격';
-
-  return [
-    `너는 Tuz 카페 재고 마감 업무를 같이 처리하는 "${manager.fullName}"다.`,
-    `성격은 ${persona}이다.`,
-    '응답은 반드시 한국어만 사용한다. 내부 추론이나 분석 과정을 출력하지 않는다.',
-    '사용자는 재고 업무 중에도 인사, 잡담, 감정 표현, 짧은 일상 대화를 할 수 있다. 이런 경우에도 자연스럽게 받아준다.',
-    '일상 대화에는 재고 요약을 억지로 붙이지 않는다. 다만 길게 수다 떨기보다 매니저답게 짧고 따뜻하게 답한다.',
-    '마감 때 쓰는 앱이므로 오늘 정리할 일과 내일 오픈 준비를 우선한다.',
-    '답변은 짧게 한다. 제목 1줄, 안내 1줄, 필요하면 2~4개 항목만 쓴다.',
-    '말끝에 가끔 "~다멍"을 쓰되 과하게 쓰지 않는다.',
-    'AI 공급자명, 모델명, 외부 서비스 이름은 절대 말하지 않는다. 필요하면 그냥 "AI"라고만 말한다.',
-    '재고 판단은 제공된 재고 데이터 안에서만 한다. 재고와 무관한 일상 대화는 가볍게 답하되, 외부 사실을 단정하지 않는다.',
-    '상태 이모지는 기한 초과 🚨, 오늘 마감 ⏰, 이번 주 📅, 부족 📦, 정상 ✅를 우선 사용한다.',
-    `개별 품목의 상세 점검은 "${manager.name}가 이어서 봐줄거다멍"이라고 안내한다.`,
-    `현재 재고 JSON: ${JSON.stringify(inventory)}`
-  ].join('\n');
-}
-
-function extractOutputText(data) {
+function textFromGemini(data) {
   return (data?.candidates || [])
     .flatMap(candidate => candidate?.content?.parts || [])
     .map(part => part?.text || '')
-    .filter(Boolean)
     .join('\n')
     .trim();
 }
 
-module.exports = async function handler(req, res) {
-  const origin = allowedOrigin(req);
-  if (origin === null) {
-    return sendJson(res, 403, { error: '허용된 도메인에서만 사용할 수 있습니다.' });
+function historyContents(recentMessages) {
+  if (!Array.isArray(recentMessages)) return [];
+  return recentMessages.slice(-MAX_HISTORY).map(message => {
+    const text = String(message?.content || '').trim().slice(0, 900);
+    if (!text) return null;
+    return {
+      role: message?.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text }]
+    };
+  }).filter(Boolean);
+}
+
+function buildSystemPrompt({ manager, inventory }) {
+  const managerName = String(manager?.fullName || manager?.name || '하동이 매니저').trim();
+  const inventoryJson = JSON.stringify(Array.isArray(inventory) ? inventory.slice(0, 80) : []);
+  return [
+    `너는 Tuz 카페 재고를 도와주는 "${managerName}"다.`,
+    '응답은 반드시 한국어로만 한다. 영어 공급자명, 모델명, 내부 추론, <think> 태그는 출력하지 않는다.',
+    '짧고 실무적으로 답한다. 제목 1줄, 안내 1줄, 빈 줄, 항목별 2줄 목록 형식을 우선 사용한다.',
+    '항목은 "이모지 이름" 다음 줄에 "재고 N | 분류 | D-day | 기준 N"처럼 정리한다.',
+    '상태 이모지는 기한 초과 🚨, 오늘 마감 ⏰, 이번 주 📅, 부족 📦, 정상 ✅를 우선 사용한다.',
+    '재고 데이터 안에서만 판단하고, 현재 재고 JSON에 없는 품목명은 절대 만들지 않는다.',
+    '모르면 확인이 필요하다고 말하고, 항목명은 JSON의 name 값을 그대로 인용한다.',
+    '폐기, 부족 재고, 이번 주 기한, 보관 방식, 구매 우선순위를 도와준다.',
+    `현재 재고 JSON: ${inventoryJson}`
+  ].join('\n');
+}
+
+async function callGemini({ systemPrompt, contents, temperature = 0.35, maxOutputTokens = 260 }) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+
+  if (!apiKey) {
+    throw Object.assign(new Error('서버에 GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.'), {
+      statusCode: 503,
+      code: 'MISSING_GEMINI_API_KEY',
+      model
+    });
   }
-  applyCors(req, res, origin);
+
+  const payload = {
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents,
+    generationConfig: {
+      temperature,
+      maxOutputTokens,
+      thinkingConfig: { thinkingBudget: 0 }
+    }
+  };
+
+  const upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const raw = await upstream.text();
+  let data = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
+  }
+
+  if (!upstream.ok) {
+    throw Object.assign(new Error(data?.error?.message || raw.slice(0, 500) || 'Gemini API 요청이 실패했습니다.'), {
+      statusCode: upstream.status,
+      code: 'GEMINI_UPSTREAM_ERROR',
+      model
+    });
+  }
+
+  const text = textFromGemini(data);
+  if (!text) {
+    throw Object.assign(new Error('Gemini 응답에 텍스트가 없습니다.'), {
+      statusCode: 502,
+      code: 'EMPTY_GEMINI_RESPONSE',
+      model
+    });
+  }
+
+  return { model, text, usageMetadata: data?.usageMetadata || null };
+}
+
+module.exports = async function handler(req, res) {
+  const id = requestId();
+  setCors(req, res);
 
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
-    return res.end();
+    res.end();
+    return;
   }
 
   if (req.method !== 'POST') {
-    res.setHeader('allow', 'POST');
-    return sendJson(res, 405, { error: 'POST만 지원합니다.' });
+    sendJson(res, 405, { error: 'POST만 지원합니다.', requestId: id });
+    return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return sendJson(res, 501, { error: 'Vercel 환경변수 GEMINI_API_KEY가 필요합니다.' });
+  if (!isAllowedOrigin(req.headers.origin || '')) {
+    sendJson(res, 403, { error: '허용되지 않은 호출 출처입니다.', requestId: id });
+    return;
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const message = cleanText(body.message);
-    if (!message) return sendJson(res, 400, { error: '질문이 비어 있습니다.' });
-
-    const manager = normalizeManager(body.manager);
-    const inventory = normalizeInventory(body.inventory);
-    const history = normalizeHistory(body.recentMessages);
-    const instructions = buildInstructions(manager, inventory);
-    const contents = [
-      ...history.map(entry => ({
-        role: entry.role,
-        parts: [{ text: entry.content }]
-      })),
-      {
-        role: 'user',
-        parts: [{ text: message }]
-      }
-    ];
-
-    const upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_MODEL}:generateContent`, {
-      method: 'POST',
-      headers: {
-        'x-goog-api-key': apiKey,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: instructions }]
-        },
-        contents,
-        generationConfig: {
-          temperature: 0.35,
-          maxOutputTokens: 220
-        }
-      })
-    });
-
-    const data = await upstream.json().catch(() => ({}));
-    if (!upstream.ok) {
-      const detail = data?.error?.message || '서버 AI 응답을 받지 못했습니다.';
-      return sendJson(res, upstream.status, { error: detail });
+    const body = await readJsonBody(req);
+    const message = String(body.message || '').trim();
+    if (!message) {
+      sendJson(res, 400, { error: '메시지가 비어 있습니다.', requestId: id });
+      return;
     }
 
-    const reply = sanitizePublicText(extractOutputText(data));
-    return sendJson(res, 200, { reply });
+    const systemPrompt = buildSystemPrompt(body);
+    const contents = [
+      ...historyContents(body.recentMessages),
+      { role: 'user', parts: [{ text: message.slice(0, 1200) }] }
+    ];
+    const promptChars = systemPrompt.length + contents.reduce((sum, item) => (
+      sum + item.parts.reduce((partSum, part) => partSum + part.text.length, 0)
+    ), 0);
+    if (promptChars > MAX_PROMPT_CHARS) {
+      sendJson(res, 413, { error: '재고 문맥이 너무 큽니다.', requestId: id });
+      return;
+    }
+
+    const startedAt = Date.now();
+    const result = await callGemini({ systemPrompt, contents });
+    console.log('[inventory-chat]', JSON.stringify({
+      requestId: id,
+      model: result.model,
+      promptChars,
+      latencyMs: Date.now() - startedAt,
+      usageMetadata: result.usageMetadata
+    }));
+
+    sendJson(res, 200, {
+      reply: result.text,
+      requestId: id,
+      model: result.model,
+      usageMetadata: result.usageMetadata
+    });
   } catch (err) {
-    return sendJson(res, 500, { error: err?.message || '서버 AI 처리 중 오류가 났습니다.' });
+    const statusCode = err.statusCode || 500;
+    console.error('[inventory-chat]', JSON.stringify({
+      requestId: id,
+      code: err.code || 'HANDLER_ERROR',
+      message: err.message || String(err)
+    }));
+    sendJson(res, statusCode, {
+      error: err.message || 'Gemini 채팅 처리 중 오류가 발생했습니다.',
+      requestId: id,
+      code: err.code || 'HANDLER_ERROR'
+    });
   }
 };
