@@ -1401,6 +1401,37 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
     }
 
+    .photo-source-options {
+      display: grid;
+      gap: 9px;
+      padding-top: 4px;
+    }
+
+    .photo-source-option {
+      min-height: 50px;
+      border: 1.5px solid var(--manager-border, var(--g3));
+      border-radius: 14px;
+      background: var(--manager-field, var(--cream));
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: .92rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    .photo-source-option span:first-child {
+      font-size: 1.15rem;
+    }
+
+    .photo-source-option:active {
+      transform: translateY(1px);
+    }
+
     #rh-add-btn {
       flex: 1;
       height: 64px;
@@ -3876,7 +3907,24 @@
     <div class="rh-bottom-bar">
       <button type="button" id="scan-btn" title="사진으로 등록">📷</button>
       <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+      <input type="file" id="gallery-input" accept="image/*" hidden>
       <button type="button" id="rh-add-btn">+ 직접 추가</button>
+    </div>
+
+    <div id="photo-source-sheet" class="picker-sheet" aria-hidden="true">
+      <div class="picker-backdrop" id="photo-source-backdrop"></div>
+      <div class="picker-panel" role="dialog" aria-modal="true" aria-labelledby="photo-source-title">
+        <div class="picker-handle"></div>
+        <div class="picker-title" id="photo-source-title">사진으로 재고 추가</div>
+        <div class="photo-source-options">
+          <button type="button" class="photo-source-option" data-photo-source="camera">
+            <span>📷</span><strong>사진 촬영</strong>
+          </button>
+          <button type="button" class="photo-source-option" data-photo-source="gallery">
+            <span>🖼️</span><strong>사진 보관함</strong>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Hidden compat elements -->
@@ -4012,7 +4060,6 @@
         <div>
           <h2>사진으로 재고 등록</h2>
           <p id="ocr-status"></p>
-          <div class="ocr-model-note">OCR: Qwen3-VL-4B</div>
         </div>
         <div class="ocr-preview-wrap">
           <img id="ocr-preview" alt="스캔 이미지">
@@ -4539,7 +4586,18 @@
     // ──────────────────────────────────────────────────────────────
     // ADD SHEET
     // ──────────────────────────────────────────────────────────────
-    function openAddSheet() {
+    function resetAddSheetForm() {
+      const form = document.getElementById('add-item-form');
+      form?.reset();
+      document.getElementById('add-quantity').value = '1';
+      setAddExpiryPresence('dated');
+      clearAddAutoFillTouched?.();
+      hideAddAutoFillHint?.();
+      updateAddPickerButtons?.();
+    }
+
+    function openAddSheet(options = {}) {
+      if (options.reset) resetAddSheetForm();
       document.getElementById('add-item-sheet').classList.add('open');
       updateAddPickerButtons();
     }
@@ -5804,69 +5862,201 @@
       }
     }
 
+    function openPhotoSourceSheet() {
+      const sheet = document.getElementById('photo-source-sheet');
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+    }
+
+    function closePhotoSourceSheet() {
+      const sheet = document.getElementById('photo-source-sheet');
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+    }
+
     document.getElementById('scan-btn').addEventListener('click', () => {
-      document.getElementById('camera-input').click();
+      openPhotoSourceSheet();
     });
 
-    document.getElementById('camera-input').addEventListener('change', async function () {
-      const file = this.files[0];
-      this.value = '';
-      if (!file) return;
-      await handleCameraFile(file);
+    document.getElementById('photo-source-backdrop').addEventListener('click', closePhotoSourceSheet);
+
+    document.querySelectorAll('[data-photo-source]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        bumpFeedback(btn);
+        const source = btn.dataset.photoSource;
+        closePhotoSourceSheet();
+        document.getElementById(source === 'gallery' ? 'gallery-input' : 'camera-input').click();
+      });
     });
 
-    async function handleCameraFile(file) {
-      const dataUrl = await new Promise(res => {
-        const reader  = new FileReader();
+    ['camera-input', 'gallery-input'].forEach(id => {
+      document.getElementById(id).addEventListener('change', async function () {
+        const file = this.files[0];
+        this.value = '';
+        if (!file) return;
+        await handleCameraFile(file);
+      });
+    });
+
+    function fileToDataUrl(file) {
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
         reader.onload = e => res(e.target.result);
+        reader.onerror = () => rej(new Error('사진을 읽지 못했습니다.'));
         reader.readAsDataURL(file);
       });
+    }
 
-      openOcrModal(dataUrl, null, true);
+    async function resizeImageForAnalysis(dataUrl, maxSize = 1280, quality = 0.78) {
+      const img = await new Promise((res, rej) => {
+        const image = new Image();
+        image.onload = () => res(image);
+        image.onerror = () => rej(new Error('사진을 불러오지 못했습니다.'));
+        image.src = dataUrl;
+      });
+      const scale = Math.min(1, maxSize / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+      const width = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+      const height = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', { alpha: false });
+      ctx.drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL('image/jpeg', quality);
+    }
+
+    function todayIsoForPhotoAnalysis() {
+      const d = new Date();
+      return [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, '0'),
+        String(d.getDate()).padStart(2, '0')
+      ].join('-');
+    }
+
+    function normalizePhotoFields(fields = {}) {
+      const qty = Number(fields.quantity);
+      const minQty = fields.min_quantity === null || fields.min_quantity === undefined || fields.min_quantity === ''
+        ? ''
+        : String(fields.min_quantity);
+      return {
+        name: String(fields.name || '').trim(),
+        quantity: Number.isFinite(qty) && qty >= 0 ? String(qty) : '1',
+        unit: String(fields.unit || '').trim(),
+        category: String(fields.category || '').trim(),
+        min_quantity: minQty,
+        storage_method: String(fields.storage_method || '').trim(),
+        origin: String(fields.origin || '').trim(),
+        expiry_date: /^\d{4}-\d{2}-\d{2}$/.test(String(fields.expiry_date || '')) ? fields.expiry_date : '',
+        expiry_type: fields.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY',
+        notes: String(fields.notes || '').trim()
+      };
+    }
+
+    async function requestPhotoAnalysis(dataUrl) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 26000);
+      try {
+        const response = await fetch(CLOUD_AI_PHOTO_ENDPOINT, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            image: dataUrl,
+            currentDate: todayIsoForPhotoAnalysis()
+          })
+        });
+        let payload = {};
+        try { payload = await response.json(); } catch {}
+        if (!response.ok) {
+          throw new Error(payload?.error || `사진 분석 실패 (${response.status})`);
+        }
+        return normalizePhotoFields(payload.fields || {});
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function fallbackPhotoTextAnalysis(dataUrl) {
+      const [barcode, worker] = await Promise.all([
+        detectBarcodeFromImage(dataUrl),
+        getOcrWorker()
+      ]);
+      const { data: { text } } = await worker.recognize(dataUrl);
+      const fields = parseInventoryFieldsFromText(text);
+      const best = pickBestDate(parseDatesFromText(text));
+      return normalizePhotoFields({
+        ...fields,
+        quantity: 1,
+        expiry_date: best || '',
+        expiry_type: fields.expiry_type || (best ? 'SELL-BY' : ''),
+        notes: barcode ? `바코드 ${barcode} 확인` : ''
+      });
+    }
+
+    function applyPhotoFieldsToAddSheet(fields, { fallback = false } = {}) {
+      const normalized = normalizePhotoFields(fields);
+      const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el || value === null || value === undefined || value === '') return false;
+        el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
+      };
+      const applied = [];
+
+      if (setValue('add-name', normalized.name)) applied.push('품목명');
+      if (setValue('add-quantity', normalized.quantity || '1')) applied.push('수량');
+      if (setValue('add-unit', normalized.unit)) applied.push('단위');
+      if (setValue('add-category', normalized.category)) applied.push('카테고리');
+      if (setValue('add-min-qty', normalized.min_quantity)) applied.push('최소 재고량');
+      if (setValue('add-storage', normalized.storage_method)) applied.push('보관 방식');
+      if (setValue('add-origin', normalized.origin)) applied.push('원산지');
+
+      if (normalized.expiry_type === 'NONE') {
+        setAddExpiryPresence('none');
+        applied.push('기한 없음');
+      } else {
+        setAddExpiryPresence('dated');
+        document.getElementById('expiry-type-hidden').value = 'SELL-BY';
+        document.getElementById('expiry-type-toggle').dataset.type = 'SELL-BY';
+        document.getElementById('expiry-type-toggle').textContent = '유통기한';
+        if (setValue('expiry-date-input', normalized.expiry_date)) applied.push('유통기한');
+      }
+
+      updateAddPickerButtons();
+      applyAddNamePrediction();
+      clearTimeout(_addAutoFillTimer);
+
+      const prefix = fallback ? '사진 글자 인식으로' : '사진 AI 분석으로';
+      if (applied.length) {
+        showAddAutoFillHint(`${prefix} ${[...new Set(applied)].join(', ')}을 채웠어요. 확인 후 추가하면 됩니다.`);
+      } else {
+        showAddAutoFillHint('사진에서 확실한 정보를 찾지 못했어요. 직접 입력해 주세요.');
+      }
+    }
+
+    async function handleCameraFile(file) {
+      openAddSheet({ reset: true });
+      showAddAutoFillHint('사진 AI가 품목명, 수량, 기한, 단위, 카테고리를 분석하는 중이에요.');
 
       try {
-        setOcrStatus('사진에서 바코드와 글자를 찾는 중…');
-        const [barcode, worker] = await Promise.all([
-          detectBarcodeFromImage(dataUrl),
-          getOcrWorker()
-        ]);
-
-        setOcrStatus('제품 정보를 자동으로 입력하는 중… (첫 실행 시 10~20초 소요)');
-        const { data: { text } } = await worker.recognize(dataUrl);
-
-        const candidates = parseDatesFromText(text);
-        const best       = pickBestDate(candidates);
-        const fields     = parseInventoryFieldsFromText(text);
-
-        document.getElementById('ocr-date-result').value = best || '';
-        applyOcrFields(fields);
-
-        const filled = [
-          best ? `${expiryTypeLabel(document.getElementById('ocr-type-hidden').value)} 날짜` : '',
-          fields.expiry_type ? '기한 유형' : '',
-          fields.name ? '재료명' : '',
-          fields.category ? '카테고리' : '',
-          fields.unit ? '단위' : '',
-          fields.storage_method ? '보관 방식' : '',
-          fields.origin ? '원산지' : '',
-          barcode ? '바코드 확인' : ''
-        ].filter(Boolean);
-
-        const barcodeHint = barcode
-          ? `\n바코드 ${barcode} 확인됨. 제품명 조회 API 연결 전까지는 포장지 글자로 자동 입력합니다.`
-          : '';
-        if (best) {
-          setOcrStatus(`자동 입력: ${filled.join(', ') || '기한'}${barcodeHint}`);
-        } else if (filled.length) {
-          setOcrStatus(`자동 입력: ${filled.join(', ')}${barcodeHint}`);
-        } else {
-          setOcrStatus('자동으로 채운 정보가 부족합니다.\n사진을 더 밝게 찍거나 직접 입력해주세요.');
-        }
+        const rawDataUrl = await fileToDataUrl(file);
+        const dataUrl = await resizeImageForAnalysis(rawDataUrl);
+        const fields = await requestPhotoAnalysis(dataUrl);
+        applyPhotoFieldsToAddSheet(fields);
       } catch (err) {
-        console.error('[OCR]', err);
-        setOcrStatus(`오류: ${err.message}\n날짜를 직접 입력해주세요.`);
-      } finally {
-        document.getElementById('ocr-confirm-btn').disabled = false;
+        console.warn('[Photo analysis]', err);
+        try {
+          const dataUrl = await fileToDataUrl(file);
+          showAddAutoFillHint('AI 연결이 불안정해서 사진 글자를 먼저 읽는 중이에요.');
+          const fields = await fallbackPhotoTextAnalysis(dataUrl);
+          applyPhotoFieldsToAddSheet(fields, { fallback: true });
+        } catch (fallbackErr) {
+          console.error('[Photo text fallback]', fallbackErr);
+          showAddAutoFillHint('사진 분석에 실패했어요. 직접 입력해 주세요.');
+        }
       }
     }
 
@@ -6559,6 +6749,9 @@
     const CLOUD_AI_CHAT_ENDPOINT = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
       ? 'https://tuz.kr/api/inventory-chat'
       : '/api/inventory-chat';
+    const CLOUD_AI_PHOTO_ENDPOINT = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+      ? 'https://tuz.kr/api/inventory-photo'
+      : '/api/inventory-photo';
     const CLOUD_AI_TIMEOUT_MS = 18000;
     let _aiRunToken = 0;
 
@@ -8817,6 +9010,7 @@
     installSwipeDownClose('#ocr-modal .ocr-shell', closeOcrModal);
     installSwipeDownClose('#ocr-picker-sheet .picker-panel', closeOcrPicker, { threshold: 56 });
     installSwipeDownClose('#add-picker-sheet .picker-panel', closeAddPicker, { threshold: 56 });
+    installSwipeDownClose('#photo-source-sheet .picker-panel', closePhotoSourceSheet, { threshold: 56 });
     installSwipeDownClose('#date-picker-sheet .date-picker-panel', closeDatePicker, { threshold: 56 });
     installSwipeDownClose('#delete-confirm-sheet .delete-confirm-panel', closeDeleteConfirm, { threshold: 56 });
     installSwipeDownClose('#manager-select-sheet .manager-select-panel', closeManagerSelectSheet, { threshold: 56 });
