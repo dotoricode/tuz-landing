@@ -443,7 +443,8 @@
     }
 
     .ai-model-panel {
-      width: 92px;
+      width: auto;
+      min-width: 50px;
       margin: 0;
       padding: 0;
       border-radius: 999px;
@@ -454,22 +455,19 @@
     }
 
     .ai-model-panel[open] {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      width: min(280px, calc(100vw - 44px));
-      border-radius: 14px;
-      background: rgba(0,0,0,.16);
-      z-index: 35;
+      position: static;
+      width: auto;
+      border-radius: 999px;
+      background: rgba(0,0,0,.12);
     }
 
     .ai-model-summary {
       min-height: 34px;
       display: flex;
       align-items: center;
-      gap: 7px;
-      padding: 6px 9px;
-      cursor: pointer;
+      gap: 6px;
+      padding: 6px 10px 6px 9px;
+      cursor: default;
       list-style: none;
       user-select: none;
     }
@@ -477,16 +475,27 @@
     .ai-model-summary::-webkit-details-marker { display: none; }
 
     .ai-model-summary::after {
-      content: '›';
-      margin-left: auto;
-      color: rgba(255,255,255,.45);
-      font-weight: 900;
-      transform: rotate(90deg);
-      transition: transform .18s ease;
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #9ee6bd;
+      box-shadow: 0 0 0 3px rgba(158,230,189,.16);
+      flex-shrink: 0;
     }
 
     .ai-model-panel[open] .ai-model-summary::after {
-      transform: rotate(-90deg);
+      transform: none;
+    }
+
+    .ai-model-panel.is-loading .ai-model-summary::after {
+      background: #facc15;
+      box-shadow: 0 0 0 3px rgba(250,204,21,.18);
+    }
+
+    .ai-model-panel.is-error .ai-model-summary::after {
+      background: #ffb3a8;
+      box-shadow: 0 0 0 3px rgba(255,179,168,.18);
     }
 
     .ai-model-chip {
@@ -505,7 +514,7 @@
     }
 
     .ai-model-content {
-      padding: 0 9px 9px;
+      display: none !important;
     }
 
     .ai-model-panel:not([open]) .ai-model-content {
@@ -513,13 +522,12 @@
     }
 
     .ai-model-status {
-      flex: 1;
-      min-width: 0;
-      font-size: .64rem;
-      line-height: 1.2;
-      white-space: nowrap;
+      position: absolute;
+      width: 1px;
+      height: 1px;
       overflow: hidden;
-      text-overflow: ellipsis;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
     }
 
     #ai-model-select {
@@ -649,10 +657,6 @@
 
       .rh-hadong-label span {
         display: none;
-      }
-
-      .ai-model-panel {
-        width: 72px;
       }
 
       .ai-model-chip {
@@ -3572,10 +3576,10 @@
           </div>
         </div>
         <div class="rh-header-actions">
-          <details class="ai-model-panel" id="ai-model-panel">
-            <summary class="ai-model-summary">
+          <details class="ai-model-panel" id="ai-model-panel" aria-label="AI 작동 중">
+            <summary class="ai-model-summary" title="AI 작동 중">
               <span class="ai-model-chip">AI</span>
-              <div class="ai-model-status" id="ai-model-status">확인 중</div>
+              <span class="ai-model-status" id="ai-model-status">작동 중</span>
             </summary>
             <div class="ai-model-content">
               <div class="ai-model-meta">
@@ -6465,18 +6469,22 @@
         panel?.classList.toggle('is-ready', state !== 'failed');
         panel?.classList.toggle('is-loading', state === 'loading');
         panel?.classList.toggle('is-error', state === 'failed');
+        if (panel) {
+          panel.open = false;
+          panel.setAttribute('aria-label', state === 'failed' ? 'AI 연결 확인 필요' : 'AI 작동 중');
+        }
         if (fill) fill.style.width = state === 'loading' ? '45%' : '100%';
         if (mobileBtn) mobileBtn.hidden = true;
         if (sizeNote) {
           sizeNote.textContent = state === 'failed'
-            ? '서버 AI 연결 실패 · 기본 재고 요약으로 답변합니다.'
-            : 'Gemini 2.5 Flash-Lite로 답변합니다. 브라우저 모델 다운로드는 하지 않습니다.';
+            ? 'AI 연결 확인 필요'
+            : 'AI 작동 중';
         }
         el.textContent = state === 'loading'
-          ? '서버 확인'
+          ? '확인 중'
           : state === 'failed'
-            ? '서버 실패'
-            : '서버';
+            ? '연결 확인 필요'
+            : '작동 중';
         return;
       }
       const model = webLLMModelLabel();
@@ -6610,7 +6618,11 @@
     document.querySelector('#ai-model-panel .ai-model-summary')?.addEventListener('click', e => {
       e.preventDefault();
       const panel = document.getElementById('ai-model-panel');
-      if (panel) panel.open = !panel.open;
+      if (panel) panel.open = false;
+    });
+
+    document.getElementById('ai-model-panel')?.addEventListener('toggle', e => {
+      if (e.currentTarget.open) e.currentTarget.open = false;
     });
 
     document.querySelectorAll('[data-ai-model]').forEach(btn => {
