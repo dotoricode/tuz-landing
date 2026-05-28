@@ -3888,8 +3888,8 @@
               <span class="cookie-manager-label"><strong id="manager-bridge-name">하동이</strong><span>매니저</span></span>
             </span>
             <div class="cookie-manager-copy">
-              <div class="cookie-manager-title" id="manager-bridge-title">마감 브리핑을 같이 정리해요</div>
-              <div class="cookie-manager-subtitle" id="manager-bridge-subtitle">오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있어요.</div>
+              <div class="cookie-manager-title" id="manager-bridge-title">마감 브리핑을 같이 정리한다멍</div>
+              <div class="cookie-manager-subtitle" id="manager-bridge-subtitle">오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있다멍.</div>
             </div>
             <div class="manager-strip-actions">
               <button type="button" class="manager-strip-btn" id="manager-briefing-open">열기</button>
@@ -4193,8 +4193,8 @@
           <div class="ai-visual-top">
             <div class="ai-risk-icon" id="ai-risk-icon">🐾</div>
             <div>
-              <div class="ai-visual-title" id="ai-visual-title">쿠키 매니저가 킁킁 살펴보는 중이에요</div>
-              <div class="ai-visual-subtitle" id="ai-visual-subtitle">기한이랑 재고 기준을 같이 보고 있어요.</div>
+              <div class="ai-visual-title" id="ai-visual-title">쿠키가 딱 보고 있다멍</div>
+              <div class="ai-visual-subtitle" id="ai-visual-subtitle">기한이랑 재고 기준을 같이 본다멍.</div>
             </div>
             <div class="ai-risk-pill" id="ai-risk-pill">점검 중</div>
           </div>
@@ -4203,7 +4203,7 @@
           </div>
         </div>
         <div class="ai-tabs" role="tablist" aria-label="상세 점검 보기">
-          <button type="button" class="ai-tab active" data-ai-tab="summary">킁킁 요약</button>
+          <button type="button" class="ai-tab active" data-ai-tab="summary">딱 보기</button>
           <button type="button" class="ai-tab" data-ai-tab="actions">해야 할 일</button>
           <button type="button" class="ai-tab" data-ai-tab="criteria">한 마디</button>
         </div>
@@ -4291,8 +4291,8 @@
         alt: '하동이 매니저',
         themeColor: '#8C4F36',
         headerSubtitle: '마감 전에 같이 정리하는 재고 파트너',
-        bridgeTitle: '마감 브리핑을 같이 정리해요',
-        bridgeSubtitle: '오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있어요.',
+        bridgeTitle: '마감 브리핑을 같이 정리한다멍',
+        bridgeSubtitle: '오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있다멍.',
         opening: '하동이 매니저다멍🐶',
         empty: '오늘 마감 전에 크게 걸리는 일은 없어 보인다멍.',
         workPrefix: '같이 볼게멍🐶'
@@ -4305,8 +4305,8 @@
         alt: '쿠키 매니저',
         themeColor: '#202020',
         headerSubtitle: '장난은 쳐도 마감 순서는 똑부러지게 보는 매니저',
-        bridgeTitle: '마감 순서, 쿠키가 깔끔하게 잡아줄게요',
-        bridgeSubtitle: '오늘 처리할 것과 내일 아침에 터질 일을 나눠서 봅니다.',
+        bridgeTitle: '마감 순서, 쿠키가 깔끔하게 잡아준다멍',
+        bridgeSubtitle: '오늘 처리할 것과 내일 아침에 터질 일을 나눠서 본다멍.',
         opening: '쿠키 매니저다멍🐾',
         empty: '마감 전에 크게 찔리는 재고는 없어 보인다멍.',
         workPrefix: '좋아, 이건 쿠키가 같이 볼게멍.'
@@ -4388,20 +4388,20 @@
       const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       if (profile.id === 'cookie') {
         return {
-          title: isFailed ? '쿠키가 연결을 확인 중' : isLoading ? '쿠키가 AI 답변을 준비 중' : '쿠키가 같이 보고 있어요',
+          title: isFailed ? '쿠키가 연결을 확인 중' : isLoading ? '쿠키가 AI 답변을 준비 중' : '쿠키가 같이 보고 있다멍',
           copy: isFailed
-            ? `쿠키 매니저다멍${icon} AI 연결이 안 잡히면 현재 재고 목록 기준으로 먼저 정리할게요.`
+            ? `쿠키 매니저다멍${icon} AI 연결이 안 잡히면 현재 재고 목록 기준으로 먼저 정리한다멍.`
             : isLoading
-              ? `쿠키 매니저다멍${icon} AI가 답을 준비하고 있어요. 재고 판단은 현재 목록 기준으로 같이 봅니다.`
-              : `쿠키 매니저다멍${icon} AI가 일상 대화를 받고, 재고 정리는 현재 목록 기준으로 같이 봅니다.`
+              ? `쿠키 매니저다멍${icon} AI가 답을 준비하고 있다멍. 재고 판단은 현재 목록 기준으로 같이 본다멍.`
+              : `쿠키 매니저다멍${icon} AI가 일상 대화를 받고, 재고 정리는 현재 목록 기준으로 같이 본다멍.`
         };
       }
       return {
-        title: isFailed ? '하동이가 연결을 확인 중' : isLoading ? '하동이가 AI 답변을 준비 중' : '하동이가 같이 보고 있어요',
+        title: isFailed ? '하동이가 연결을 확인 중' : isLoading ? '하동이가 AI 답변을 준비 중' : '하동이가 같이 보고 있다멍',
         copy: isFailed
-          ? `하동이 매니저다멍${icon} AI 연결이 안 잡히면 현재 재고 목록으로 먼저 짧게 정리해줄게요.`
+          ? `하동이 매니저다멍${icon} AI 연결이 안 잡히면 현재 재고 목록으로 먼저 짧게 정리해준다멍.`
           : isLoading
-            ? `하동이 매니저다멍${icon} AI가 답을 준비하고 있어요. 재고는 현재 목록 기준으로 같이 본다멍.`
+            ? `하동이 매니저다멍${icon} AI가 답을 준비하고 있다멍. 재고는 현재 목록 기준으로 같이 본다멍.`
             : `하동이 매니저다멍${icon} AI가 일상 대화를 받고, 재고 정리는 현재 목록 기준으로 같이 본다멍.`
       };
     }
@@ -4436,6 +4436,7 @@
       setElText('hadong-header-title', profile.fullName);
       setElText('hadong-header-subtitle', profile.headerSubtitle);
       setElText('ai-sheet-title', `${profile.name} 상세 점검`);
+      setManagerDetailTabLabels(profile);
       const input = document.getElementById('hadong-input');
       if (input) input.placeholder = `${profile.name}에게 같이 할 일을 말해 주세요`;
       document.querySelectorAll('[data-manager-choice]').forEach(btn => {
@@ -6382,9 +6383,9 @@
       });
 
       if (applied.length) {
-        showAddAutoFillHint(`쿠키 매니저가 품목명을 보고 ${applied.join(', ')} 항목을 채웠어요. 필요하면 아래에서 바로 바꿀 수 있어요.`);
+        showAddAutoFillHint(`쿠키 매니저가 품목명을 보고 ${applied.join(', ')} 항목을 채웠다멍. 필요하면 아래에서 바로 바꿀 수 있다멍.`);
       } else if (Object.values(fields).some(Boolean)) {
-        showAddAutoFillHint('쿠키 매니저가 예측값을 찾았어요. 직접 고른 값은 그대로 둘게요.');
+        showAddAutoFillHint('쿠키 매니저가 예측값을 찾았다멍. 직접 고른 값은 그대로 둔다멍.');
       } else {
         hideAddAutoFillHint();
       }
@@ -7351,8 +7352,8 @@
 
     function managerDetailLoadingTitle(profile = getManagerProfile()) {
       return profile.id === 'cookie'
-        ? '쿠키가 딱 보고 있어요'
-        : '하동이가 킁킁 살펴보는 중이에요';
+        ? '쿠키가 딱 보고 있다멍'
+        : '하동이가 킁킁 살펴보는 중이다멍';
     }
 
     function managerDetailStatusText(status, profile = getManagerProfile()) {
@@ -7362,16 +7363,70 @@
         : `${label} · 하동이가 같이 봤다멍`;
     }
 
+    function setManagerDetailTabLabels(profile = getManagerProfile()) {
+      const labels = profile.id === 'cookie'
+        ? { summary: '딱 보기', actions: '해야 할 일', criteria: '한 마디' }
+        : { summary: '킁킁 요약', actions: '해야 할 일', criteria: '한 마디' };
+      Object.entries(labels).forEach(([tab, label]) => {
+        const btn = document.querySelector(`[data-ai-tab="${tab}"]`);
+        if (btn) btn.textContent = label;
+      });
+    }
+
+    function applyManagerDetailSpeechTone(text) {
+      const replacements = [
+        [/추천하지 않아요/g, '추천하지 않는다멍'],
+        [/먼저 확인해야 해요/g, '먼저 확인해야 한다멍'],
+        [/오늘 챙겨야 해요/g, '오늘 챙겨야 한다멍'],
+        [/관리해야 해요/g, '관리해야 한다멍'],
+        [/봐야 해요/g, '봐야 한다멍'],
+        [/미루면 안 돼요/g, '미루면 안 된다멍'],
+        [/기한이 비어 있어요/g, '기한이 비어 있다멍'],
+        [/오늘 마감이에요/g, '오늘 마감이다멍'],
+        [/안 해도 괜찮아 보여요/g, '안 해도 괜찮아 보인다멍'],
+        [/괜찮아 보여요/g, '괜찮아 보인다멍'],
+        [/부족해 보여요/g, '부족해 보인다멍'],
+        [/조금 길어요/g, '조금 길다멍'],
+        [/재고만 봐요/g, '재고만 본다멍'],
+        [/괜찮아요/g, '괜찮다멍'],
+        [/추천해요/g, '추천한다멍'],
+        [/좋아요/g, '좋다멍'],
+        [/안전해요/g, '안전하다멍'],
+        [/빠릅니다/g, '빠르다멍'],
+        [/중요해요/g, '중요하다멍'],
+        [/맛이 떨어질 수 있어요/g, '맛이 떨어질 수 있다멍'],
+        [/변할 수 있어요/g, '변할 수 있다멍'],
+        [/수 있어요/g, '수 있다멍'],
+        [/입력해 주세요/g, '입력해야 한다멍'],
+        [/확인해 주세요/g, '확인해야 한다멍'],
+        [/봐주세요/g, '봐야 한다멍'],
+        [/나눠주세요/g, '나눠야 한다멍'],
+        [/말아주세요/g, '말아야 한다멍'],
+        [/빼주세요/g, '빼야 한다멍'],
+        [/넣어주세요/g, '넣어야 한다멍'],
+        [/점검이에요/g, '점검이다멍'],
+        [/품목이에요/g, '품목이다멍'],
+        [/봤어요/g, '봤다멍'],
+        [/이에요/g, '이다멍'],
+        [/예요/g, '다멍'],
+        [/해요/g, '한다멍']
+      ];
+      return replacements.reduce((value, [pattern, replacement]) => (
+        value.replace(pattern, replacement)
+      ), String(text || ''));
+    }
+
     function applyManagerToneToDetailText(text, profile = getManagerProfile()) {
       const subject = profile.id === 'cookie' ? '쿠키가' : '하동이가';
       const topic = profile.id === 'cookie' ? '쿠키는' : '하동이는';
-      return String(text || '')
+      const toned = String(text || '')
         .replace(/쿠키 매니저가/g, subject)
         .replace(/쿠키 매니저는/g, topic)
         .replace(/쿠키 매니저/g, profile.name)
         .replace(/킁킁 살펴보/g, profile.id === 'cookie' ? '딱 보' : '킁킁 살펴보')
         .replace(/킁킁,/g, profile.id === 'cookie' ? '딱 보면,' : '킁킁,')
         .replace(/킁킁/g, profile.id === 'cookie' ? '딱 보면' : '킁킁');
+      return applyManagerDetailSpeechTone(toned);
     }
 
     function withManagerDetailClosing(text, profile = getManagerProfile()) {
@@ -7796,7 +7851,7 @@
       if (stats.today) parts.push(`오늘 마감 ${stats.today}개`);
       if (stats.week) parts.push(`이번 주 마감 ${stats.week}개`);
       if (stats.low) parts.push(`부족 재고 ${stats.low}개`);
-      const summary = parts.length ? parts.join(', ') : '급한 재고 알림은 없어요';
+      const summary = parts.length ? parts.join(', ') : '급한 재고 알림은 없다멍';
       const hasWork = parts.length > 0;
       return {
         text: `${profile.opening}\n지금 ${summary}.\n마감 전에 한 번에 보기에서 오늘 정리할 일부터 같이 볼 수 있다멍.`,
@@ -7804,8 +7859,8 @@
           title: `${profile.name} 마감 브리핑`,
           icon: profile.id === 'cookie' ? '🐾' : '🐶',
           subtitle: hasWork
-            ? '지금 먼저 볼 재고만 숫자로 정리했어요.'
-            : '지금 크게 걸리는 재고는 없어 보여요.',
+            ? '지금 먼저 볼 재고만 숫자로 정리했다멍.'
+            : '지금 크게 걸리는 재고는 없어 보인다멍.',
           metrics: [
             { kind: 'expired', icon: '🚨', label: '기한 지남', count: stats.expired },
             { kind: 'today', icon: '⏰', label: '오늘 마감', count: stats.today },
@@ -7981,14 +8036,14 @@
       const profile = getManagerProfile();
       const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       if (beforeTask && !afterTask) {
-        return `${profile.name}가 확인했다멍${icon}\n${topicName(item.name)} 걸리던 조건은 해소됐어요. 다음 항목으로 넘어가도 된다멍.`;
+        return `${profile.name}가 확인했다멍${icon}\n${topicName(item.name)} 걸리던 조건은 해소됐다멍. 다음 항목으로 넘어가도 된다멍.`;
       }
       if (beforeTask && afterTask) {
         const labels = managerTaskIssueLabels(afterTask);
-        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 수정은 됐지만 아직 ${labels || '확인할 조건'}이 남아있다멍. 남은 부분만 한 번 더 보면 돼요.`;
+        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 수정은 됐지만 아직 ${labels || '확인할 조건'}이 남아있다멍. 남은 부분만 한 번 더 보면 된다멍.`;
       }
       if (!beforeTask && !afterTask) {
-        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 지금 마감 브리핑에 걸리는 조건은 없어요.`;
+        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 지금 마감 브리핑에 걸리는 조건은 없다멍.`;
       }
       return '';
     }
@@ -8031,7 +8086,7 @@
           </div>
           ${tasks.length
             ? `<div class="manager-task-list">${tasks.map(renderManagerTaskCard).join('')}</div>`
-            : `<div class="hadong-empty">${title}에 걸린 일이 없어요.</div>`}
+            : `<div class="hadong-empty">${title}에 걸린 일이 없다멍.</div>`}
         </section>`;
     }
 
@@ -8046,7 +8101,7 @@
       root.innerHTML = `
         <div class="hadong-overview-summary">
           <div class="hadong-overview-title">${escHtml(profile.opening)} 마감 전에 볼 일 ${tasks.length}개 있다멍</div>
-          <div class="hadong-overview-subtitle">오늘 정리할 일부터 내일 오픈 준비까지 순서대로 정리했어요.</div>
+          <div class="hadong-overview-subtitle">오늘 정리할 일부터 내일 오픈 준비까지 순서대로 정리했다멍.</div>
         </div>
         ${tasks.length
           ? `${renderManagerTaskSection('오늘 정리', todayTasks)}${renderManagerTaskSection('내일 오픈 준비', tomorrowTasks)}`
@@ -8137,15 +8192,15 @@
       const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const text = String(message || '').replace(/\s+/g, ' ').trim();
       if (/^(안녕|안녕하세요|하이|ㅎㅇ|hello|hi)|^(안녕|하이|hello|hi)\s+/i.test(text)) {
-        return `${profile.opening}\n나 여기 있다멍${icon}\n지금 AI 연결 확인 중이라 짧게만 답할게요. 잡담도 재고도 같이 볼 수 있다멍.`;
+        return `${profile.opening}\n나 여기 있다멍${icon}\n지금 AI 연결 확인 중이라 짧게만 답한다멍. 잡담도 재고도 같이 볼 수 있다멍.`;
       }
       if (/고마워|감사|땡큐|thanks?/i.test(text)) {
-        return `천만에멍${icon}\n필요하면 바로 불러줘요.`;
+        return `천만에멍${icon}\n필요하면 바로 불러달라멍.`;
       }
       if (/^(아|앗|오|헐|음|흠|ㅋㅋ+|ㅎㅎ+)/i.test(text)) {
-        return `멍, 방금 답답했죠${icon}\nAI 연결이 잠깐 안 잡히면 내가 현재 재고 목록 기준으로 먼저 도와줄게요.`;
+        return `멍, 방금 답답했죠${icon}\nAI 연결이 잠깐 안 잡히면 내가 현재 재고 목록 기준으로 먼저 도와준다멍.`;
       }
-      return `${profile.name}가 듣고 있다멍${icon}\n짧은 대화도 괜찮고, 재고 일도 바로 같이 볼 수 있어요.`;
+      return `${profile.name}가 듣고 있다멍${icon}\n짧은 대화도 괜찮고, 재고 일도 바로 같이 볼 수 있다멍.`;
     }
 
     function managerInventoryFallback(message) {
@@ -8163,7 +8218,7 @@
       if (week) parts.push(`이번 주 ${week}개`);
       if (low) parts.push(`부족 ${low}개`);
       if (isManagerCasualMessage(text)) return managerCasualFallback(text);
-      return `AI 연결이 아직 안정적이지 않아서 현재 재고 목록 기준으로 먼저 정리했어요.\n${parts.length ? parts.join(' | ') : '급한 재고는 없어요.'}`;
+      return `AI 연결이 아직 안정적이지 않아서 현재 재고 목록 기준으로 먼저 정리했다멍.\n${parts.length ? parts.join(' | ') : '급한 재고는 없다멍.'}`;
     }
 
     function inventorySnapshotForCloud() {
@@ -8509,17 +8564,19 @@
     }
 
     function hadongChooseItem(query) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const matches = findHadongItems(query);
       if (matches.length === 1) return { item: matches[0] };
       if (!matches.length) {
         return {
-          reply: `🐶 멍, "${cleanHadongItemQuery(query) || query}" 재고를 찾지 못했어요.\n품목명을 조금 더 정확히 적어주세요.`
+          reply: `${icon} 멍, "${cleanHadongItemQuery(query) || query}" 재고를 찾지 못했다멍.\n품목명을 조금 더 정확히 적어달라멍.`
         };
       }
       const top = matches.slice(0, 5);
       return {
         reply: {
-          text: `🐶 비슷한 재고가 ${matches.length}개 있어요.\n어느 품목인지 이름을 조금 더 붙여서 말해 주세요.\n\n${top.map(item => `- ${item.name} · 현재 ${item.quantity}${item.unit || '개'}`).join('\n')}`,
+          text: `${icon} 비슷한 재고가 ${matches.length}개 있다멍.\n어느 품목인지 이름을 조금 더 붙여서 말해달라멍.\n\n${top.map(item => `- ${item.name} · 현재 ${item.quantity}${item.unit || '개'}`).join('\n')}`,
           actions: top.map(item => ({
             type: 'edit',
             itemId: item.id,
@@ -8539,13 +8596,15 @@
     }
 
     function applyHadongQuantityChange(item, nextQty, label) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const before = hadongSnapshotItem(item);
       const oldQty = Number(item.quantity) || 0;
       item.quantity = Math.max(0, Number(nextQty.toFixed ? nextQty.toFixed(3) : nextQty));
       saveHadongItemChange(item, before, `[${item.name}] 수량이 변경됐습니다.`);
       const unit = item.unit || '개';
       return {
-        text: `🐶 멍! ${item.name} 수량을 처리했어요.\n${oldQty}${unit}에서 ${item.quantity}${unit}로 바뀌었어요.\n\n${label}`,
+        text: `${icon} 멍! ${item.name} 수량을 처리했다멍.\n${oldQty}${unit}에서 ${item.quantity}${unit}로 바뀌었다멍.\n\n${label}`,
         actions: [
           { type: 'undo', label: '되돌리기', variant: 'primary' },
           { type: 'edit', itemId: item.id, label: '수정 열기' }
@@ -8554,29 +8613,33 @@
     }
 
     function undoHadongLastChange() {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const last = _hadongUndoStack.pop();
-      if (!last) return '🐶 멍, 되돌릴 작업이 없어요.';
+      if (!last) return `${icon} 멍, 되돌릴 작업이 없다멍.`;
       if (last.type === 'update') {
         const idx = items.findIndex(item => item.id === last.before.id);
         if (idx >= 0) items[idx] = { ...last.before, updated_at: new Date().toISOString() };
         else items.push({ ...last.before, updated_at: new Date().toISOString() });
         saveData(items);
         refreshAll();
-        return `🐶 ${last.before.name} 수량을 되돌렸어요.`;
+        return `${icon} ${last.before.name} 수량을 되돌렸다멍.`;
       }
       if (last.type === 'delete') {
         const insertAt = Math.min(Math.max(last.index, 0), items.length);
         if (!items.some(item => item.id === last.before.id)) items.splice(insertAt, 0, { ...last.before });
         saveData(items);
         refreshAll();
-        return `🐶 ${last.before.name} 재고를 다시 살려뒀어요.`;
+        return `${icon} ${last.before.name} 재고를 다시 살려뒀다멍.`;
       }
-      return '🐶 멍, 되돌리기를 완료했어요.';
+      return `${icon} 멍, 되돌리기를 완료했다멍.`;
     }
 
     function deleteHadongItem(item) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const index = items.findIndex(row => row.id === item.id);
-      if (index < 0) return '🐶 멍, 이미 처리된 재고예요.';
+      if (index < 0) return `${icon} 멍, 이미 처리된 재고다멍.`;
       const before = hadongSnapshotItem(item);
       items.splice(index, 1);
       _hadongUndoStack.push({ type: 'delete', before, index });
@@ -8585,16 +8648,18 @@
       refreshAll();
       showToast(`[${item.name}] 삭제됐습니다.`);
       return {
-        text: `🐶 ${item.name} 재고를 목록에서 뺐어요.\n실수였다면 바로 되돌릴 수 있어요.`,
+        text: `${icon} ${item.name} 재고를 목록에서 뺐다멍.\n실수였다면 바로 되돌릴 수 있다멍.`,
         actions: [{ type: 'undo', label: '되돌리기', variant: 'primary' }]
       };
     }
 
     function makeHadongDeleteConfirm(item, word) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const dday = calcDDay(item.expiry_date);
       const dateText = dday === null ? '기한 미입력' : ddayLabel(dday);
       return {
-        text: `🐶 ${item.name} 재고를 ${word} 처리할까요?\n현재 ${item.quantity}${item.unit || '개'}이고, 기한은 ${dateText}예요.\n\n실수 방지를 위해 한 번만 확인할게요.`,
+        text: `${icon} ${item.name} 재고를 ${word} 처리할까멍?\n현재 ${item.quantity}${item.unit || '개'}이고, 기한은 ${dateText}다멍.\n\n실수 방지를 위해 한 번만 확인한다멍.`,
         actions: [
           { type: 'confirm-delete', itemId: item.id, label: `${word} 처리`, variant: 'danger' },
           { type: 'edit', itemId: item.id, label: '수정 열기' }
@@ -8603,17 +8668,19 @@
     }
 
     function makeHadongOrderReply() {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const low = items
         .filter(item => item.min_quantity != null && Number(item.quantity) <= Number(item.min_quantity))
         .sort((a, b) => (Number(a.quantity) - Number(a.min_quantity)) - (Number(b.quantity) - Number(b.min_quantity)));
-      if (!low.length) return '🐶 멍! 지금은 발주가 급한 부족 재고가 없어요.';
+      if (!low.length) return `${icon} 멍! 지금은 발주가 급한 부족 재고가 없다멍.`;
       const lines = low.map(item => {
         const unit = item.unit || '개';
         const need = Math.max(0, Number(item.min_quantity) - Number(item.quantity));
         return `- ${item.name}: 현재 ${item.quantity}${unit}, 기준 ${item.min_quantity}${unit}, 추천 ${need || 1}${unit}`;
       });
       return {
-        text: `🐶 발주 후보 ${low.length}개를 골랐어요.\n부족한 순서로 보면 됩니다.\n\n${lines.join('\n')}`,
+        text: `${icon} 발주 후보 ${low.length}개를 골랐다멍.\n부족한 순서로 보면 된다멍.\n\n${lines.join('\n')}`,
         actions: [
           { type: 'overview-low', label: '한 번에 보기', variant: 'primary' }
         ]
@@ -8621,6 +8688,8 @@
     }
 
     function hadongInventoryCommandReply(message) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const raw = String(message || '').trim();
       const text = raw.replace(/\s+/g, ' ').trim();
       if (!text) return '';
@@ -8645,17 +8714,17 @@
         const match = setMatch || text.match(/^(.+?)\s*(?:수량|재고)\s*(\d+(?:\.\d+)?)\s*([^\s\d]*)\s*(?:수정|변경|바꿔|맞춰|해줘|해)?$/);
         if (match) {
           const amount = parseHadongNumber(match[2]);
-          if (amount === null || amount < 0) return '🐶 멍, 바꿀 수량을 숫자로 알려주세요.';
+          if (amount === null || amount < 0) return `${icon} 멍, 바꿀 수량을 숫자로 알려달라멍.`;
           const chosen = hadongChooseItem(match[1]);
           if (chosen.reply) return chosen.reply;
-          return applyHadongQuantityChange(chosen.item, amount, '직접 지정한 수량으로 맞췄어요.');
+          return applyHadongQuantityChange(chosen.item, amount, '직접 지정한 수량으로 맞췄다멍.');
         }
       }
 
       const qtyMatch = text.match(/^(.+)\s+(\d+(?:\.\d+)?)\s*([^\s\d]*)\s*(썼|사용|소진|차감|빼|줄|들어왔|입고|추가|채워|보충|샀)/);
       if (qtyMatch) {
         const amount = parseHadongNumber(qtyMatch[2]);
-        if (amount === null || amount <= 0) return '🐶 멍, 처리할 수량을 숫자로 알려주세요.';
+        if (amount === null || amount <= 0) return `${icon} 멍, 처리할 수량을 숫자로 알려달라멍.`;
         const chosen = hadongChooseItem(qtyMatch[1]);
         if (chosen.reply) return chosen.reply;
         const item = chosen.item;
@@ -8666,17 +8735,17 @@
         return applyHadongQuantityChange(
           item,
           nextQty,
-          isDecrease ? `${amount}${item.unit || '개'} 사용한 걸로 차감했어요.` : `${amount}${item.unit || '개'} 입고된 걸로 더했어요.`
+          isDecrease ? `${amount}${item.unit || '개'} 사용한 걸로 차감했다멍.` : `${amount}${item.unit || '개'} 입고된 걸로 더했다멍.`
         );
       }
 
       const findMatch = text.match(/^(.+?)\s*(찾아|검색|어디|보여)/);
       if (findMatch) {
         const matches = findHadongItems(findMatch[1]);
-        if (!matches.length) return `🐶 멍, "${cleanHadongItemQuery(findMatch[1])}" 재고를 찾지 못했어요.`;
+        if (!matches.length) return `${icon} 멍, "${cleanHadongItemQuery(findMatch[1])}" 재고를 찾지 못했다멍.`;
         return makeHadongRichReply(
-          `🐶 찾은 재고 ${matches.length}개`,
-          '필요하면 수정 버튼으로 바로 열 수 있어요.',
+          `${icon} 찾은 재고 ${matches.length}개`,
+          '필요하면 수정 버튼으로 바로 열 수 있다멍.',
           matches.slice(0, 8),
           { includeDday: true, includeLow: true }
         );
@@ -8688,6 +8757,7 @@
     function hadongLocalInventoryReply(message, { fallback = false } = {}) {
       const text = String(message || '').replace(/\s+/g, ' ').trim();
       const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const dated = items
         .map(i => ({ ...i, dday: calcDDay(i.expiry_date) }))
         .filter(i => i.dday !== null);
@@ -8714,11 +8784,11 @@
       }
 
       if (wantsThanks) {
-        return `🐶 필요할 때 또 불러달라멍.\n재고 마감은 ${profile.name}가 같이 살펴볼게요.`;
+        return `${icon} 필요할 때 또 불러달라멍.\n재고 마감은 ${profile.name}가 같이 살펴본다멍.`;
       }
 
       if (wantsHelp) {
-        return `🐶 ${profile.fullName}는 마감 브리핑과 재고 수정을 같이 해요.\n"우유 2개 썼어", "바닐라 시럽 3병 추가", "휘핑크림 5개로 수정", "딸기 퓨레 폐기 처리", "발주 리스트"처럼 말해 주세요.`;
+        return `${icon} ${profile.fullName}는 마감 브리핑과 재고 수정을 같이 한다멍.\n"우유 2개 썼어", "바닐라 시럽 3병 추가", "휘핑크림 5개로 수정", "딸기 퓨레 폐기 처리", "발주 리스트"처럼 말해달라멍.`;
       }
 
       if (wantsBriefing) {
@@ -8726,20 +8796,20 @@
       }
 
       if (wantsLow) {
-        if (!low.length) return '🐶 멍! 부족 재고는 없어요.';
+        if (!low.length) return `${icon} 멍! 부족 재고는 없다멍.`;
         return { text: `📦 부족 재고 ${low.length}개를 한 번에 보기 탭에 올려뒀다멍.\n내일 오픈 전에 수량을 먼저 보면 좋다멍.`, overviewFilter: 'low' };
       }
 
       if (wantsDispose) {
-        if (!expired.length) return '🐶 멍! 지금 폐기 후보로 볼 기한 초과 재고는 없어요.';
+        if (!expired.length) return `${icon} 멍! 지금 폐기 후보로 볼 기한 초과 재고는 없다멍.`;
         return { text: `🚨 기한 초과 재고 ${expired.length}개를 한 번에 보기 탭에 올려뒀다멍.\n상세 점검도 ${profile.name}가 이어서 봐줄거다멍${profile.id === 'cookie' ? '🐾' : '🐶'}`, overviewFilter: 'expired' };
       }
 
       if (wantsNoExpiry) {
-        if (!noExpiry.length) return '🐶 멍! 기한 없는 재고는 아직 없어요.';
+        if (!noExpiry.length) return `${icon} 멍! 기한 없는 재고는 아직 없다멍.`;
         return formatHadongList(
           `📦 기한 없는 재고 ${noExpiry.length}개`,
-          '날짜 대신 수량 기준으로 보면 됩니다.',
+          '날짜 대신 수량 기준으로 보면 된다멍.',
           noExpiry,
           { includeDday: false }
         );
@@ -8747,12 +8817,12 @@
 
       if (wantsToday) {
         const priority = [...expired, ...today, ...low.filter(i => !expired.some(e => e.id === i.id) && !today.some(t => t.id === i.id))];
-        if (!priority.length) return '🐶 멍! 오늘 먼저 볼 급한 재고는 없어요.';
-        return { text: `🐾 오늘 정리할 재고 ${priority.length}개를 한 번에 보기 탭에 정리했다멍.\n마감 전에 위에서부터 보면 된다멍.`, overviewFilter: 'all' };
+        if (!priority.length) return `${icon} 멍! 오늘 먼저 볼 급한 재고는 없다멍.`;
+        return { text: `${icon} 오늘 정리할 재고 ${priority.length}개를 한 번에 보기 탭에 정리했다멍.\n마감 전에 위에서부터 보면 된다멍.`, overviewFilter: 'all' };
       }
 
       if (wantsWeek) {
-        if (!week.length) return '🐶 멍! 이번 주 안에 마감되는 재고는 없어요.';
+        if (!week.length) return `${icon} 멍! 이번 주 안에 마감되는 재고는 없다멍.`;
         return { text: `📅 이번 주 기한 재고 ${week.length}개를 한 번에 보기 탭에 올려뒀다멍.\n내일 준비 목록처럼 보면 된다멍.`, overviewFilter: 'week' };
       }
 
@@ -8880,13 +8950,13 @@
 
       const runToken = ++_hadongRunToken;
       const profile = getManagerProfile();
-      const botEl = addHadongMessage('bot', `${profile.fullName}가 AI 답변을 준비하는 중이에요…`, false);
+      const botEl = addHadongMessage('bot', `${profile.fullName}가 AI 답변을 준비하는 중이다멍…`, false);
       updateAiModelStatus('loading');
 
       try {
         const cloudText = await requestManagerCloudReply(msg, profile);
         if (runToken !== _hadongRunToken) return;
-        const finalText = cleanKoreanChatText(cloudText) || '멍… 서버 답변을 만들지 못했어요. 다시 물어봐 주세요.';
+        const finalText = cleanKoreanChatText(cloudText) || '멍… 서버 답변을 만들지 못했다멍. 다시 물어봐달라멍.';
         const finalPayload = withManagerReplyActions(finalText, msg);
         renderHadongMessageContent(botEl, finalPayload);
         _hadongMessages.push({ role: 'assistant', content: finalText });
@@ -8967,7 +9037,9 @@
 
       if (action === 'confirm-delete') {
         const item = items.find(row => row.id === itemId);
-        addHadongMessage('bot', item ? deleteHadongItem(item) : '🐶 멍, 이미 처리된 재고예요.');
+        const profile = getManagerProfile();
+        const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+        addHadongMessage('bot', item ? deleteHadongItem(item) : `${icon} 멍, 이미 처리된 재고다멍.`);
         return;
       }
 
