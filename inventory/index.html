@@ -42,6 +42,36 @@
       --safe-fg:  #2d6a4f;
     }
 
+    body,
+    #app {
+      --manager-accent: var(--red);
+      --manager-accent-deep: var(--red-deep);
+      --manager-soft: var(--red-tint);
+      --manager-card: #fff;
+      --manager-border: var(--bone);
+      --manager-ink: var(--ink);
+    }
+
+    body[data-manager="hadong"],
+    #app[data-manager="hadong"] {
+      --manager-accent: #6F4A32;
+      --manager-accent-deep: #4B3021;
+      --manager-soft: #F7EFE3;
+      --manager-card: #FFFBF4;
+      --manager-border: #E4D3BE;
+      --manager-ink: #251811;
+    }
+
+    body[data-manager="cookie"],
+    #app[data-manager="cookie"] {
+      --manager-accent: #242424;
+      --manager-accent-deep: #111;
+      --manager-soft: #F2F2EF;
+      --manager-card: #fff;
+      --manager-border: #D8D8D2;
+      --manager-ink: #171717;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     [hidden] { display: none !important; }
@@ -258,13 +288,15 @@
       padding: 4px 10px 4px 5px;
       gap: 7px;
       border-radius: 999px;
-      background: rgba(255,255,255,.16);
+      background: var(--manager-accent, rgba(255,255,255,.16));
       color: #fff;
       cursor: pointer;
       appearance: none;
       -webkit-appearance: none;
       font-family: inherit;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.18),
+        0 8px 18px rgba(0,0,0,.13);
     }
 
     .rh-avatar {
@@ -273,6 +305,10 @@
       border-radius: 50%;
       background: #fff;
       object-fit: contain;
+    }
+
+    #app[data-manager="cookie"] .rh-avatar {
+      border: 1px solid rgba(255,255,255,.72);
     }
 
     .rh-hadong-label {
@@ -296,24 +332,7 @@
     }
 
     .rh-notification-badge {
-      position: absolute;
-      top: -17px;
-      right: -6px;
-      left: auto;
-      min-width: 19px;
-      height: 19px;
-      padding: 0 5px;
-      border-radius: 999px;
-      background: #fff;
-      border: 2px solid var(--red);
-      color: var(--red);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: .68rem;
-      font-weight: 900;
-      line-height: 1;
-      box-shadow: 0 3px 8px rgba(0,0,0,.12);
+      display: none !important;
     }
 
     .notification-popover {
@@ -720,7 +739,7 @@
       color: #fff;
       font-size: 1.9rem;
       font-weight: 900;
-      letter-spacing: -0.05em;
+      letter-spacing: 0;
     }
 
     .rh-stat-count.tomorrow { color: rgba(255,255,255,.82); }
@@ -926,7 +945,7 @@
       font-size: .92rem;
       font-weight: 900;
       color: var(--ink);
-      letter-spacing: -.02em;
+      letter-spacing: 0;
     }
 
     .crisis-subtitle {
@@ -973,7 +992,7 @@
       font-size: 1.25rem;
       line-height: 1;
       font-weight: 950;
-      letter-spacing: -.04em;
+      letter-spacing: 0;
     }
 
     .crisis-metric-label {
@@ -989,7 +1008,7 @@
       min-height: 44px;
       border: 0;
       border-radius: 14px;
-      background: var(--ink);
+      background: var(--manager-accent, var(--ink));
       color: #fff;
       font-family: inherit;
       font-size: .88rem;
@@ -1022,9 +1041,9 @@
       align-items: center;
       gap: 11px;
       padding: 12px 14px;
-      border: 1px solid var(--bone);
+      border: 1px solid var(--manager-border, var(--bone));
       border-radius: 18px;
-      background: linear-gradient(135deg, #fffaf4 0%, #fff 100%);
+      background: linear-gradient(135deg, var(--manager-card, #fffaf4) 0%, #fff 100%);
       box-shadow: 0 8px 20px rgba(0,0,0,.045);
     }
 
@@ -1037,8 +1056,8 @@
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      background: linear-gradient(135deg, #fff 0%, #fff7ed 100%);
-      border: 1px solid rgba(168,42,31,.16);
+      background: linear-gradient(135deg, #fff 0%, var(--manager-soft, #fff7ed) 100%);
+      border: 1px solid var(--manager-border, rgba(168,42,31,.16));
       box-shadow:
         inset 0 0 0 1px rgba(255,255,255,.9),
         0 8px 18px rgba(168,42,31,.10);
@@ -1065,12 +1084,12 @@
     .cookie-manager-label strong {
       font-size: .77rem;
       font-weight: 950;
-      color: var(--ink);
+      color: var(--manager-ink, var(--ink));
     }
 
     .cookie-manager-label span {
       margin-top: 2px;
-      color: var(--red);
+      color: var(--manager-accent, var(--red));
       font-size: .58rem;
       font-weight: 850;
     }
@@ -1083,7 +1102,7 @@
     .cookie-manager-title {
       font-size: .9rem;
       font-weight: 950;
-      color: var(--ink);
+      color: var(--manager-ink, var(--ink));
       line-height: 1.15;
     }
 
@@ -1092,6 +1111,47 @@
       color: var(--g1);
       font-size: .72rem;
       line-height: 1.35;
+    }
+
+    .manager-strip-actions {
+      display: flex;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .manager-strip-btn {
+      min-height: 36px;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 12px;
+      background: var(--manager-accent, var(--red));
+      color: #fff;
+      font-family: inherit;
+      font-size: .78rem;
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .manager-strip-btn.secondary {
+      border: 1px solid var(--manager-border, var(--bone));
+      background: #fff;
+      color: var(--manager-accent, var(--red));
+    }
+
+    @media (max-width: 430px) {
+      .cookie-manager-strip {
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+
+      .manager-strip-actions {
+        width: 100%;
+      }
+
+      .manager-strip-btn {
+        flex: 1;
+      }
     }
 
     /* ── INVENTORY CARDS ──────────────────────────────────────── */
@@ -1282,7 +1342,7 @@
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
-      letter-spacing: -0.01em;
+      letter-spacing: 0;
     }
 
     /* ── ADD ITEM SHEET ───────────────────────────────────────── */
@@ -1340,6 +1400,19 @@
       background: var(--g3);
       border-radius: 2px;
       margin: 12px auto 16px;
+    }
+
+    .add-sheet-handle,
+    .add-sheet-title,
+    .picker-handle,
+    .manager-select-handle,
+    .manager-select-head,
+    .ai-sheet-header,
+    .hadong-header,
+    .ocr-header {
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .add-sheet-title {
@@ -2251,7 +2324,7 @@
     .ai-sheet.open { transform: translateY(0); }
 
     .ai-sheet-header {
-      background: var(--ink);
+      background: var(--manager-accent, var(--ink));
       color: #fff;
       padding: 16px 20px 14px;
       flex-shrink: 0;
@@ -2266,21 +2339,29 @@
       background: #fff;
       object-fit: contain;
       flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,.45);
     }
 
-    .ai-sheet-header h3 { margin: 0 0 2px; font-size: .95rem; letter-spacing: -.02em; }
+    .ai-sheet-header h3 { margin: 0 0 2px; font-size: .95rem; letter-spacing: 0; }
     .ai-meta { font-size: .75em; opacity: .62; }
 
     .ai-sheet-body { padding: 16px 18px; flex: 1; overflow-y: auto; }
-    .ai-status { font-size: .82em; color: var(--g1); margin-bottom: 10px; }
+    .ai-status {
+      font-size: .82em;
+      line-height: 1.45;
+      color: var(--g1);
+      margin-bottom: 10px;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
 
     .ai-visual-card {
       position: relative;
       overflow: hidden;
-      border: 1px solid var(--bone);
+      border: 1px solid var(--manager-border, var(--bone));
       border-radius: 18px;
       padding: 15px;
-      background: linear-gradient(135deg, #fff8ec 0%, #ffffff 100%);
+      background: linear-gradient(135deg, var(--manager-soft, #fff8ec) 0%, var(--manager-card, #fff) 100%);
       box-shadow: 0 10px 26px rgba(0,0,0,.06);
       animation: cookieCardIn .34s ease both;
     }
@@ -2294,6 +2375,7 @@
       top: -30px;
       border-radius: 50%;
       background: rgba(168,42,31,.08);
+      background: color-mix(in srgb, var(--manager-accent, var(--red)) 12%, transparent);
     }
 
     .ai-visual-top {
@@ -2313,7 +2395,7 @@
       align-items: center;
       justify-content: center;
       background: #fff;
-      border: 1px solid var(--bone);
+      border: 1px solid var(--manager-border, var(--bone));
       font-size: 1.35rem;
       box-shadow: 0 5px 14px rgba(0,0,0,.06);
     }
@@ -2322,7 +2404,9 @@
       font-size: 1.05rem;
       font-weight: 900;
       line-height: 1.25;
-      letter-spacing: -.02em;
+      letter-spacing: 0;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
 
     .ai-visual-subtitle {
@@ -2337,8 +2421,8 @@
       min-height: 28px;
       padding: 5px 9px;
       border-radius: 999px;
-      background: var(--red-tint);
-      color: var(--red);
+      background: var(--manager-soft, var(--red-tint));
+      color: var(--manager-accent, var(--red));
       font-size: .72rem;
       font-weight: 900;
       white-space: nowrap;
@@ -2391,7 +2475,7 @@
 
     .ai-tab.active {
       background: #fff;
-      color: var(--red);
+      color: var(--manager-accent, var(--red));
       box-shadow: 0 4px 13px rgba(0,0,0,.08);
     }
 
@@ -2406,9 +2490,11 @@
 
     .ai-summary-text,
     .ai-criteria-text {
-      font-size: .96rem;
-      line-height: 1.6;
+      font-size: .9rem;
+      line-height: 1.62;
       white-space: pre-wrap;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
 
     .ai-action-list {
@@ -2421,19 +2507,25 @@
 
     .ai-action-list li {
       display: grid;
-      grid-template-columns: 26px 1fr;
-      gap: 9px;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
       align-items: start;
       padding: 11px 12px;
-      border: 1px solid var(--bone);
+      border: 1px solid var(--manager-border, var(--bone));
       border-radius: 14px;
-      background: var(--cream);
-      font-size: .9rem;
-      line-height: 1.42;
+      background: var(--manager-card, var(--cream));
+      font-size: .86rem;
+      line-height: 1.62;
+      word-break: keep-all;
+      overflow-wrap: break-word;
       animation: cookieActionIn .28s ease both;
     }
 
-    .ai-action-list li span {
+    .ai-action-list li > div {
+      min-width: 0;
+    }
+
+    .ai-action-index {
       width: 26px;
       height: 26px;
       border-radius: 50%;
@@ -2441,10 +2533,10 @@
       align-items: center;
       justify-content: center;
       background: #fff;
-      color: var(--red);
+      color: var(--manager-accent, var(--red));
       font-size: .75rem;
       font-weight: 900;
-      border: 1px solid var(--bone);
+      border: 1px solid var(--manager-border, var(--bone));
     }
 
     .ai-criteria-title {
@@ -2452,13 +2544,13 @@
     }
 
     .cookie-highlight {
-      display: inline-flex;
+      display: inline;
       vertical-align: baseline;
-      padding: 1px 5px 2px;
-      border-radius: 999px;
+      padding: 0 3px;
+      border-radius: 6px;
       font-weight: 900;
-      line-height: 1.2;
-      white-space: nowrap;
+      line-height: inherit;
+      white-space: normal;
       box-decoration-break: clone;
       -webkit-box-decoration-break: clone;
     }
@@ -2566,7 +2658,7 @@
       align-items: center;
       gap: 12px;
       padding: 16px 18px 13px;
-      background: var(--red);
+      background: var(--manager-accent, var(--red));
       color: #fff;
       flex-shrink: 0;
     }
@@ -2619,7 +2711,7 @@
     }
 
     .hadong-tab.active {
-      background: var(--red);
+      background: var(--manager-accent, var(--red));
       color: #fff;
     }
 
@@ -2627,7 +2719,7 @@
       flex: 1;
       overflow-y: auto;
       padding: 14px 14px 12px;
-      background: #fff;
+      background: var(--manager-card, #fff);
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -2643,8 +2735,8 @@
     .hadong-overview-summary {
       padding: 12px 13px;
       border-radius: 8px;
-      background: var(--cream);
-      color: var(--ink);
+      background: var(--manager-soft, var(--cream));
+      color: var(--manager-ink, var(--ink));
     }
 
     .hadong-overview-title {
@@ -2721,6 +2813,7 @@
 
     .hadong-alert-card.is-expired { --card-accent: #d92d20; --card-soft: #fff0ed; --card-ink: #b42318; }
     .hadong-alert-card.is-today   { --card-accent: #f79009; --card-soft: #fff7e6; --card-ink: #b54708; }
+    .hadong-alert-card.is-tomorrow { --card-accent: #2e90fa; --card-soft: #edf6ff; --card-ink: #175cd3; }
     .hadong-alert-card.is-week    { --card-accent: #2e90fa; --card-soft: #edf6ff; --card-ink: #175cd3; }
     .hadong-alert-card.is-low     { --card-accent: #7a5af8; --card-soft: #f3f0ff; --card-ink: #5925dc; }
 
@@ -2780,6 +2873,135 @@
       line-height: 1.45;
     }
 
+    .manager-briefing-section {
+      display: grid;
+      gap: 9px;
+    }
+
+    .manager-briefing-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 2px;
+      color: var(--manager-ink, var(--ink));
+      font-size: .84rem;
+      font-weight: 950;
+    }
+
+    .manager-briefing-count {
+      color: var(--g1);
+      font-size: .72rem;
+      font-weight: 850;
+    }
+
+    .manager-task-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .manager-task-card {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,.045);
+    }
+
+    .manager-task-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: var(--card-accent, var(--manager-accent, var(--red)));
+    }
+
+    .manager-task-card.is-expired { --card-accent: #d92d20; --card-soft: #fff0ed; --card-ink: #b42318; }
+    .manager-task-card.is-today   { --card-accent: #f79009; --card-soft: #fff7e6; --card-ink: #b54708; }
+    .manager-task-card.is-tomorrow { --card-accent: #2e90fa; --card-soft: #edf6ff; --card-ink: #175cd3; }
+    .manager-task-card.is-week    { --card-accent: #4f46e5; --card-soft: #eef2ff; --card-ink: #3730a3; }
+    .manager-task-card.is-low     { --card-accent: #7a5af8; --card-soft: #f3f0ff; --card-ink: #5925dc; }
+
+    .manager-task-main {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 6px;
+      padding-left: 4px;
+    }
+
+    .manager-task-title {
+      display: flex;
+      gap: 7px;
+      align-items: flex-start;
+      color: var(--ink);
+      font-size: .92rem;
+      font-weight: 950;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .manager-task-title span:first-child {
+      flex-shrink: 0;
+    }
+
+    .manager-task-copy {
+      color: var(--g1);
+      font-size: .76rem;
+      line-height: 1.4;
+    }
+
+    .manager-task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .manager-task-chip {
+      min-height: 23px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: var(--card-soft, var(--cream));
+      color: var(--card-ink, var(--ink));
+      font-size: .68rem;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .manager-task-actions {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .manager-task-btn {
+      min-height: 34px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 10px;
+      background: #fff;
+      color: var(--manager-accent, var(--red));
+      font-family: inherit;
+      font-size: .74rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .manager-task-btn.primary {
+      border-color: transparent;
+      background: var(--manager-accent, var(--red));
+      color: #fff;
+    }
+
+    .manager-task-btn:active {
+      transform: translateY(1px);
+    }
+
     .hadong-messages {
       flex: 1;
       overflow-y: auto;
@@ -2792,20 +3014,22 @@
     }
 
     .hadong-msg {
-      max-width: 86%;
+      max-width: 84%;
       border-radius: 16px;
-      padding: 10px 12px;
-      font-size: .9rem;
-      line-height: 1.45;
+      padding: 10px 12px 11px;
+      font-size: .84rem;
+      line-height: 1.58;
       white-space: pre-wrap;
-      overflow-wrap: anywhere;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
 
     .hadong-msg.bot {
-      max-width: 92%;
+      max-width: 88%;
       align-self: flex-start;
-      background: var(--cream);
-      color: var(--ink);
+      background: var(--manager-soft, var(--cream));
+      color: var(--manager-ink, var(--ink));
+      border: 1px solid var(--manager-border, transparent);
       border-top-left-radius: 6px;
     }
 
@@ -2830,8 +3054,8 @@
     }
 
     .hadong-action-btn.primary {
-      border-color: rgba(178, 39, 29, .3);
-      background: var(--red);
+      border-color: var(--manager-border, rgba(178, 39, 29, .3));
+      background: var(--manager-accent, var(--red));
       color: #fff;
     }
 
@@ -2864,8 +3088,8 @@
     .hadong-rich-head {
       padding: 11px 13px;
       border-radius: 15px;
-      background: var(--cream);
-      color: var(--ink);
+      background: var(--manager-soft, var(--cream));
+      color: var(--manager-ink, var(--ink));
       border-top-left-radius: 6px;
     }
 
@@ -3041,7 +3265,7 @@
 
     .hadong-msg.user {
       align-self: flex-end;
-      background: var(--red);
+      background: var(--manager-accent, var(--red));
       color: #fff;
       border-top-right-radius: 6px;
     }
@@ -3094,11 +3318,141 @@
       width: 64px;
       border: 0;
       border-radius: 13px;
-      background: var(--red);
+      background: var(--manager-accent, var(--red));
       color: #fff;
       font-family: inherit;
       font-weight: 800;
       cursor: pointer;
+    }
+
+    /* ── MANAGER SELECT SHEET ─────────────────────────────────── */
+    .manager-select-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 1350;
+      pointer-events: none;
+    }
+
+    .manager-select-sheet.open {
+      pointer-events: all;
+    }
+
+    .manager-select-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.42);
+      opacity: 0;
+      transition: opacity .24s ease;
+    }
+
+    .manager-select-sheet.open .manager-select-backdrop {
+      opacity: 1;
+    }
+
+    .manager-select-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 86vh;
+      overflow-y: auto;
+      border-radius: 24px 24px 0 0;
+      background: #fff;
+      padding: 8px 18px max(22px, env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform .32s cubic-bezier(.22,1,.36,1);
+      box-shadow: 0 -16px 42px rgba(0,0,0,.2);
+    }
+
+    .manager-select-sheet.open .manager-select-panel {
+      transform: translateY(0);
+    }
+
+    .manager-select-handle {
+      width: 42px;
+      height: 4px;
+      margin: 10px auto 14px;
+      border-radius: 999px;
+      background: var(--g3);
+    }
+
+    .manager-select-head {
+      padding: 0 2px 14px;
+    }
+
+    .manager-select-title {
+      color: var(--ink);
+      font-size: 1.02rem;
+      font-weight: 950;
+      line-height: 1.25;
+    }
+
+    .manager-select-subtitle {
+      margin-top: 5px;
+      color: var(--g1);
+      font-size: .8rem;
+      line-height: 1.4;
+    }
+
+    .manager-choice-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .manager-choice-card {
+      width: 100%;
+      min-height: 112px;
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--manager-choice-border, var(--bone));
+      border-radius: 8px;
+      padding: 13px;
+      background: var(--manager-choice-bg, #fff);
+      color: var(--ink);
+      text-align: left;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .manager-choice-card[data-manager-choice="hadong"] {
+      --manager-choice-bg: #FFFBF4;
+      --manager-choice-border: #E4D3BE;
+    }
+
+    .manager-choice-card[data-manager-choice="cookie"] {
+      --manager-choice-bg: #F7F7F5;
+      --manager-choice-border: #D8D8D2;
+    }
+
+    .manager-choice-card.is-selected {
+      outline: 2px solid var(--manager-accent, var(--red));
+      outline-offset: 2px;
+    }
+
+    .manager-choice-card img {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      background: #fff;
+      object-fit: contain;
+      border: 1px solid rgba(0,0,0,.06);
+    }
+
+    .manager-choice-name {
+      display: block;
+      font-size: .98rem;
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .manager-choice-tone {
+      display: block;
+      margin-top: 5px;
+      color: var(--g1);
+      font-size: .78rem;
+      line-height: 1.38;
     }
 
     /* ── WEBLLM OVERLAY ───────────────────────────────────────── */
@@ -3183,10 +3537,9 @@
       <div class="rh-header">
         <div class="rh-brand-area">
           <div class="rh-wordmark">Tuz<small>재고</small></div>
-          <button type="button" class="rh-avatar-wrap" id="notification-btn" aria-label="알림 없음">
-            <img class="rh-avatar" src="assets/mascot-poodle.png" alt="마스코트">
-            <span class="rh-hadong-label"><strong>하동이</strong><span>매니저</span></span>
-            <span class="rh-notification-badge" id="notification-badge" hidden>0</span>
+          <button type="button" class="rh-avatar-wrap" id="notification-btn" aria-label="매니저 변경">
+            <img class="rh-avatar" id="manager-avatar-img" src="assets/mascot-poodle.png" alt="하동이 매니저">
+            <span class="rh-hadong-label"><strong id="manager-header-name">하동이</strong><span>매니저</span></span>
           </button>
           <div class="notification-popover" id="notification-popover" hidden>
             <div class="notification-popover-title" id="notification-popover-title">알림</div>
@@ -3200,20 +3553,8 @@
               <div class="ai-model-status" id="ai-model-status">확인 중</div>
             </summary>
             <div class="ai-model-content">
-              <select id="ai-model-select" aria-label="분석 모델 선택">
-                <option value="auto">자동: Qwen3 4B 균형</option>
-                <option value="Qwen3-4B-q4f16_1-MLC">Qwen3 4B 균형</option>
-                <option value="Qwen3-8B-q4f16_1-MLC">Qwen3 8B 고성능</option>
-                <option value="Qwen3-1.7B-q4f16_1-MLC">Qwen3 1.7B 경량</option>
-              </select>
-              <div class="ai-model-options" aria-label="분석 모델 빠른 선택">
-                <button type="button" class="ai-model-option" data-ai-model="Qwen3-4B-q4f16_1-MLC">4B 균형 · 약 3.4GB</button>
-                <button type="button" class="ai-model-option" data-ai-model="Qwen3-8B-q4f16_1-MLC">8B 고성능 · 약 5.7GB</button>
-                <button type="button" class="ai-model-option" data-ai-model="Qwen3-1.7B-q4f16_1-MLC">1.7B · 약 2.0GB</button>
-              </div>
               <div class="ai-model-meta">
-                <span id="ai-model-size-note">모델 용량 확인 중</span>
-                <button type="button" class="ai-mobile-download-btn" id="ai-mobile-download-btn">LTE에서 다운받기</button>
+                <span id="ai-model-size-note">Gemini 2.5 Flash-Lite로 답변합니다.</span>
               </div>
               <div class="ai-model-progress" aria-hidden="true">
                 <div class="ai-model-progress-fill" id="ai-model-progress-fill"></div>
@@ -3295,15 +3636,19 @@
           <div id="crisis-item-list"></div>
         </div>
 
-        <section class="inventory-bridge" aria-label="쿠키 매니저 재고 점검">
+        <section class="inventory-bridge" aria-label="매니저 마감 브리핑">
           <div class="cookie-manager-strip">
             <span class="cookie-manager-profile">
-              <img src="assets/mascot-collie.png" alt="쿠키 매니저">
-              <span class="cookie-manager-label"><strong>쿠키</strong><span>매니저</span></span>
+              <img id="manager-bridge-img" src="assets/mascot-poodle.png" alt="하동이 매니저">
+              <span class="cookie-manager-label"><strong id="manager-bridge-name">하동이</strong><span>매니저</span></span>
             </span>
             <div class="cookie-manager-copy">
-              <div class="cookie-manager-title">쿠키 매니저가 카드별로 점검해요</div>
-              <div class="cookie-manager-subtitle">아래 재고에서 쿠키 매니저 점검을 누르면 기한과 보관 기준을 바로 볼 수 있어요.</div>
+              <div class="cookie-manager-title" id="manager-bridge-title">마감 브리핑을 같이 정리해요</div>
+              <div class="cookie-manager-subtitle" id="manager-bridge-subtitle">오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있어요.</div>
+            </div>
+            <div class="manager-strip-actions">
+              <button type="button" class="manager-strip-btn" id="manager-briefing-open">열기</button>
+              <button type="button" class="manager-strip-btn secondary" id="manager-change-open">변경</button>
             </div>
           </div>
         </section>
@@ -3539,6 +3884,33 @@
     </div>
   </div>
 
+  <div id="manager-select-sheet" class="manager-select-sheet" aria-hidden="true">
+    <div class="manager-select-backdrop" id="manager-select-backdrop"></div>
+    <div class="manager-select-panel" role="dialog" aria-modal="true" aria-labelledby="manager-select-title">
+      <div class="manager-select-handle"></div>
+      <div class="manager-select-head">
+        <div class="manager-select-title" id="manager-select-title">같이 일할 매니저를 골라주세요</div>
+        <div class="manager-select-subtitle">한 번 고르면 다음 접속부터 기본 매니저로 적용돼요.</div>
+      </div>
+      <div class="manager-choice-list">
+        <button type="button" class="manager-choice-card" data-manager-choice="hadong">
+          <img src="assets/mascot-poodle.png" alt="하동이 매니저">
+          <span>
+            <span class="manager-choice-name">하동이 매니저</span>
+            <span class="manager-choice-tone">귀엽고 친절하게 마감 일을 같이 챙겨준다멍.</span>
+          </span>
+        </button>
+        <button type="button" class="manager-choice-card" data-manager-choice="cookie">
+          <img src="assets/mascot-collie.png" alt="쿠키 매니저">
+          <span>
+            <span class="manager-choice-name">쿠키 매니저</span>
+            <span class="manager-choice-tone">장난은 쳐도 마감 순서는 똑부러지게 잡아준다멍.</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST -->
   <div id="toast"></div>
 
@@ -3548,9 +3920,9 @@
   <div id="ai-overlay" class="ai-overlay">
     <div id="ai-sheet" class="ai-sheet">
       <div class="ai-sheet-header">
-        <img src="assets/mascot-collie.png" alt="쿠키 매니저">
+        <img id="ai-manager-img" src="assets/mascot-collie.png" alt="쿠키 매니저">
         <div>
-          <h3>쿠키 매니저 점검</h3>
+          <h3 id="ai-sheet-title">상세 점검</h3>
           <div class="ai-meta" id="ai-meta-text"></div>
         </div>
       </div>
@@ -3569,10 +3941,10 @@
             <div class="ai-risk-fill" id="ai-risk-fill"></div>
           </div>
         </div>
-        <div class="ai-tabs" role="tablist" aria-label="쿠키 매니저 점검 보기">
+        <div class="ai-tabs" role="tablist" aria-label="상세 점검 보기">
           <button type="button" class="ai-tab active" data-ai-tab="summary">킁킁 요약</button>
           <button type="button" class="ai-tab" data-ai-tab="actions">해야 할 일</button>
-          <button type="button" class="ai-tab" data-ai-tab="criteria">쿠키 매니저의 한 마디</button>
+          <button type="button" class="ai-tab" data-ai-tab="criteria">한 마디</button>
         </div>
         <div class="ai-tab-panes">
           <section class="ai-tab-pane active" data-ai-pane="summary">
@@ -3598,27 +3970,22 @@
   <div id="hadong-overlay" class="hadong-overlay">
     <section id="hadong-sheet" class="hadong-sheet" data-view="overview" aria-label="하동이 매니저 재고 관리">
       <div class="hadong-header">
-        <img src="assets/mascot-poodle.png" alt="">
+        <img id="hadong-header-img" src="assets/mascot-poodle.png" alt="">
         <div>
-          <div class="hadong-title">하동이 매니저</div>
-          <div class="hadong-subtitle">알림에서 수정까지 연결하는 로컬 재고 매니저</div>
+          <div class="hadong-title" id="hadong-header-title">하동이 매니저</div>
+          <div class="hadong-subtitle" id="hadong-header-subtitle">마감 전에 같이 정리하는 재고 파트너</div>
         </div>
         <button type="button" class="hadong-close" id="hadong-close" aria-label="닫기">×</button>
       </div>
       <div class="hadong-tabs" role="tablist" aria-label="하동이 매니저 보기 전환">
         <button type="button" class="hadong-tab active" data-hadong-view="overview">한 번에 보기</button>
-        <button type="button" class="hadong-tab" data-hadong-view="chat">대화</button>
+        <button type="button" class="hadong-tab" data-hadong-view="chat">같이 일하기</button>
       </div>
       <div class="hadong-overview" id="hadong-overview"></div>
       <div class="hadong-messages" id="hadong-messages"></div>
-      <div class="hadong-quick">
-        <button type="button" data-hadong-question="오늘 먼저 확인할 재고 알려줘">오늘 확인</button>
-        <button type="button" data-hadong-question="부족한 재고만 정리해줘">부족 재고</button>
-        <button type="button" data-hadong-question="이번 주 마감되는 재료 알려줘">이번 주 기한</button>
-        <button type="button" data-hadong-question="폐기해야 할 재료가 있어?">폐기 후보</button>
-      </div>
+      <div class="hadong-quick" id="manager-suggestions"></div>
       <div class="hadong-input-row">
-        <input id="hadong-input" type="text" placeholder="하동이 매니저에게 재고를 물어보세요">
+        <input id="hadong-input" type="text" placeholder="매니저에게 같이 할 일을 말해 주세요">
         <button type="button" id="hadong-send">전송</button>
       </div>
     </section>
@@ -3626,7 +3993,7 @@
 
   <!-- WEBLLM OVERLAY -->
   <div id="webllm-overlay" class="webllm-loading-overlay" hidden>
-    <h4>쿠키 매니저 점검 준비 중</h4>
+    <h4>상세 점검 준비 중</h4>
     <p id="webllm-load-msg" style="font-size:.85em;margin:0 0 14px;opacity:.8">
       첫 실행 시 선택한 모델에 따라 약 2.0GB~5.7GB 다운로드가 발생합니다.
     </p>
@@ -3654,6 +4021,35 @@
     const AUTH_TTL = 30 * 24 * 60 * 60 * 1000;
     const INV_KEY  = 'tuz_inv_data_v1';
     const DEMO_KEY = 'tuz_inv_demo_seeded_v1';
+    const MANAGER_PROFILE_KEY = 'tuz_inv_manager_profile_v1';
+    const MANAGER_PROFILES = {
+      hadong: {
+        id: 'hadong',
+        name: '하동이',
+        fullName: '하동이 매니저',
+        avatar: 'assets/mascot-poodle.png',
+        alt: '하동이 매니저',
+        headerSubtitle: '마감 전에 같이 정리하는 재고 파트너',
+        bridgeTitle: '마감 브리핑을 같이 정리해요',
+        bridgeSubtitle: '오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있어요.',
+        opening: '하동이 매니저다멍🐶',
+        empty: '오늘 마감 전에 크게 걸리는 일은 없어 보인다멍.',
+        workPrefix: '같이 볼게멍🐶'
+      },
+      cookie: {
+        id: 'cookie',
+        name: '쿠키',
+        fullName: '쿠키 매니저',
+        avatar: 'assets/mascot-collie.png',
+        alt: '쿠키 매니저',
+        headerSubtitle: '장난은 쳐도 마감 순서는 똑부러지게 보는 매니저',
+        bridgeTitle: '마감 순서, 쿠키가 깔끔하게 잡아줄게요',
+        bridgeSubtitle: '오늘 처리할 것과 내일 아침에 터질 일을 나눠서 봅니다.',
+        opening: '쿠키 매니저다멍🐾',
+        empty: '마감 전에 크게 찔리는 재고는 없어 보인다멍.',
+        workPrefix: '좋아, 이건 쿠키가 같이 볼게멍.'
+      }
+    };
 
     // ──────────────────────────────────────────────────────────────
     // CRYPTO
@@ -3702,6 +4098,81 @@
     const appEl    = document.getElementById('app');
     const pinInput = document.getElementById('pin-input');
     const pinError = document.getElementById('pin-error');
+
+    function getSelectedManagerId() {
+      const saved = localStorage.getItem(MANAGER_PROFILE_KEY);
+      return MANAGER_PROFILES[saved] ? saved : null;
+    }
+
+    function getManagerProfile(id = getSelectedManagerId()) {
+      return MANAGER_PROFILES[id] || MANAGER_PROFILES.hadong;
+    }
+
+    function setElText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function setElImage(id, src, alt) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.src = src;
+      el.alt = alt;
+    }
+
+    function applyManagerProfile(id = getSelectedManagerId()) {
+      const profile = getManagerProfile(id);
+      appEl.dataset.manager = profile.id;
+      document.body.dataset.manager = profile.id;
+      setElImage('manager-avatar-img', profile.avatar, profile.alt);
+      setElImage('manager-bridge-img', profile.avatar, profile.alt);
+      setElImage('hadong-header-img', profile.avatar, profile.alt);
+      setElImage('ai-manager-img', profile.avatar, profile.alt);
+      setElText('manager-header-name', profile.name);
+      setElText('manager-bridge-name', profile.name);
+      setElText('manager-bridge-title', profile.bridgeTitle);
+      setElText('manager-bridge-subtitle', profile.bridgeSubtitle);
+      setElText('hadong-header-title', profile.fullName);
+      setElText('hadong-header-subtitle', profile.headerSubtitle);
+      setElText('ai-sheet-title', `${profile.name} 상세 점검`);
+      const input = document.getElementById('hadong-input');
+      if (input) input.placeholder = `${profile.name}에게 같이 할 일을 말해 주세요`;
+      document.querySelectorAll('[data-manager-choice]').forEach(btn => {
+        btn.classList.toggle('is-selected', btn.dataset.managerChoice === profile.id);
+      });
+      return profile;
+    }
+
+    function openManagerSelectSheet({ required = false } = {}) {
+      applyManagerProfile();
+      const sheet = document.getElementById('manager-select-sheet');
+      sheet.dataset.required = required ? 'true' : 'false';
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeManagerSelectSheet({ force = false } = {}) {
+      const sheet = document.getElementById('manager-select-sheet');
+      if (!force && sheet.dataset.required === 'true' && !getSelectedManagerId()) return;
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+      sheet.dataset.required = 'false';
+    }
+
+    function saveManagerProfile(id) {
+      if (!MANAGER_PROFILES[id]) return;
+      localStorage.setItem(MANAGER_PROFILE_KEY, id);
+      const profile = applyManagerProfile(id);
+      closeManagerSelectSheet({ force: true });
+      refreshAll?.();
+      renderManagerSuggestions?.();
+      showToast?.(`${profile.fullName}와 같이 일합니다.`);
+    }
+
+    function promptManagerIfNeeded() {
+      if (getSelectedManagerId()) return;
+      setTimeout(() => openManagerSelectSheet({ required: true }), 260);
+    }
 
     function showApp() {
       gateEl.hidden = true;
@@ -3777,8 +4248,7 @@
 
     document.getElementById('notification-btn').addEventListener('click', e => {
       e.stopPropagation();
-      document.getElementById('notification-popover').hidden = true;
-      openHadongChat();
+      openManagerSelectSheet();
     });
 
     document.addEventListener('click', e => {
@@ -3789,6 +4259,28 @@
 
     document.getElementById('notification-popover').addEventListener('click', e => {
       e.stopPropagation();
+    });
+
+    document.getElementById('manager-select-backdrop').addEventListener('click', () => {
+      closeManagerSelectSheet();
+    });
+
+    document.querySelectorAll('[data-manager-choice]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        bumpFeedback(btn);
+        saveManagerProfile(btn.dataset.managerChoice);
+      });
+    });
+
+    document.getElementById('manager-briefing-open').addEventListener('click', e => {
+      bumpFeedback(e.currentTarget);
+      openHadongChat();
+      setHadongView('overview');
+    });
+
+    document.getElementById('manager-change-open').addEventListener('click', e => {
+      bumpFeedback(e.currentTarget);
+      openManagerSelectSheet();
     });
 
     // ──────────────────────────────────────────────────────────────
@@ -3808,11 +4300,21 @@
       if (!panel) return;
 
       const threshold = options.threshold || 72;
+      const flickDistance = options.flickDistance || 30;
+      const flickVelocity = options.flickVelocity || 0.45;
+      const topDragZoneHeight = options.topDragZoneHeight || 132;
       const interactiveSelector = 'button, input, select, textarea, a, [role="button"], label';
+      const handleDragSelector = '.add-sheet-handle, .picker-handle, .manager-select-handle';
+      const headerDragSelector = '.ai-sheet-header, .hadong-header, .ocr-header, .manager-select-head';
       let pointerId = null;
       let startX = 0;
       let startY = 0;
+      let currentX = 0;
       let currentY = 0;
+      let startTime = 0;
+      let lastY = 0;
+      let lastTime = 0;
+      let velocityY = 0;
       let scrollEl = null;
       let dragging = false;
 
@@ -3828,127 +4330,146 @@
       const reset = () => {
         pointerId = null;
         dragging = false;
+        velocityY = 0;
         panel.classList.remove('sheet-dragging');
         panel.style.transform = '';
       };
 
-      panel.addEventListener('pointerdown', e => {
-        if (pointerId !== null || e.button !== 0) return;
-        if (e.pointerType !== 'pen') return;
-        const interactive = e.target.closest(interactiveSelector);
-        const explicitDragZone = e.target.closest('.add-sheet-handle, .picker-handle, .ai-sheet-header, .hadong-header, .ocr-header');
-        if (interactive && !explicitDragZone) return;
+      const getDragZone = (target, y) => {
+        const handle = target.closest(handleDragSelector);
+        if (handle) return handle;
+        if (target.closest(interactiveSelector)) return null;
+        const header = target.closest(headerDragSelector);
+        if (header) return header;
 
-        scrollEl = findScrollParent(e.target);
-        if (scrollEl && scrollEl.scrollTop > 0) return;
+        const rect = panel.getBoundingClientRect();
+        return y >= rect.top && y <= rect.top + topDragZoneHeight ? panel : null;
+      };
 
-        pointerId = e.pointerId;
-        startX = e.clientX;
-        startY = e.clientY;
-        currentY = startY;
+      const begin = (id, x, y, target) => {
+        scrollEl = findScrollParent(target);
+        if (scrollEl && scrollEl.scrollTop > 0) return false;
+
+        pointerId = id;
+        startX = x;
+        startY = y;
+        currentX = x;
+        currentY = y;
+        startTime = performance.now();
+        lastY = y;
+        lastTime = startTime;
+        velocityY = 0;
         dragging = false;
-        panel.setPointerCapture?.(pointerId);
-      });
+        return true;
+      };
 
-      panel.addEventListener('pointermove', e => {
-        if (pointerId !== e.pointerId) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        currentY = e.clientY;
-        if (dy <= 0 || Math.abs(dx) > Math.abs(dy) * 1.15) return;
-        if (scrollEl && scrollEl.scrollTop > 0) return;
+      const updateDrag = (x, y) => {
+        const now = performance.now();
+        const dx = x - startX;
+        const dy = y - startY;
+        const dt = Math.max(now - lastTime, 1);
+
+        currentX = x;
+        currentY = y;
+        velocityY = (y - lastY) / dt;
+        lastY = y;
+        lastTime = now;
+
+        if (dy <= 0 || Math.abs(dx) > Math.abs(dy) * 1.15) return false;
+        if (scrollEl && scrollEl.scrollTop > 0) return false;
 
         dragging = true;
         panel.classList.add('sheet-dragging');
         panel.style.transform = `translateY(${Math.min(dy, 180)}px)`;
-        e.preventDefault();
-      });
+        return true;
+      };
 
-      const finish = e => {
-        if (pointerId !== e.pointerId) return;
-        const dy = currentY - startY;
-        const shouldClose = dragging && dy >= threshold;
+      const finishDrag = (x = currentX, y = currentY) => {
+        const dx = x - startX;
+        const dy = y - startY;
+        const elapsed = Math.max(performance.now() - startTime, 1);
+        const finalVelocityY = Math.max(velocityY, dy / elapsed);
+        const verticalSwipe = dy > 0 && Math.abs(dx) <= Math.abs(dy) * 1.15;
+        const shouldClose = verticalSwipe && (
+          dy >= threshold ||
+          (dy >= flickDistance && finalVelocityY >= flickVelocity)
+        );
+
         reset();
         if (shouldClose) closeFn();
       };
 
+      const cancelOrFinish = e => {
+        if (dragging) {
+          finishDrag(e?.clientX, e?.clientY);
+        } else {
+          reset();
+        }
+      };
+
+      panel.addEventListener('pointerdown', e => {
+        if (pointerId !== null || e.button !== 0) return;
+        if (e.pointerType === 'mouse') return;
+        const dragZone = getDragZone(e.target, e.clientY);
+        if (!dragZone) return;
+
+        if (!begin(e.pointerId, e.clientX, e.clientY, e.target)) return;
+        panel.setPointerCapture?.(pointerId);
+        e.preventDefault();
+      });
+
+      panel.addEventListener('pointermove', e => {
+        if (pointerId !== e.pointerId) return;
+        if (updateDrag(e.clientX, e.clientY)) e.preventDefault();
+      });
+
+      const finish = e => {
+        if (pointerId !== e.pointerId) return;
+        finishDrag(e.clientX, e.clientY);
+      };
+
       panel.addEventListener('pointerup', finish);
-      panel.addEventListener('pointercancel', reset);
-      panel.addEventListener('lostpointercapture', reset);
+      panel.addEventListener('pointercancel', cancelOrFinish);
+      panel.addEventListener('lostpointercapture', cancelOrFinish);
 
       panel.addEventListener('mousedown', e => {
         if (pointerId !== null || e.button !== 0) return;
-        const interactive = e.target.closest(interactiveSelector);
-        const explicitDragZone = e.target.closest('.add-sheet-handle, .picker-handle, .ai-sheet-header, .hadong-header, .ocr-header');
-        if (interactive && !explicitDragZone) return;
-        scrollEl = findScrollParent(e.target);
-        if (scrollEl && scrollEl.scrollTop > 0) return;
-        pointerId = 'mouse';
-        startX = e.clientX;
-        startY = e.clientY;
-        currentY = startY;
-        dragging = false;
+        if (!getDragZone(e.target, e.clientY)) return;
+        begin('mouse', e.clientX, e.clientY, e.target);
       });
 
       document.addEventListener('mousemove', e => {
         if (pointerId !== 'mouse') return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        currentY = e.clientY;
-        if (dy <= 0 || Math.abs(dx) > Math.abs(dy) * 1.15) return;
-        if (scrollEl && scrollEl.scrollTop > 0) return;
-        dragging = true;
-        panel.classList.add('sheet-dragging');
-        panel.style.transform = `translateY(${Math.min(dy, 180)}px)`;
-        e.preventDefault();
+        if (updateDrag(e.clientX, e.clientY)) e.preventDefault();
       });
 
-      document.addEventListener('mouseup', () => {
+      document.addEventListener('mouseup', e => {
         if (pointerId !== 'mouse') return;
-        const dy = currentY - startY;
-        const shouldClose = dragging && dy >= threshold;
-        reset();
-        if (shouldClose) closeFn();
+        finishDrag(e.clientX, e.clientY);
       });
 
       panel.addEventListener('touchstart', e => {
         if (pointerId !== null || e.touches.length !== 1) return;
         const touch = e.touches[0];
-        const interactive = e.target.closest(interactiveSelector);
-        const explicitDragZone = e.target.closest('.add-sheet-handle, .picker-handle, .ai-sheet-header, .hadong-header, .ocr-header');
-        if (interactive && !explicitDragZone) return;
-        scrollEl = findScrollParent(e.target);
-        if (scrollEl && scrollEl.scrollTop > 0) return;
-        pointerId = 'touch';
-        startX = touch.clientX;
-        startY = touch.clientY;
-        currentY = startY;
-        dragging = false;
-      }, { passive: true });
+        const dragZone = getDragZone(e.target, touch.clientY);
+        if (!dragZone) return;
+        if (!begin('touch', touch.clientX, touch.clientY, e.target)) return;
+        e.preventDefault();
+      }, { passive: false });
 
       panel.addEventListener('touchmove', e => {
         if (pointerId !== 'touch' || e.touches.length !== 1) return;
         const touch = e.touches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-        currentY = touch.clientY;
-        if (dy <= 0 || Math.abs(dx) > Math.abs(dy) * 1.15) return;
-        if (scrollEl && scrollEl.scrollTop > 0) return;
-        dragging = true;
-        panel.classList.add('sheet-dragging');
-        panel.style.transform = `translateY(${Math.min(dy, 180)}px)`;
-        e.preventDefault();
+        if (updateDrag(touch.clientX, touch.clientY)) e.preventDefault();
       }, { passive: false });
 
-      panel.addEventListener('touchend', () => {
+      panel.addEventListener('touchend', e => {
         if (pointerId !== 'touch') return;
-        const dy = currentY - startY;
-        const shouldClose = dragging && dy >= threshold;
-        reset();
-        if (shouldClose) closeFn();
+        const touch = e.changedTouches?.[0];
+        finishDrag(touch?.clientX, touch?.clientY);
       });
 
-      panel.addEventListener('touchcancel', reset);
+      panel.addEventListener('touchcancel', () => cancelOrFinish());
     }
 
     document.getElementById('rh-add-btn')
@@ -3960,11 +4481,13 @@
     // APP INIT
     // ──────────────────────────────────────────────────────────────
     function initApp() {
+      applyManagerProfile();
       updateDateDisplay();
       loadInventory();
       syncAiModelSelect();
       updateAiModelStatus();
       preloadAiModelSoon();
+      promptManagerIfNeeded();
     }
 
     function updateDateDisplay() {
@@ -4167,6 +4690,7 @@
       renderList(getFiltered());
       if (document.getElementById('hadong-sheet')?.classList.contains('open')) {
         renderHadongOverview();
+        renderManagerSuggestions();
       }
     }
 
@@ -4197,13 +4721,13 @@
       const popoverTitle = document.getElementById('notification-popover-title');
       const popoverList = document.getElementById('notification-popover-list');
       const notificationCount = urgent.length + lowStock.length;
+      const manager = getManagerProfile();
 
-      badgeEl.hidden = notificationCount === 0;
-      badgeEl.textContent = notificationCount > 99 ? '99+' : String(notificationCount);
-      notifyBtn.setAttribute(
-        'aria-label',
-        notificationCount ? `하동이 매니저에게 재고 알림 ${notificationCount}개 물어보기` : '하동이 매니저 재고 챗봇 열기'
-      );
+      if (badgeEl) {
+        badgeEl.hidden = true;
+        badgeEl.textContent = '';
+      }
+      notifyBtn.setAttribute('aria-label', `${manager.fullName} 변경`);
 
       if (!notificationCount) {
         alertEl.hidden = true;
@@ -4234,17 +4758,17 @@
       document.getElementById('crisis-message').innerHTML = `
         <div class="crisis-head">
           <div>
-            <div class="crisis-title">하동이 매니저의 오늘 브리핑</div>
-            <div class="crisis-subtitle">먼저 볼 핵심만 모았어요. 자세한 항목은 매니저에서 확인해 주세요</div>
+            <div class="crisis-title">${escHtml(manager.fullName)}의 마감 브리핑</div>
+            <div class="crisis-subtitle">오늘 정리할 일과 내일 오픈 준비를 나눠서 볼 수 있어요</div>
           </div>
         </div>
         <div class="crisis-metrics">${metricHtml}</div>
       `;
       document.getElementById('crisis-item-list').innerHTML = `
         <button type="button" class="crisis-manager-cta" data-open-hadong-manager>
-          하동이 매니저에서 한 번에 보기
+          ${escHtml(manager.fullName)}와 한 번에 보기
         </button>
-        <div class="crisis-manager-note">항목 확인과 수정은 하동이 매니저의 한 번에 보기에서 이어서 할 수 있어요.</div>
+        <div class="crisis-manager-note">마감 순서는 한 번에 보기에서, 개별 상태는 상세 점검에서 이어서 볼 수 있어요.</div>
       `;
       popoverTitle.textContent = `알림 ${notificationCount}개`;
       popoverList.innerHTML = [
@@ -4383,7 +4907,7 @@
               </div>
               <div class="inv-actions">
                 <button class="inv-btn" onclick="editItem('${safeId}')">수정</button>
-                ${item.expiry_date ? `<button class="inv-btn ai" onclick="openAiSheet('${safeId}')">쿠키 매니저 점검</button>` : ''}
+                <button class="inv-btn ai" onclick="openAiSheet('${safeId}')">상세 점검</button>
                 <button class="inv-btn del" onclick="deleteItem('${safeId}')">삭제</button>
               </div>
             </div>
@@ -4544,6 +5068,7 @@
       sheet.classList.remove('open');
       sheet.setAttribute('aria-hidden', 'true');
       _editingItemId = null;
+      restoreManagerReturnContext();
     }
 
     function editItem(id) {
@@ -5768,6 +6293,9 @@
       'Qwen3-1.7B-q4f16_1-MLC': { size: '약 2.0GB', short: '1.7B' }
     };
     const WEBLLM_PACKAGE_URL = 'https://esm.run/@mlc-ai/web-llm@0.2.83';
+    const USE_CLOUD_AI = true;
+    const CLOUD_AI_CHAT_ENDPOINT = '/api/inventory-chat';
+    const CLOUD_AI_TIMEOUT_MS = 18000;
     let _aiRunToken = 0;
 
     function checkWebGPU() {
@@ -5905,6 +6433,24 @@
       const sizeNote = document.getElementById('ai-model-size-note');
       const mobileBtn = document.getElementById('ai-mobile-download-btn');
       if (!el) return;
+      if (USE_CLOUD_AI) {
+        panel?.classList.toggle('is-ready', state !== 'failed');
+        panel?.classList.toggle('is-loading', state === 'loading');
+        panel?.classList.toggle('is-error', state === 'failed');
+        if (fill) fill.style.width = state === 'loading' ? '45%' : '100%';
+        if (mobileBtn) mobileBtn.hidden = true;
+        if (sizeNote) {
+          sizeNote.textContent = state === 'failed'
+            ? '서버 AI 연결 실패 · 기본 재고 요약으로 답변합니다.'
+            : 'Gemini 2.5 Flash-Lite로 답변합니다. 브라우저 모델 다운로드는 하지 않습니다.';
+        }
+        el.textContent = state === 'loading'
+          ? '서버 확인'
+          : state === 'failed'
+            ? '서버 실패'
+            : '서버';
+        return;
+      }
       const model = webLLMModelLabel();
       const rawModel = selectWebLLMModel();
       const size = webLLMModelSize(rawModel);
@@ -6064,6 +6610,10 @@
     let _webllmCancelReject = null;
 
     function preloadAiModelSoon() {
+      if (USE_CLOUD_AI) {
+        updateAiModelStatus('ready');
+        return;
+      }
       if (_webllmPreloadStarted || _webllmReady || _webllmLoading || !checkWebGPU()) {
         updateAiModelStatus();
         return;
@@ -6255,11 +6805,114 @@
 
     let _aiCurrentItem   = null;
     let _aiSuggestedDate = null;
+    let _managerReturnContext = null;
+
+    function captureManagerReturnContext() {
+      const sheet = document.getElementById('hadong-sheet');
+      if (!sheet?.classList.contains('open')) return null;
+      return {
+        view: sheet.dataset.view === 'chat' ? 'chat' : 'overview',
+        overviewFilter: _hadongOverviewFilter,
+        overviewScrollTop: document.getElementById('hadong-overview')?.scrollTop || 0,
+        messagesScrollTop: document.getElementById('hadong-messages')?.scrollTop || 0
+      };
+    }
+
+    function openChildSheetFromManager(openChild) {
+      _managerReturnContext = captureManagerReturnContext();
+      closeHadongChat();
+      setTimeout(openChild, 180);
+    }
+
+    function restoreManagerReturnContext() {
+      const context = _managerReturnContext;
+      if (!context) return;
+      _managerReturnContext = null;
+      setTimeout(() => {
+        applyManagerProfile();
+        document.getElementById('hadong-overlay').classList.add('open');
+        document.getElementById('hadong-sheet').classList.add('open');
+        if (context.view === 'overview') {
+          renderHadongOverview(context.overviewFilter);
+          setHadongView('overview');
+        } else {
+          setHadongView('chat');
+        }
+        requestAnimationFrame(() => {
+          const target = context.view === 'overview'
+            ? document.getElementById('hadong-overview')
+            : document.getElementById('hadong-messages');
+          if (target) target.scrollTop = context.view === 'overview'
+            ? context.overviewScrollTop
+            : context.messagesScrollTop;
+        });
+      }, 120);
+    }
+
+    function managerDetailIntro(profile = getManagerProfile()) {
+      return profile.id === 'cookie'
+        ? '쿠키가 기준대로 딱 보고 정리해줄거다멍🐾'
+        : '하동이가 같이 보고 차근차근 정리해줄거다멍🐶';
+    }
+
+    function managerDetailLoadingTitle(profile = getManagerProfile()) {
+      return profile.id === 'cookie'
+        ? '쿠키가 딱 보고 있어요'
+        : '하동이가 킁킁 살펴보는 중이에요';
+    }
+
+    function managerDetailStatusText(status, profile = getManagerProfile()) {
+      const label = status || '점검 완료';
+      return profile.id === 'cookie'
+        ? `${label} · 쿠키 기준이다멍`
+        : `${label} · 하동이가 같이 봤다멍`;
+    }
+
+    function applyManagerToneToDetailText(text, profile = getManagerProfile()) {
+      const subject = profile.id === 'cookie' ? '쿠키가' : '하동이가';
+      const topic = profile.id === 'cookie' ? '쿠키는' : '하동이는';
+      return String(text || '')
+        .replace(/쿠키 매니저가/g, subject)
+        .replace(/쿠키 매니저는/g, topic)
+        .replace(/쿠키 매니저/g, profile.name)
+        .replace(/킁킁 살펴보/g, profile.id === 'cookie' ? '딱 보' : '킁킁 살펴보')
+        .replace(/킁킁,/g, profile.id === 'cookie' ? '딱 보면,' : '킁킁,')
+        .replace(/킁킁/g, profile.id === 'cookie' ? '딱 보면' : '킁킁');
+    }
+
+    function withManagerDetailClosing(text, profile = getManagerProfile()) {
+      const value = String(text || '').trim();
+      if (!value || /다멍|볼게멍/.test(value)) return value;
+      const closing = profile.id === 'cookie'
+        ? '쿠키 기준으론 이렇게 처리하면 된다멍.'
+        : '하동이랑 이렇게 같이 보면 된다멍.';
+      return `${value}\n${closing}`;
+    }
+
+    function applyManagerToneToSuggestion(suggestion, profile = getManagerProfile()) {
+      const mapText = value => applyManagerToneToDetailText(value, profile);
+      const summary = withManagerDetailClosing(mapText(suggestion.summary || suggestion.text || ''), profile);
+      const criteriaText = withManagerDetailClosing(mapText(suggestion.criteriaText || ''), profile);
+      return {
+        ...suggestion,
+        title: mapText(suggestion.title),
+        subtitle: mapText(suggestion.subtitle),
+        summary,
+        actions: (suggestion.actions || []).map(mapText),
+        criteriaTitle: mapText(suggestion.criteriaTitle),
+        criteriaText,
+        text:
+          `${mapText(suggestion.title)}\n${summary}\n\n` +
+          `지금 할 일\n${cookieActionList((suggestion.actions || []).map(mapText))}\n\n` +
+          `한 마디\n${criteriaText}`
+      };
+    }
 
     function openAiSheet(id) {
       const item = items.find(i => i.id === id);
       if (!item) return;
 
+      const profile = applyManagerProfile();
       _aiCurrentItem   = item;
       _aiSuggestedDate = null;
       const runToken = ++_aiRunToken;
@@ -6275,12 +6928,12 @@
       ].filter(Boolean).join(' · ');
 
       document.getElementById('ai-stream-output').textContent = '';
-      document.getElementById('ai-status-text').textContent   = '쿠키 매니저 점검 준비 중…';
+      document.getElementById('ai-status-text').textContent   = managerDetailIntro(profile);
       document.getElementById('ai-accept-btn').disabled       = true;
       document.getElementById('ai-accept-btn').textContent    = '이 기한으로 업데이트';
-      document.getElementById('ai-risk-icon').textContent     = '🐾';
-      document.getElementById('ai-visual-title').textContent  = '쿠키 매니저가 킁킁 살펴보는 중이에요';
-      document.getElementById('ai-visual-subtitle').textContent = '기한이랑 재고 기준을 같이 보고 있어요.';
+      document.getElementById('ai-risk-icon').textContent     = profile.id === 'cookie' ? '🐾' : '🐶';
+      document.getElementById('ai-visual-title').textContent  = managerDetailLoadingTitle(profile);
+      document.getElementById('ai-visual-subtitle').textContent = managerDetailIntro(profile);
       document.getElementById('ai-risk-pill').textContent     = '점검 중';
       document.getElementById('ai-risk-fill').style.width     = '0%';
       document.getElementById('ai-summary-text').textContent  = '';
@@ -6301,6 +6954,7 @@
       document.getElementById('ai-sheet').classList.remove('open');
       _aiCurrentItem   = null;
       _aiSuggestedDate = null;
+      restoreManagerReturnContext();
     }
 
     function cookieRuleProfile(item) {
@@ -6380,7 +7034,7 @@
         text:
           `${title}\n${summary}\n\n` +
           `지금 할 일\n${cookieActionList(actions)}\n\n` +
-          `쿠키 매니저의 한 마디\n${criteriaText}`,
+          `한 마디\n${criteriaText}`,
         suggestedDate
       };
     }
@@ -6528,7 +7182,7 @@
       card.classList.remove(...riskClasses);
       card.classList.add(`risk-${suggestion.risk || 'info'}`);
       document.getElementById('ai-risk-icon').textContent = suggestion.icon || '🐾';
-      document.getElementById('ai-visual-title').textContent = suggestion.title || '킁킁, 쿠키 매니저 점검 완료';
+      document.getElementById('ai-visual-title').textContent = suggestion.title || '킁킁, 상세 점검 완료';
       document.getElementById('ai-visual-subtitle').textContent = suggestion.subtitle || suggestion.status || '';
       document.getElementById('ai-risk-pill').textContent = suggestion.status || '점검 완료';
       renderCookieHighlightedText(document.getElementById('ai-summary-text'), suggestion.summary || suggestion.text || '');
@@ -6544,6 +7198,7 @@
         const li = document.createElement('li');
         li.style.animationDelay = `${idx * 45}ms`;
         const badge = document.createElement('span');
+        badge.className = 'ai-action-index';
         badge.textContent = idx + 1;
         const text = document.createElement('div');
         renderCookieHighlightedText(text, line);
@@ -6562,9 +7217,10 @@
       const statusEl  = document.getElementById('ai-status-text');
       const acceptBtn = document.getElementById('ai-accept-btn');
       if (runToken !== _aiRunToken) return;
-      const suggestion = buildCookieSuggestion(item);
+      const profile = getManagerProfile();
+      const suggestion = applyManagerToneToSuggestion(buildCookieSuggestion(item), profile);
       _aiSuggestedDate = suggestion.suggestedDate;
-      statusEl.textContent = suggestion.status;
+      statusEl.textContent = managerDetailStatusText(suggestion.status, profile);
       renderCookieSuggestion(suggestion);
       acceptBtn.disabled = !suggestion.suggestedDate;
       acceptBtn.textContent = suggestion.suggestedDate ? '이 기한으로 업데이트' : '업데이트할 기한 없음';
@@ -6625,6 +7281,7 @@
     }
 
     function hadongOpeningText() {
+      const profile = getManagerProfile();
       const withDday = items
         .map(i => ({ ...i, dday: calcDDay(i.expiry_date) }))
         .filter(i => i.dday !== null);
@@ -6638,7 +7295,7 @@
       if (week) parts.push(`이번 주 마감 ${week}개`);
       if (low) parts.push(`부족 재고 ${low}개`);
       const summary = parts.length ? parts.join(', ') : '급한 재고 알림은 없어요';
-      return `🐶 멍! 하동이 매니저예요.\n지금 ${summary}.\n\n필요하면 "오늘 확인", "부족 재고", "이번 주 기한", "폐기 후보"를 물어봐 주세요.`;
+      return `${profile.opening}\n지금 ${summary}.\n\n마감 전에 한 번에 보기에서 오늘 정리할 일부터 같이 볼 수 있다멍.`;
     }
 
     function hadongDdayIcon(dday) {
@@ -6702,14 +7359,20 @@
         const tags = [];
         if (dday !== null && dday < 0) tags.push({ type: 'expired', label: ddayLabel(dday) });
         if (dday === 0) tags.push({ type: 'today', label: '오늘 마감' });
-        if (dday !== null && dday > 0 && dday <= 6) tags.push({ type: 'week', label: ddayLabel(dday) });
+        if (dday === 1) tags.push({ type: 'tomorrow', label: '내일 마감' });
+        if (dday !== null && dday > 1 && dday <= 6) tags.push({ type: 'week', label: ddayLabel(dday) });
         if (low) tags.push({ type: 'low', label: `부족 · 기준 ${item.min_quantity}${item.unit || '개'}` });
         if (!tags.length) return null;
         const priority = tags.some(t => t.type === 'expired') ? 0
           : tags.some(t => t.type === 'today') ? 1
-          : tags.some(t => t.type === 'low') ? 2
-          : 3;
-        const status = tags[0]?.type || 'low';
+          : tags.some(t => t.type === 'tomorrow') ? 2
+          : tags.some(t => t.type === 'low') ? 3
+          : 4;
+        const status = tags.some(t => t.type === 'expired') ? 'expired'
+          : tags.some(t => t.type === 'today') ? 'today'
+          : tags.some(t => t.type === 'tomorrow') ? 'tomorrow'
+          : tags.some(t => t.type === 'low') ? 'low'
+          : 'week';
         return { item, dday, low, tags, priority, status };
       }).filter(Boolean).sort((a, b) => {
         if (a.priority !== b.priority) return a.priority - b.priority;
@@ -6727,62 +7390,161 @@
         btn.classList.toggle('active', btn.dataset.hadongView === next);
       });
       if (next === 'overview') renderHadongOverview();
-      if (next === 'chat') setTimeout(() => document.getElementById('hadong-input').focus(), 120);
+      if (next === 'chat') {
+        renderManagerSuggestions();
+        setTimeout(() => document.getElementById('hadong-input').focus(), 120);
+      }
+    }
+
+    function managerTaskIcon(status) {
+      if (status === 'expired') return '🚨';
+      if (status === 'today') return '⏰';
+      if (status === 'tomorrow') return '🌙';
+      if (status === 'low') return '📦';
+      if (status === 'week') return '📅';
+      return '🐾';
+    }
+
+    function managerTaskReason(row) {
+      const item = row.item;
+      const unit = item.unit || '개';
+      if (row.status === 'expired') return `${ddayLabel(row.dday)}라 마감 전에 사용 여부를 정리해야 한다멍.`;
+      if (row.status === 'today') return '오늘 마감이라 남은 양과 상태를 마감 전에 확인하면 좋다멍.';
+      if (row.status === 'tomorrow') return '내일 마감이라 오픈 전에 바로 쓸지 따로 둘지 정해두면 좋다멍.';
+      if (row.status === 'low') return `현재 ${item.quantity}${unit}, 기준 ${item.min_quantity}${unit} 이하라 내일 오픈 전에 수량을 확인하면 좋다멍.`;
+      if (row.status === 'week') return '이번 주 안에 마감돼서 내일 준비 목록에 올려두면 좋다멍.';
+      return '마감 전에 한 번 확인하면 좋다멍.';
+    }
+
+    function buildManagerBriefingTasks() {
+      return getHadongAlertRows().map(row => {
+        const item = row.item;
+        const group = row.status === 'expired' || row.status === 'today' ? 'today' : 'tomorrow';
+        const title = row.status === 'expired' ? `${item.name} 사용 여부 확인`
+          : row.status === 'today' ? `${item.name} 오늘 안에 처리`
+          : row.status === 'tomorrow' ? `${item.name} 내일 오픈 전 확인`
+          : row.status === 'low' ? `${item.name} 수량 확인`
+          : `${item.name} 이번 주 준비`;
+        return {
+          id: item.id,
+          item,
+          group,
+          status: row.status,
+          icon: managerTaskIcon(row.status),
+          title,
+          copy: managerTaskReason(row),
+          chips: row.tags.map(tag => tag.label)
+        };
+      });
+    }
+
+    function renderManagerTaskCard(task) {
+      const item = task.item;
+      const meta = [
+        item.category || '미분류',
+        item.storage_method || '',
+        `${item.quantity}${item.unit || '개'}`
+      ].filter(Boolean);
+      return `
+        <article class="manager-task-card is-${escAttr(task.status)}">
+          <div class="manager-task-main">
+            <div class="manager-task-title"><span>${task.icon}</span><span>${escHtml(task.title)}</span></div>
+            <div class="manager-task-copy">${escHtml(task.copy)}</div>
+            <div class="manager-task-meta">
+              ${[...task.chips, ...meta].map(label => `<span class="manager-task-chip">${escHtml(label)}</span>`).join('')}
+            </div>
+          </div>
+          <div class="manager-task-actions">
+            <button type="button" class="manager-task-btn primary" data-manager-action="edit" data-item-id="${escAttr(item.id)}">수정하기</button>
+            <button type="button" class="manager-task-btn" data-manager-action="inspect" data-item-id="${escAttr(item.id)}">상세 점검</button>
+          </div>
+        </article>`;
+    }
+
+    function renderManagerTaskSection(title, tasks) {
+      return `
+        <section class="manager-briefing-section">
+          <div class="manager-briefing-heading">
+            <span>${escHtml(title)}</span>
+            <span class="manager-briefing-count">${tasks.length}개</span>
+          </div>
+          ${tasks.length
+            ? `<div class="manager-task-list">${tasks.map(renderManagerTaskCard).join('')}</div>`
+            : `<div class="hadong-empty">${title}에 걸린 일이 없어요.</div>`}
+        </section>`;
     }
 
     function renderHadongOverview(filter = _hadongOverviewFilter) {
       _hadongOverviewFilter = filter || 'all';
       const root = document.getElementById('hadong-overview');
       if (!root) return;
-      const rows = getHadongAlertRows();
-      const counts = {
-        all: rows.length,
-        expired: rows.filter(r => r.tags.some(t => t.type === 'expired')).length,
-        today: rows.filter(r => r.tags.some(t => t.type === 'today')).length,
-        low: rows.filter(r => r.tags.some(t => t.type === 'low')).length,
-        week: rows.filter(r => r.tags.some(t => t.type === 'week')).length
-      };
-      const shown = rows.filter(row =>
-        _hadongOverviewFilter === 'all' || row.tags.some(tag => tag.type === _hadongOverviewFilter)
-      );
-      const filters = [
-        ['all', `전체 ${counts.all}`],
-        ['expired', `기한 초과 ${counts.expired}`],
-        ['today', `오늘 ${counts.today}`],
-        ['low', `부족 ${counts.low}`],
-        ['week', `이번 주 ${counts.week}`]
-      ];
+      const profile = getManagerProfile();
+      const tasks = buildManagerBriefingTasks();
+      const todayTasks = tasks.filter(task => task.group === 'today');
+      const tomorrowTasks = tasks.filter(task => task.group === 'tomorrow');
       root.innerHTML = `
         <div class="hadong-overview-summary">
-          <div class="hadong-overview-title">하동이 매니저 알림 ${counts.all}개</div>
-          <div class="hadong-overview-subtitle">항목별로 확인하고 바로 수정할 수 있어요.</div>
+          <div class="hadong-overview-title">${escHtml(profile.opening)} 마감 전에 볼 일 ${tasks.length}개 있다멍</div>
+          <div class="hadong-overview-subtitle">오늘 정리할 일부터 내일 오픈 준비까지 순서대로 정리했어요.</div>
         </div>
-        <div class="hadong-overview-filters">
-          ${filters.map(([key, label]) =>
-            `<button type="button" class="hadong-filter-btn${_hadongOverviewFilter === key ? ' active' : ''}" data-hadong-filter="${key}">${escHtml(label)}</button>`
-          ).join('')}
-        </div>
-        <div class="hadong-alert-list">
-          ${shown.length ? shown.map(row => {
-            const item = row.item;
-            const meta = [
-              item.category || '미분류',
-              item.storage_method || '',
-              `${item.quantity}${item.unit || '개'}`
-            ].filter(Boolean).map(escHtml).join(' · ');
-            return `
-              <article class="hadong-alert-card is-${escAttr(row.status)}">
-                <div>
-                  <div class="hadong-alert-name">${escHtml(item.name)}</div>
-                  <div class="hadong-alert-meta">${meta}</div>
-                  <div class="hadong-alert-badges">
-                    ${row.tags.map(tag => `<span class="hadong-alert-badge">${escHtml(tag.label)}</span>`).join('')}
-                  </div>
-                </div>
-                <button type="button" class="hadong-alert-edit" data-hadong-edit-id="${escAttr(item.id)}">수정</button>
-              </article>`;
-          }).join('') : '<div class="hadong-empty">이 조건에 해당하는 알림이 없어요.</div>'}
-        </div>`;
+        ${tasks.length
+          ? `${renderManagerTaskSection('오늘 정리', todayTasks)}${renderManagerTaskSection('내일 오픈 준비', tomorrowTasks)}`
+          : `<div class="hadong-empty">${escHtml(profile.empty)}<br>그래도 마감 전에 수량이 바뀐 재고는 한 번 훑어보면 좋다멍.</div>`}`;
+      renderManagerSuggestions();
+    }
+
+    function makeManagerSuggestionLabel(task) {
+      if (task.status === 'expired') return `${task.item.name} 사용 여부 같이 정리`;
+      if (task.status === 'today') return `${task.item.name} 오늘 마감 처리`;
+      if (task.status === 'tomorrow') return `${task.item.name} 내일 오픈 전 확인`;
+      if (task.status === 'low') return `${task.item.name} 수량 같이 확인`;
+      return `${task.item.name} 이번 주 준비`;
+    }
+
+    function renderManagerSuggestions() {
+      const root = document.getElementById('manager-suggestions');
+      if (!root) return;
+      const tasks = buildManagerBriefingTasks().slice(0, 4);
+      if (!tasks.length) {
+        root.innerHTML = '<button type="button" data-hadong-question="마감 브리핑 다시 정리해줘">마감 브리핑 정리</button>';
+        return;
+      }
+      root.innerHTML = tasks.map(task =>
+        `<button type="button" data-manager-suggestion-id="${escAttr(task.item.id)}">${escHtml(makeManagerSuggestionLabel(task))}</button>`
+      ).join('');
+    }
+
+    function managerWorkReason(item) {
+      const dday = calcDDay(item.expiry_date);
+      const unit = item.unit || '개';
+      const low = item.min_quantity != null && Number(item.quantity) <= Number(item.min_quantity);
+      if (dday !== null && dday < 0) return `${ddayLabel(dday)}라 마감 전에 사용 여부를 먼저 봐야 한다멍.`;
+      if (dday === 0) return '오늘 마감이라 남은 양과 상태를 마감 전에 나눠두면 좋다멍.';
+      if (dday === 1) return '내일 마감이라 오픈 전에 바로 쓸지 확인해두면 좋다멍.';
+      if (low) return `현재 ${item.quantity}${unit}, 기준 ${item.min_quantity}${unit} 이하라 내일 오픈 전에 수량을 봐야 한다멍.`;
+      if (dday !== null && dday <= 6) return `${ddayLabel(dday)}라 이번 주 준비 목록에 올려두면 좋다멍.`;
+      return '마감 전에 수량과 보관 상태만 한 번 확인하면 좋다멍.';
+    }
+
+    function makeManagerWorkReply(item) {
+      const profile = getManagerProfile();
+      return {
+        text:
+          `${profile.workPrefix}\n` +
+          `${topicName(item.name)} ${managerWorkReason(item)}\n` +
+          `상세 점검도 ${profile.name}가 이어서 봐줄거다멍${profile.id === 'cookie' ? '🐾' : '🐶'}`,
+        actions: [
+          { type: 'edit', itemId: item.id, label: '수정하기', variant: 'primary' },
+          { type: 'inspect', itemId: item.id, label: '상세 점검' }
+        ]
+      };
+    }
+
+    function startManagerWorkOnItem(itemId) {
+      const item = items.find(row => row.id === itemId);
+      if (!item) return;
+      setHadongView('chat');
+      addHadongMessage('bot', makeManagerWorkReply(item));
     }
 
     function cleanKoreanChatText(text) {
@@ -6793,6 +7555,57 @@
         .filter(line => !/[A-Za-z]{4,}/.test(line))
         .join('\n')
         .trim();
+    }
+
+    function inventorySnapshotForCloud() {
+      try {
+        return JSON.parse(summarizeInventoryForHadong());
+      } catch {
+        return [];
+      }
+    }
+
+    function cloudHistoryForManager() {
+      return _hadongMessages.slice(-9, -1).map(message => ({
+        role: message.role === 'assistant' ? 'assistant' : 'user',
+        content: String(message.content || '').slice(0, 900)
+      }));
+    }
+
+    async function requestManagerCloudReply(message, profile) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), CLOUD_AI_TIMEOUT_MS);
+      try {
+        const response = await fetch(CLOUD_AI_CHAT_ENDPOINT, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            message,
+            manager: {
+              id: profile.id,
+              name: profile.name,
+              fullName: profile.fullName
+            },
+            inventory: inventorySnapshotForCloud(),
+            recentMessages: cloudHistoryForManager()
+          })
+        });
+
+        if (!response.ok) {
+          let detail = `서버 AI 응답 실패 (${response.status})`;
+          try {
+            const errorPayload = await response.json();
+            if (errorPayload?.error) detail = errorPayload.error;
+          } catch {}
+          throw new Error(detail);
+        }
+
+        const payload = await response.json();
+        return String(payload.reply || '').trim();
+      } finally {
+        clearTimeout(timer);
+      }
     }
 
     function parseHadongRichReply(text) {
@@ -7128,7 +7941,7 @@
       return {
         text: `🐶 발주 후보 ${low.length}개를 골랐어요.\n부족한 순서로 보면 됩니다.\n\n${lines.join('\n')}`,
         actions: [
-          { type: 'overview-low', label: '부족 재고 보기', variant: 'primary' }
+          { type: 'overview-low', label: '한 번에 보기', variant: 'primary' }
         ]
       };
     }
@@ -7200,6 +8013,7 @@
 
     function hadongLocalInventoryReply(message, { fallback = false } = {}) {
       const text = String(message || '').replace(/\s+/g, ' ').trim();
+      const profile = getManagerProfile();
       const dated = items
         .map(i => ({ ...i, dday: calcDDay(i.expiry_date) }))
         .filter(i => i.dday !== null);
@@ -7216,30 +8030,35 @@
       const wantsWeek = /이번\s*주|주간|7일|일주일|기한/i.test(text);
       const wantsDispose = /폐기|버릴|지난|초과|만료/i.test(text);
       const wantsNoExpiry = /기한\s*없|소모품|일회용|컵|뚜껑|빨대|포장/i.test(text);
+      const wantsBriefing = /마감|브리핑|한\s*번에|업무|할\s*일|같이\s*일/i.test(text);
       const wantsGreeting = /^(안녕|안녕하세요|하이|ㅎㅇ|hello|hi|멍|하동아|하동이\s*안녕)[!.?。,\s]*$/i.test(text);
       const wantsThanks = /^(고마워|감사|땡큐|thanks?|thank you)[!.?。,\s]*$/i.test(text);
       const wantsHelp = /^(도움|도와줘|뭐\s*할\s*수|사용법|help)[!.?。,\s]*$/i.test(text);
 
       if (wantsGreeting) {
-        return '🐶 멍! 하동이 매니저예요.\n오늘 확인, 부족 재고, 이번 주 기한, 폐기 후보를 바로 정리해드릴게요.';
+        return `${profile.opening}\n마감 전에 오늘 정리할 일과 내일 오픈 준비를 같이 볼 수 있다멍.`;
       }
 
       if (wantsThanks) {
-        return '🐶 멍! 필요할 때 또 불러주세요.\n재고는 하동이 매니저가 같이 살펴볼게요.';
+        return `🐶 필요할 때 또 불러달라멍.\n재고 마감은 ${profile.name}가 같이 살펴볼게요.`;
       }
 
       if (wantsHelp) {
-        return '🐶 하동이 매니저는 재고를 빠르게 정리해요.\n"오늘 확인", "우유 2개 썼어", "바닐라 시럽 3병 추가", "휘핑크림 5개로 수정", "딸기 퓨레 폐기 처리", "발주 리스트"처럼 말해 주세요.';
+        return `🐶 ${profile.fullName}는 마감 브리핑과 재고 수정을 같이 해요.\n"우유 2개 썼어", "바닐라 시럽 3병 추가", "휘핑크림 5개로 수정", "딸기 퓨레 폐기 처리", "발주 리스트"처럼 말해 주세요.`;
+      }
+
+      if (wantsBriefing) {
+        return { text: `${profile.opening}\n한 번에 보기 탭에 마감 브리핑을 정리해뒀다멍.\n오늘 정리할 일부터 내일 오픈 준비 순서로 보면 된다멍.`, overviewFilter: 'all' };
       }
 
       if (wantsLow) {
         if (!low.length) return '🐶 멍! 부족 재고는 없어요.';
-        return { text: `📦 부족 재고 ${low.length}개를 한 번에 보기 탭에 정리했어요.\n수정이 필요한 항목은 바로 눌러주세요.`, overviewFilter: 'low' };
+        return { text: `📦 부족 재고 ${low.length}개를 한 번에 보기 탭에 올려뒀다멍.\n내일 오픈 전에 수량을 먼저 보면 좋다멍.`, overviewFilter: 'low' };
       }
 
       if (wantsDispose) {
         if (!expired.length) return '🐶 멍! 지금 폐기 후보로 볼 기한 초과 재고는 없어요.';
-        return { text: `🚨 폐기 후보 ${expired.length}개를 한 번에 보기 탭에 정리했어요.\n기한이 지난 항목부터 수정하거나 처리해 주세요.`, overviewFilter: 'expired' };
+        return { text: `🚨 기한 초과 재고 ${expired.length}개를 한 번에 보기 탭에 올려뒀다멍.\n상세 점검도 ${profile.name}가 이어서 봐줄거다멍${profile.id === 'cookie' ? '🐾' : '🐶'}`, overviewFilter: 'expired' };
       }
 
       if (wantsNoExpiry) {
@@ -7255,12 +8074,12 @@
       if (wantsToday) {
         const priority = [...expired, ...today, ...low.filter(i => !expired.some(e => e.id === i.id) && !today.some(t => t.id === i.id))];
         if (!priority.length) return '🐶 멍! 오늘 먼저 볼 급한 재고는 없어요.';
-        return { text: `🐾 오늘 먼저 볼 재고 ${priority.length}개를 한 번에 보기 탭에 정리했어요.\n알림에서 바로 수정으로 연결할 수 있어요.`, overviewFilter: 'all' };
+        return { text: `🐾 오늘 정리할 재고 ${priority.length}개를 한 번에 보기 탭에 정리했다멍.\n마감 전에 위에서부터 보면 된다멍.`, overviewFilter: 'all' };
       }
 
       if (wantsWeek) {
         if (!week.length) return '🐶 멍! 이번 주 안에 마감되는 재고는 없어요.';
-        return { text: `📅 이번 주 기한 재고 ${week.length}개를 한 번에 보기 탭에 정리했어요.\n마감이 가까운 항목부터 확인해 주세요.`, overviewFilter: 'week' };
+        return { text: `📅 이번 주 기한 재고 ${week.length}개를 한 번에 보기 탭에 올려뒀다멍.\n내일 준비 목록처럼 보면 된다멍.`, overviewFilter: 'week' };
       }
 
       if (fallback) {
@@ -7290,9 +8109,11 @@
     }
 
     function openHadongChat() {
+      applyManagerProfile();
       document.getElementById('hadong-overlay').classList.add('open');
       document.getElementById('hadong-sheet').classList.add('open');
       setHadongView('overview');
+      renderManagerSuggestions();
       if (!document.getElementById('hadong-messages').children.length) {
         addHadongMessage('bot', hadongOpeningText());
       }
@@ -7326,66 +8147,26 @@
         return;
       }
 
-      if (!_webllmReady || !_webllmEngine) {
-        const prepEl = addHadongMessage('bot', '하동이 매니저가 자유 질문용 모델을 준비하는 중이에요…', false);
-        const ok = await ensureWebLLM({ showOverlay: true });
-        if (!ok || !_webllmReady || !_webllmEngine) {
-          prepEl.textContent = _webllmFailure
-            ? `${_webllmFailure.message}\n그래도 기본 재고 조회는 바로 가능해요. "오늘 확인", "부족 재고", "폐기 후보"처럼 물어봐 주세요.`
-            : '멍… 자유 질문용 모델을 준비하지 못했어요.\n기본 재고 조회는 바로 가능해요. "오늘 확인", "부족 재고", "폐기 후보"처럼 물어봐 주세요.';
-          _hadongMessages.push({ role: 'assistant', content: prepEl.textContent });
-          return;
-        }
-        prepEl.remove();
-      }
-
       const runToken = ++_hadongRunToken;
-      const botEl = addHadongMessage('bot', '하동이 매니저가 재고를 살펴보는 중이에요…', false);
-      const systemPrompt =
-        '너는 Tuz 카페 재고를 도와주는 강아지 챗봇 "하동이 매니저"다.\n' +
-        '응답은 반드시 한국어만 사용한다. 영어 단어, 영어 문장, 로마자 설명을 출력하지 않는다.\n' +
-        '내부 추론, 분석 과정, <think> 태그를 절대 출력하지 않는다.\n' +
-        '한국어로 짧고 실무적으로 답한다. 가끔 자연스럽게 "멍"을 쓰되 과하게 쓰지 않는다.\n' +
-        '가독성을 위해 제목 1줄, 짧은 안내 1줄, 빈 줄, 항목별 2줄 목록으로 답한다.\n' +
-        '항목은 "이모지 이름" 다음 줄에 "재고 N | 분류 | D-day | 기준 N"처럼 정리한다.\n' +
-        '상태 이모지는 기한 초과 🚨, 오늘 마감 ⏰, 이번 주 📅, 부족 📦, 정상 ✅를 우선 사용한다.\n' +
-        '재고 데이터 안에서만 판단하고, 모르면 확인이 필요하다고 말한다.\n' +
-        '폐기, 부족 재고, 이번 주 기한, 보관 방식, 구매 우선순위를 도와준다.\n' +
-        `현재 재고 JSON: ${summarizeInventoryForHadong()}`;
+      const profile = getManagerProfile();
+      const botEl = addHadongMessage('bot', `${profile.fullName}가 서버에 물어보는 중이에요…`, false);
+      updateAiModelStatus('loading');
 
       try {
-        botEl.textContent = '하동이 매니저가 재고를 살펴보는 중이에요…';
-        const stream = await createWebLLMCompletion({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ..._hadongMessages.slice(-8).map(m => ({ role: m.role, content: m.content }))
-          ],
-          stream: true,
-          temperature: 0.35,
-          max_tokens: 180
-        });
-
-        let fullText = '';
-        for await (const chunk of stream) {
-          if (runToken !== _hadongRunToken) return;
-          const delta = chunk.choices[0]?.delta?.content || '';
-          fullText += delta;
-          botEl.textContent = cleanKoreanChatText(fullText) || '하동이 매니저가 재고를 살펴보는 중이에요…';
-          document.getElementById('hadong-messages').scrollTop = document.getElementById('hadong-messages').scrollHeight;
-        }
-        if (runToken === _hadongRunToken) {
-          const finalText = cleanKoreanChatText(fullText) || '멍… 한국어 답변을 만들지 못했어요. 다시 물어봐 주세요.';
-          renderHadongMessageContent(botEl, finalText);
-          _hadongMessages.push({ role: 'assistant', content: finalText });
-        }
+        const cloudText = await requestManagerCloudReply(msg, profile);
+        if (runToken !== _hadongRunToken) return;
+        const finalText = cleanKoreanChatText(cloudText) || '멍… 서버 답변을 만들지 못했어요. 다시 물어봐 주세요.';
+        renderHadongMessageContent(botEl, finalText);
+        _hadongMessages.push({ role: 'assistant', content: finalText });
+        updateAiModelStatus('ready');
       } catch (err) {
         if (runToken !== _hadongRunToken) return;
-        console.error('[Hadong chat]', err);
+        console.warn('[Manager cloud chat]', err);
         const fallback = hadongLocalInventoryReply(msg, { fallback: true });
-        const errorText = isRecoverableWebLLMError(err)
-          ? fallback
-          : (fallback || `멍… 답변 중 오류가 났어요.\n${err.message || '잠시 후 다시 시도해 주세요.'}`);
+        const errorText = fallback ||
+          `멍… 서버 AI 연결이 아직 안 됐어요.\nVercel 환경변수 GEMINI_API_KEY를 설정하면 바로 답변할 수 있다멍.`;
         renderHadongMessageContent(botEl, errorText);
+        updateAiModelStatus('failed');
         if (runToken === _hadongRunToken) {
           _hadongMessages.push({ role: 'assistant', content: errorText });
         }
@@ -7415,8 +8196,12 @@
       }
 
       if (action === 'edit') {
-        closeHadongChat();
-        setTimeout(() => openItemEditSheet(itemId, 'qty'), 180);
+        openChildSheetFromManager(() => openItemEditSheet(itemId, 'qty'));
+        return;
+      }
+
+      if (action === 'inspect') {
+        openChildSheetFromManager(() => openAiSheet(itemId));
         return;
       }
 
@@ -7439,6 +8224,21 @@
       });
     });
 
+    document.getElementById('manager-suggestions').addEventListener('click', e => {
+      const suggestionBtn = e.target.closest('[data-manager-suggestion-id]');
+      if (suggestionBtn) {
+        bumpFeedback(suggestionBtn);
+        startManagerWorkOnItem(suggestionBtn.dataset.managerSuggestionId);
+        return;
+      }
+      const questionBtn = e.target.closest('[data-hadong-question]');
+      if (questionBtn) {
+        bumpFeedback(questionBtn);
+        setHadongView('chat');
+        sendHadongMessage(questionBtn.dataset.hadongQuestion);
+      }
+    });
+
     document.querySelectorAll('[data-hadong-view]').forEach(btn => {
       btn.addEventListener('click', () => {
         bumpFeedback(btn);
@@ -7447,19 +8247,17 @@
     });
 
     document.getElementById('hadong-overview').addEventListener('click', e => {
-      const filterBtn = e.target.closest('[data-hadong-filter]');
-      if (filterBtn) {
-        bumpFeedback(filterBtn);
-        renderHadongOverview(filterBtn.dataset.hadongFilter);
+      const actionBtn = e.target.closest('[data-manager-action]');
+      if (!actionBtn) return;
+      const id = actionBtn.dataset.itemId;
+      bumpFeedback(actionBtn);
+      if (actionBtn.dataset.managerAction === 'edit') {
+        openChildSheetFromManager(() => openItemEditSheet(id, 'qty'));
         return;
       }
-
-      const editBtn = e.target.closest('[data-hadong-edit-id]');
-      if (editBtn) {
-        const id = editBtn.dataset.hadongEditId;
-        bumpFeedback(editBtn);
-        closeHadongChat();
-        setTimeout(() => openItemEditSheet(id, 'qty'), 180);
+      if (actionBtn.dataset.managerAction === 'inspect') {
+        openChildSheetFromManager(() => openAiSheet(id));
+        return;
       }
     });
 
@@ -7470,6 +8268,7 @@
     installSwipeDownClose('#add-picker-sheet .picker-panel', closeAddPicker, { threshold: 56 });
     installSwipeDownClose('#date-picker-sheet .date-picker-panel', closeDatePicker, { threshold: 56 });
     installSwipeDownClose('#delete-confirm-sheet .delete-confirm-panel', closeDeleteConfirm, { threshold: 56 });
+    installSwipeDownClose('#manager-select-sheet .manager-select-panel', closeManagerSelectSheet, { threshold: 56 });
     installSwipeDownClose('#ai-sheet', closeAiSheet);
     installSwipeDownClose('#hadong-sheet', closeHadongChat);
     installSwipeDownClose('#webllm-overlay', () => document.getElementById('webllm-cancel-btn').click(), { threshold: 110 });

@@ -1,0 +1,150 @@
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+const MAX_MESSAGE_LENGTH = 800;
+const MAX_HISTORY_ITEMS = 8;
+const MAX_INVENTORY_ITEMS = 80;
+
+function sendJson(res, status, payload) {
+  res.statusCode = status;
+  res.setHeader('content-type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(payload));
+}
+
+function sameOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
+function cleanText(value, maxLength = MAX_MESSAGE_LENGTH) {
+  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
+function normalizeManager(raw) {
+  const id = raw?.id === 'cookie' ? 'cookie' : 'hadong';
+  return id === 'cookie'
+    ? { id, name: '쿠키', fullName: '쿠키 매니저' }
+    : { id, name: '하동이', fullName: '하동이 매니저' };
+}
+
+function normalizeHistory(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(-MAX_HISTORY_ITEMS).map(entry => {
+    const role = entry?.role === 'assistant' ? 'model' : 'user';
+    const content = cleanText(entry?.content, 900);
+    return content ? { role, content } : null;
+  }).filter(Boolean);
+}
+
+function normalizeInventory(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(0, MAX_INVENTORY_ITEMS).map(item => ({
+    name: cleanText(item?.name, 80),
+    quantity: cleanText(item?.quantity, 40),
+    category: cleanText(item?.category, 60),
+    storage: cleanText(item?.storage, 60),
+    origin: cleanText(item?.origin, 60),
+    expiryType: cleanText(item?.expiryType, 60),
+    expiryDate: cleanText(item?.expiryDate, 40),
+    dday: cleanText(item?.dday, 40),
+    lowStock: cleanText(item?.lowStock, 40)
+  })).filter(item => item.name);
+}
+
+function buildInstructions(manager, inventory) {
+  const persona = manager.id === 'cookie'
+    ? '장난스럽고 약간 차갑지만 일은 똑부러지게 잘하는 성격'
+    : '귀엽고 친절하지만 살짝 어설픈 성격';
+
+  return [
+    `너는 Tuz 카페 재고 마감 업무를 같이 처리하는 "${manager.fullName}"다.`,
+    `성격은 ${persona}이다.`,
+    '응답은 반드시 한국어만 사용한다. 내부 추론이나 분석 과정을 출력하지 않는다.',
+    '마감 때 쓰는 앱이므로 오늘 정리할 일과 내일 오픈 준비를 우선한다.',
+    '답변은 짧게 한다. 제목 1줄, 안내 1줄, 필요하면 2~4개 항목만 쓴다.',
+    '말끝에 가끔 "~다멍"을 쓰되 과하게 쓰지 않는다.',
+    '재고 데이터 안에서만 판단하고, 모르면 확인이 필요하다고 말한다.',
+    '상태 이모지는 기한 초과 🚨, 오늘 마감 ⏰, 이번 주 📅, 부족 📦, 정상 ✅를 우선 사용한다.',
+    `개별 품목의 상세 점검은 "${manager.name}가 이어서 봐줄거다멍"이라고 안내한다.`,
+    `현재 재고 JSON: ${JSON.stringify(inventory)}`
+  ].join('\n');
+}
+
+function extractOutputText(data) {
+  return (data?.candidates || [])
+    .flatMap(candidate => candidate?.content?.parts || [])
+    .map(part => part?.text || '')
+    .filter(Boolean)
+    .join('\n')
+    .trim();
+}
+
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('allow', 'POST');
+    return sendJson(res, 405, { error: 'POST만 지원합니다.' });
+  }
+
+  if (!sameOrigin(req)) {
+    return sendJson(res, 403, { error: '같은 도메인에서만 사용할 수 있습니다.' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return sendJson(res, 501, { error: 'Vercel 환경변수 GEMINI_API_KEY가 필요합니다.' });
+  }
+
+  try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+    const message = cleanText(body.message);
+    if (!message) return sendJson(res, 400, { error: '질문이 비어 있습니다.' });
+
+    const manager = normalizeManager(body.manager);
+    const inventory = normalizeInventory(body.inventory);
+    const history = normalizeHistory(body.recentMessages);
+    const instructions = buildInstructions(manager, inventory);
+    const contents = [
+      ...history.map(entry => ({
+        role: entry.role,
+        parts: [{ text: entry.content }]
+      })),
+      {
+        role: 'user',
+        parts: [{ text: message }]
+      }
+    ];
+
+    const upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_MODEL}:generateContent`, {
+      method: 'POST',
+      headers: {
+        'x-goog-api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: instructions }]
+        },
+        contents,
+        generationConfig: {
+          temperature: 0.35,
+          maxOutputTokens: 220
+        }
+      })
+    });
+
+    const data = await upstream.json().catch(() => ({}));
+    if (!upstream.ok) {
+      const detail = data?.error?.message || '서버 AI 응답을 받지 못했습니다.';
+      return sendJson(res, upstream.status, { error: detail });
+    }
+
+    const reply = extractOutputText(data);
+    return sendJson(res, 200, { reply });
+  } catch (err) {
+    return sendJson(res, 500, { error: err?.message || '서버 AI 처리 중 오류가 났습니다.' });
+  }
+};
