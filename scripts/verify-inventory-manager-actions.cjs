@@ -18,6 +18,7 @@ function plan(message) {
 }
 
 function simulate(planToApply, list = inventoryFixture()) {
+  if (planToApply.execution !== 'auto') return list;
   for (const candidate of planToApply.candidates || []) {
     const index = list.findIndex(item => item.id === candidate.id);
     if (index < 0) continue;
@@ -40,6 +41,12 @@ assert.equal(simulate(disposeGeneric).some(item => item.id === 'strawberry'), fa
 const disposeExpired = plan('유통기한 지난 거 다 빼줘');
 assert.equal(disposeExpired.execution, 'auto');
 assert.deepEqual(disposeExpired.candidates.map(item => item.id).sort(), ['strawberry', 'tiramisu']);
+
+const listOnly = plan('폐기해야할거 목록만 보여줘');
+assert.equal(listOnly.intent, 'dispose_candidates');
+assert.equal(listOnly.execution, 'reply');
+assert.deepEqual(listOnly.candidates.map(item => item.id).sort(), ['strawberry', 'tiramisu']);
+assert.equal(simulate(listOnly).length, inventoryFixture().length);
 
 const spoiledMilk = plan('상한 우유 폐기해줘');
 assert.equal(spoiledMilk.intent, 'dispose_named_item');

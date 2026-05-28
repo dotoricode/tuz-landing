@@ -13,6 +13,7 @@
   const EXPIRED_RE = /(유통기한|소비기한|기한|지난|초과|만료|폐기해야|폐기\s*해야)/i;
   const TODAY_RE = /(오늘|마감|먼저|우선|급한|처리할|정리할)/i;
   const ALL_RE = /(다|전부|모두|전체|싹|전량)/i;
+  const READ_ONLY_RE = /(목록|리스트|후보|보여|알려|찾아|조회|있어|뭐|어떤|확인만|보기만)/i;
   const GENERIC_TARGET_RE = /(폐기\s*해야\s*할\s*(거|것)|폐기할\s*(거|것)|버릴\s*(거|것)|유통기한\s*지난\s*(거|것)|기한\s*지난\s*(거|것)|지난\s*(거|것)|만료된\s*(거|것)|오늘\s*(정리|처리)할\s*(거|것)|정리할\s*(거|것)|처리할\s*(거|것))/i;
   const VAGUE_RE = /(이상한\s*(거|것)|문제\s*있는\s*(거|것)|찝찝한\s*(거|것)|뭔가\s*이상)/i;
 
@@ -188,6 +189,7 @@
     const disposalContext = DISPOSAL_CONTEXT_RE.test(text);
     const genericTarget = GENERIC_TARGET_RE.test(text) || GENERIC_TARGET_RE.test(compact);
     const vague = VAGUE_RE.test(text);
+    const readOnly = READ_ONLY_RE.test(text);
     const query = extractItemQuery(text);
 
     if (vague) {
@@ -201,10 +203,21 @@
       };
     }
 
-    if (explicitAction && disposalContext) {
+    if (readOnly && TODAY_RE.test(text) && !EXPIRED_RE.test(text) && !SPOILAGE_RE.test(text) && !/폐기|버릴|버려|만료|초과|지난/.test(text)) {
+      return {
+        intent: 'brief_today',
+        operation: 'brief',
+        confidence: 0.84,
+        criteria: { today: true, expired: true, readOnly: true },
+        query,
+        amount: null
+      };
+    }
+
+    if ((explicitAction || readOnly) && disposalContext) {
       return {
         intent: genericTarget || !query ? 'dispose_candidates' : 'dispose_named_item',
-        operation: 'dispose',
+        operation: readOnly ? 'brief' : 'dispose',
         confidence: genericTarget || query ? 0.86 : 0.7,
         criteria: {
           expired: EXPIRED_RE.test(text) || genericTarget,
@@ -212,7 +225,8 @@
           spoiled: SPOILAGE_RE.test(text),
           today: TODAY_RE.test(text),
           all: ALL_RE.test(text) || genericTarget,
-          explicitAction
+          explicitAction,
+          readOnly
         },
         query,
         amount
@@ -381,6 +395,23 @@
     }
 
     if (intent.intent === 'dispose_candidates') {
+      if (intent.criteria?.readOnly) {
+        const candidates = expiredOrMarked.map(row => candidateFromItem(row, row.expired ? '기한 초과' : '폐기 예정 표시'));
+        return {
+          source: 'local',
+          intent: intent.intent,
+          operation: 'brief',
+          confidence: 0.9,
+          requiresConfirmation: false,
+          execution: 'reply',
+          criteria: intent.criteria,
+          candidates,
+          reply: candidates.length
+            ? `폐기 후보 ${candidates.length}개를 찾았다멍. 아직 처리하지 않고 목록만 보여준다멍.`
+            : buildEmptyDisposalReply(intent, rows)
+        };
+      }
+
       if (intent.criteria.today && !intent.criteria.expired && !intent.criteria.markedForDisposal) {
         const todayRows = inStockRows.filter(row => row.expired || row.today);
         return {

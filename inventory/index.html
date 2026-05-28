@@ -4239,7 +4239,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        SCRIPT
   ═══════════════════════════════════════════════════════════ -->
-  <script src="manager-actions.js?v=20260529"></script>
+  <script src="manager-actions.js?v=2026052902"></script>
   <script>
     'use strict';
 
@@ -8898,8 +8898,11 @@
       const candidates = Array.isArray(plan?.candidates) ? plan.candidates : [];
 
       if (plan?.execution === 'reply') {
+        const lines = formatHadongPlanCandidates(candidates);
         return {
-          text: `${icon} ${plan.reply || '오늘 정리할 재고를 확인했다멍.'}`,
+          text:
+            `${icon} ${plan.reply || '오늘 정리할 재고를 확인했다멍.'}` +
+            `${lines ? `\n\n${lines}` : ''}`,
           actions: [
             { type: 'overview', overviewFilter: 'all', label: '한 번에 보기', variant: 'primary' }
           ]
