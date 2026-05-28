@@ -451,11 +451,12 @@
       background: rgba(0,0,0,.12);
       border: 1px solid rgba(255,255,255,.16);
       color: rgba(255,255,255,.68);
-      overflow: hidden;
+      overflow: visible;
+      position: relative;
+      z-index: 40;
     }
 
     .ai-model-panel[open] {
-      position: static;
       width: auto;
       border-radius: 999px;
       background: rgba(0,0,0,.12);
@@ -467,7 +468,7 @@
       align-items: center;
       gap: 6px;
       padding: 6px 10px 6px 9px;
-      cursor: default;
+      cursor: pointer;
       list-style: none;
       user-select: none;
     }
@@ -514,11 +515,56 @@
     }
 
     .ai-model-content {
-      display: none !important;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: min(286px, calc(100vw - 34px));
+      padding: 13px 14px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--manager-border, rgba(255,255,255,.24));
+      background: var(--manager-sheet, #fff);
+      color: var(--manager-ink, var(--ink));
+      box-shadow: 0 18px 36px rgba(37, 21, 12, .24);
     }
 
     .ai-model-panel:not([open]) .ai-model-content {
       display: none;
+    }
+
+    .ai-model-content::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      right: 18px;
+      width: 12px;
+      height: 12px;
+      transform: rotate(45deg);
+      background: var(--manager-sheet, #fff);
+      border-left: 1px solid var(--manager-border, rgba(255,255,255,.24));
+      border-top: 1px solid var(--manager-border, rgba(255,255,255,.24));
+    }
+
+    .ai-model-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+      color: var(--manager-ink, var(--ink));
+      font-size: .8rem;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .ai-model-provider {
+      flex-shrink: 0;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: var(--manager-soft, var(--cream));
+      color: var(--manager-accent, var(--red));
+      font-size: .63rem;
+      font-weight: 900;
     }
 
     .ai-model-status {
@@ -569,14 +615,10 @@
     }
 
     .ai-model-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-top: 7px;
+      display: block;
       font-size: .68rem;
-      line-height: 1.25;
-      color: rgba(255,255,255,.68);
+      line-height: 1.45;
+      color: var(--manager-muted, var(--g1));
     }
 
     .ai-mobile-download-btn {
@@ -3744,6 +3786,10 @@
               <span class="ai-model-status" id="ai-model-status">작동 중</span>
             </summary>
             <div class="ai-model-content">
+              <div class="ai-model-title">
+                <strong id="ai-model-title">AI 작동 중</strong>
+                <span class="ai-model-provider" id="ai-model-provider">Gemini</span>
+              </div>
               <div class="ai-model-meta">
                 <span id="ai-model-size-note">AI 작동 중</span>
               </div>
@@ -4313,6 +4359,44 @@
       el.alt = alt;
     }
 
+    function managerAiPanelCopy(profile = getManagerProfile(), state = 'ready') {
+      const isFailed = state === 'failed' || state === 'unsupported';
+      const isLoading = state === 'loading';
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      if (profile.id === 'cookie') {
+        return {
+          title: isFailed ? '쿠키가 연결을 확인 중' : isLoading ? '쿠키가 Gemini에 물어보는 중' : '쿠키가 같이 보고 있어요',
+          copy: isFailed
+            ? `쿠키 매니저다멍${icon} Gemini 연결이 안 잡히면 현재 재고 목록 기준으로 먼저 정리할게요.`
+            : isLoading
+              ? `쿠키 매니저다멍${icon} Gemini에 물어보는 중이에요. 재고 판단은 지금 목록 기준으로 딱 잘라 볼게요.`
+              : `쿠키 매니저다멍${icon} 일상 대화는 Gemini로 받고, 재고 정리는 현재 목록 기준으로 같이 봅니다.`
+        };
+      }
+      return {
+        title: isFailed ? '하동이가 연결을 확인 중' : isLoading ? '하동이가 Gemini에 물어보는 중' : '하동이가 같이 보고 있어요',
+        copy: isFailed
+          ? `하동이 매니저다멍${icon} Gemini 연결이 안 잡히면 재고 목록으로 먼저 짧게 정리해줄게요.`
+          : isLoading
+            ? `하동이 매니저다멍${icon} Gemini에 물어보는 중이에요. 재고는 지금 목록 기준으로 같이 본다멍.`
+            : `하동이 매니저다멍${icon} 일상 대화는 Gemini로 받고, 재고 정리는 현재 목록 기준으로 같이 본다멍.`
+      };
+    }
+
+    function refreshAiModelPanel(state = document.getElementById('ai-model-panel')?.dataset.aiState || 'ready') {
+      const panel = document.getElementById('ai-model-panel');
+      const title = document.getElementById('ai-model-title');
+      const note = document.getElementById('ai-model-size-note');
+      const provider = document.getElementById('ai-model-provider');
+      const summary = panel?.querySelector('.ai-model-summary');
+      const profile = getManagerProfile();
+      const copy = managerAiPanelCopy(profile, state);
+      if (title) title.textContent = copy.title;
+      if (note) note.textContent = copy.copy;
+      if (provider) provider.textContent = 'Gemini';
+      if (summary) summary.title = `${profile.name}의 AI 설명 보기`;
+    }
+
     function applyManagerProfile(id = getSelectedManagerId()) {
       const profile = getManagerProfile(id);
       appEl.dataset.manager = profile.id;
@@ -4334,6 +4418,7 @@
       document.querySelectorAll('[data-manager-choice]').forEach(btn => {
         btn.classList.toggle('is-selected', btn.dataset.managerChoice === profile.id);
       });
+      refreshAiModelPanel();
       return profile;
     }
 
@@ -6640,23 +6725,20 @@
       const mobileBtn = document.getElementById('ai-mobile-download-btn');
       if (!el) return;
       if (USE_CLOUD_AI) {
-        panel?.classList.toggle('is-ready', state !== 'failed');
-        panel?.classList.toggle('is-loading', state === 'loading');
-        panel?.classList.toggle('is-error', state === 'failed');
+        const nextState = state === 'failed' ? 'failed' : state === 'loading' ? 'loading' : 'ready';
+        panel?.classList.toggle('is-ready', nextState === 'ready');
+        panel?.classList.toggle('is-loading', nextState === 'loading');
+        panel?.classList.toggle('is-error', nextState === 'failed');
         if (panel) {
-          panel.open = false;
-          panel.setAttribute('aria-label', state === 'failed' ? 'AI 연결 확인 필요' : 'AI 작동 중');
+          panel.dataset.aiState = nextState;
+          panel.setAttribute('aria-label', nextState === 'failed' ? 'AI 연결 확인 필요' : 'AI 작동 중');
         }
-        if (fill) fill.style.width = state === 'loading' ? '45%' : '100%';
+        if (fill) fill.style.width = nextState === 'loading' ? '45%' : '100%';
         if (mobileBtn) mobileBtn.hidden = true;
-        if (sizeNote) {
-          sizeNote.textContent = state === 'failed'
-            ? 'AI 연결 확인 필요'
-            : 'AI 작동 중';
-        }
-        el.textContent = state === 'loading'
+        refreshAiModelPanel(nextState);
+        el.textContent = nextState === 'loading'
           ? '확인 중'
-          : state === 'failed'
+          : nextState === 'failed'
             ? '연결 확인 필요'
             : '작동 중';
         return;
@@ -6669,6 +6751,7 @@
       const nextState =
         state ||
         (!checkWebGPU() ? 'unsupported' : _webllmReady ? 'ready' : _webllmLoading ? 'loading' : 'idle');
+      if (panel) panel.dataset.aiState = nextState;
 
       panel?.classList.toggle('is-ready', nextState === 'ready');
       panel?.classList.toggle('is-loading', nextState === 'loading');
@@ -6789,14 +6872,40 @@
       chooseWebLLMModel(e.target.value);
     });
 
-    document.querySelector('#ai-model-panel .ai-model-summary')?.addEventListener('click', e => {
+    let _aiPanelPointerHandled = false;
+
+    function toggleAiModelPanel(e) {
       e.preventDefault();
+      e.stopPropagation();
+      bumpFeedback(e.currentTarget);
       const panel = document.getElementById('ai-model-panel');
-      if (panel) panel.open = false;
+      if (!panel) return;
+      panel.open = !panel.open;
+      if (panel.open) refreshAiModelPanel();
+    }
+
+    document.querySelector('#ai-model-panel .ai-model-summary')?.addEventListener('pointerdown', e => {
+      _aiPanelPointerHandled = true;
+      toggleAiModelPanel(e);
+    });
+
+    document.querySelector('#ai-model-panel .ai-model-summary')?.addEventListener('click', e => {
+      if (_aiPanelPointerHandled) {
+        _aiPanelPointerHandled = false;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      toggleAiModelPanel(e);
     });
 
     document.getElementById('ai-model-panel')?.addEventListener('toggle', e => {
-      if (e.currentTarget.open) e.currentTarget.open = false;
+      if (e.currentTarget.open) refreshAiModelPanel();
+    });
+
+    document.addEventListener('click', e => {
+      const panel = document.getElementById('ai-model-panel');
+      if (panel?.open && !panel.contains(e.target)) panel.open = false;
     });
 
     document.querySelectorAll('[data-ai-model]').forEach(btn => {
