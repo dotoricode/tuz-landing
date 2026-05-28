@@ -2799,7 +2799,6 @@
 
     .hadong-sheet[data-view="chat"] .hadong-overview { display: none; }
     .hadong-sheet[data-view="overview"] .hadong-messages,
-    .hadong-sheet[data-view="overview"] .hadong-quick,
     .hadong-sheet[data-view="overview"] .hadong-input-row { display: none; }
 
     .hadong-overview-summary {
@@ -3501,29 +3500,6 @@
       border-top-right-radius: 6px;
     }
 
-    .hadong-quick {
-      display: flex;
-      gap: 7px;
-      overflow-x: auto;
-      padding: 0 16px 10px;
-      scrollbar-width: none;
-      flex-shrink: 0;
-    }
-
-    .hadong-quick::-webkit-scrollbar { display: none; }
-
-    .hadong-quick button {
-      flex-shrink: 0;
-      border: 1px solid var(--manager-border, var(--g3));
-      border-radius: 999px;
-      background: var(--manager-field, var(--cream));
-      color: var(--manager-muted, var(--g1));
-      padding: 8px 11px;
-      font-size: .8rem;
-      font-family: inherit;
-      cursor: pointer;
-    }
-
     .hadong-input-row {
       display: flex;
       gap: 8px;
@@ -4220,7 +4196,6 @@
       </div>
       <div class="hadong-overview" id="hadong-overview"></div>
       <div class="hadong-messages" id="hadong-messages"></div>
-      <div class="hadong-quick" id="manager-suggestions"></div>
       <div class="hadong-input-row">
         <input id="hadong-input" type="text" placeholder="매니저에게 같이 할 일을 말해 주세요">
         <button type="button" id="hadong-send">전송</button>
@@ -4444,7 +4419,6 @@
       const profile = applyManagerProfile(id);
       closeManagerSelectSheet({ force: true });
       refreshAll?.();
-      renderManagerSuggestions?.();
       showToast?.(`${profile.fullName}와 같이 일합니다.`);
     }
 
@@ -4969,7 +4943,6 @@
       renderList(getFiltered());
       if (document.getElementById('hadong-sheet')?.classList.contains('open')) {
         renderHadongOverview();
-        renderManagerSuggestions();
       }
     }
 
@@ -7648,7 +7621,8 @@
           note: hasWork
             ? '아래 예상 질문이나 한 번에 보기에서 오늘 정리할 일부터 보면 된다멍.'
             : '그래도 마감 전에는 오늘 수량이 바뀐 재고만 한 번 훑어보면 좋다멍.'
-        }
+        },
+        actions: buildManagerOpeningActions()
       };
     }
 
@@ -7745,7 +7719,6 @@
       });
       if (next === 'overview') renderHadongOverview();
       if (next === 'chat') {
-        renderManagerSuggestions();
         setTimeout(() => document.getElementById('hadong-input').focus(), 120);
       }
     }
@@ -7884,7 +7857,6 @@
         ${tasks.length
           ? `${renderManagerTaskSection('오늘 정리', todayTasks)}${renderManagerTaskSection('내일 오픈 준비', tomorrowTasks)}`
           : `<div class="hadong-empty">${escHtml(profile.empty)}<br>그래도 마감 전에 수량이 바뀐 재고는 한 번 훑어보면 좋다멍.</div>`}`;
-      renderManagerSuggestions();
     }
 
     function makeManagerSuggestionLabel(task) {
@@ -7895,17 +7867,19 @@
       return `${task.item.name} 이번 주 준비`;
     }
 
-    function renderManagerSuggestions() {
-      const root = document.getElementById('manager-suggestions');
-      if (!root) return;
-      const tasks = buildManagerBriefingTasks().slice(0, 4);
+    function buildManagerOpeningActions(limit = 4) {
+      const tasks = buildManagerBriefingTasks().slice(0, limit);
       if (!tasks.length) {
-        root.innerHTML = '<button type="button" data-hadong-question="마감 브리핑 다시 정리해줘">마감 브리핑 정리</button>';
-        return;
+        return [
+          { type: 'overview', overviewFilter: 'all', label: '한 번에 보기' },
+          { type: 'ask', question: '마감 브리핑 다시 정리해줘', label: '마감 브리핑 정리' }
+        ];
       }
-      root.innerHTML = tasks.map(task =>
-        `<button type="button" data-manager-suggestion-id="${escAttr(task.item.id)}">${escHtml(makeManagerSuggestionLabel(task))}</button>`
-      ).join('');
+      return tasks.map(task => ({
+        type: 'work',
+        itemId: task.item.id,
+        label: makeManagerSuggestionLabel(task)
+      }));
     }
 
     function managerWorkReason(item) {
@@ -8251,13 +8225,33 @@
       el.appendChild(card);
     }
 
+    function appendHadongActions(el, actions = []) {
+      if (!el.classList.contains('bot') || !Array.isArray(actions) || !actions.length) return;
+      const panel = document.createElement('div');
+      panel.className = 'hadong-action-panel';
+      actions.forEach(action => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `hadong-action-btn ${action.variant || ''}`.trim();
+        btn.dataset.hadongAction = action.type || '';
+        if (action.itemId) btn.dataset.itemId = action.itemId;
+        if (action.overviewFilter) btn.dataset.overviewFilter = action.overviewFilter;
+        if (action.question) btn.dataset.question = action.question;
+        btn.textContent = action.label;
+        panel.appendChild(btn);
+      });
+      el.appendChild(panel);
+    }
+
     function renderHadongMessageContent(el, payload) {
       const text = typeof payload === 'object' && payload ? payload.text : String(payload || '');
+      const actions = typeof payload === 'object' && payload ? payload.actions : null;
       const briefing = el.classList.contains('bot') && typeof payload === 'object' && payload?.briefing
         ? payload.briefing
         : null;
       if (briefing) {
         renderHadongBriefingMessage(el, briefing);
+        appendHadongActions(el, actions);
         return;
       }
       const rich = el.classList.contains('bot')
@@ -8265,25 +8259,13 @@
         : null;
       if (rich) {
         renderHadongRichMessage(el, rich);
+        appendHadongActions(el, actions);
         return;
       }
       el.classList.remove('has-rich');
       el.classList.remove('has-briefing');
       el.textContent = text;
-      if (el.classList.contains('bot') && typeof payload === 'object' && Array.isArray(payload.actions) && payload.actions.length) {
-        const panel = document.createElement('div');
-        panel.className = 'hadong-action-panel';
-        payload.actions.forEach(action => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = `hadong-action-btn ${action.variant || ''}`.trim();
-          btn.dataset.hadongAction = action.type || '';
-          if (action.itemId) btn.dataset.itemId = action.itemId;
-          btn.textContent = action.label;
-          panel.appendChild(btn);
-        });
-        el.appendChild(panel);
-      }
+      appendHadongActions(el, actions);
     }
 
     function hadongSnapshotItem(item) {
@@ -8587,6 +8569,67 @@
       return '';
     }
 
+    function dedupeHadongActions(actions) {
+      const seen = new Set();
+      return actions.filter(action => {
+        const key = [action.type, action.itemId || '', action.overviewFilter || '', action.question || '', action.label || ''].join('|');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function buildManagerReplyActions(message, payload = null) {
+      const text = String(message || '').replace(/\s+/g, ' ').trim();
+      const normalized = normalizeHadongSearchText(text);
+      const actions = [];
+      const push = action => {
+        if (!action || !action.label || actions.length >= 4) return;
+        actions.push(action);
+      };
+
+      if (/부족|최소|적정|발주|주문|구매|사야|low/i.test(text)) {
+        push({ type: 'overview', overviewFilter: 'low', label: '부족 재고 보기', variant: 'primary' });
+        push({ type: 'ask', question: '발주 리스트 정리해줘', label: '발주 후보 정리' });
+      }
+      if (/폐기|버릴|지난|초과|만료/i.test(text)) {
+        push({ type: 'overview', overviewFilter: 'expired', label: '기한 초과 보기', variant: actions.length ? '' : 'primary' });
+      }
+      if (/오늘|먼저|우선|급한|마감/i.test(text)) {
+        push({ type: 'overview', overviewFilter: 'all', label: '오늘 정리 보기', variant: actions.length ? '' : 'primary' });
+      }
+      if (/이번\s*주|주간|7일|일주일|기한/i.test(text)) {
+        push({ type: 'overview', overviewFilter: 'week', label: '이번 주 기한 보기' });
+      }
+      if (/한\s*번에|브리핑|업무|할\s*일|같이\s*일/i.test(text)) {
+        push({ type: 'overview', overviewFilter: 'all', label: '한 번에 보기', variant: actions.length ? '' : 'primary' });
+      }
+
+      if (normalized.length >= 2) {
+        findHadongItems(text).slice(0, 2).forEach(item => {
+          push({ type: 'work', itemId: item.id, label: `${item.name} 같이 보기`, variant: actions.length ? '' : 'primary' });
+        });
+      }
+
+      if (!actions.length) {
+        buildManagerOpeningActions(2).forEach(push);
+        const hasOverview = actions.some(action => action.type === 'overview');
+        if (!hasOverview) push({ type: 'overview', overviewFilter: 'all', label: '한 번에 보기' });
+      }
+
+      return dedupeHadongActions(actions).slice(0, 4);
+    }
+
+    function withManagerReplyActions(payload, message) {
+      if (typeof payload === 'object' && payload) {
+        if (Array.isArray(payload.actions) && payload.actions.length) return payload;
+        const actions = buildManagerReplyActions(message, payload);
+        return actions.length ? { ...payload, actions } : payload;
+      }
+      const actions = buildManagerReplyActions(message, payload);
+      return actions.length ? { text: String(payload || ''), actions } : payload;
+    }
+
     function addHadongMessage(role, text, save = true) {
       const box = document.getElementById('hadong-messages');
       const el = document.createElement('div');
@@ -8606,7 +8649,6 @@
       document.getElementById('hadong-overlay').classList.add('open');
       document.getElementById('hadong-sheet').classList.add('open');
       setHadongView('overview');
-      renderManagerSuggestions();
       if (!document.getElementById('hadong-messages').children.length) {
         addHadongMessage('bot', hadongOpeningText());
       }
@@ -8626,14 +8668,15 @@
 
       const commandReply = hadongInventoryCommandReply(msg);
       if (commandReply) {
-        addHadongMessage('bot', commandReply);
+        addHadongMessage('bot', withManagerReplyActions(commandReply, msg));
         return;
       }
 
       const preferGemini = USE_CLOUD_AI && isManagerCasualMessage(msg);
       const localReply = preferGemini ? '' : hadongLocalInventoryReply(msg);
       if (localReply) {
-        addHadongMessage('bot', localReply);
+        const replyPayload = withManagerReplyActions(localReply, msg);
+        addHadongMessage('bot', replyPayload);
         if (typeof localReply === 'object' && localReply.overviewFilter) {
           renderHadongOverview(localReply.overviewFilter);
           setHadongView('overview');
@@ -8650,7 +8693,8 @@
         const cloudText = await requestManagerCloudReply(msg, profile);
         if (runToken !== _hadongRunToken) return;
         const finalText = cleanKoreanChatText(cloudText) || '멍… 서버 답변을 만들지 못했어요. 다시 물어봐 주세요.';
-        renderHadongMessageContent(botEl, finalText);
+        const finalPayload = withManagerReplyActions(finalText, msg);
+        renderHadongMessageContent(botEl, finalPayload);
         _hadongMessages.push({ role: 'assistant', content: finalText });
         updateAiModelStatus('ready');
       } catch (err) {
@@ -8659,7 +8703,7 @@
         const errorText = isManagerCasualMessage(msg)
           ? managerCasualFallback(msg)
           : (hadongLocalInventoryReply(msg, { fallback: true }) || managerCasualFallback(msg));
-        renderHadongMessageContent(botEl, errorText);
+        renderHadongMessageContent(botEl, withManagerReplyActions(errorText, msg));
         updateAiModelStatus('failed');
         if (runToken === _hadongRunToken) {
           _hadongMessages.push({ role: 'assistant', content: errorText });
@@ -8711,6 +8755,22 @@
         return;
       }
 
+      if (action === 'work') {
+        startManagerWorkOnItem(itemId);
+        return;
+      }
+
+      if (action === 'ask') {
+        if (btn.dataset.question) sendHadongMessage(btn.dataset.question);
+        return;
+      }
+
+      if (action === 'overview') {
+        renderHadongOverview(btn.dataset.overviewFilter || 'all');
+        setHadongView('overview');
+        return;
+      }
+
       if (action === 'confirm-delete') {
         const item = items.find(row => row.id === itemId);
         addHadongMessage('bot', item ? deleteHadongItem(item) : '🐶 멍, 이미 처리된 재고예요.');
@@ -8728,21 +8788,6 @@
         setHadongView('chat');
         sendHadongMessage(btn.dataset.hadongQuestion);
       });
-    });
-
-    document.getElementById('manager-suggestions').addEventListener('click', e => {
-      const suggestionBtn = e.target.closest('[data-manager-suggestion-id]');
-      if (suggestionBtn) {
-        bumpFeedback(suggestionBtn);
-        startManagerWorkOnItem(suggestionBtn.dataset.managerSuggestionId);
-        return;
-      }
-      const questionBtn = e.target.closest('[data-hadong-question]');
-      if (questionBtn) {
-        bumpFeedback(questionBtn);
-        setHadongView('chat');
-        sendHadongMessage(questionBtn.dataset.hadongQuestion);
-      }
     });
 
     document.querySelectorAll('[data-hadong-view]').forEach(btn => {
