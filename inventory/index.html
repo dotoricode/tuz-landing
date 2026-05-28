@@ -4239,7 +4239,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        SCRIPT
   ═══════════════════════════════════════════════════════════ -->
-  <script src="manager-actions.js?v=2026052902"></script>
+  <script src="manager-actions.js?v=2026052903"></script>
   <script>
     'use strict';
 
@@ -8937,9 +8937,17 @@
       return '';
     }
 
-    function executeHadongActionPlan(plan) {
+    function executeHadongActionPlan(plan, options = {}) {
       const profile = getManagerProfile();
       const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const validation = window.TuzInventoryManager?.validateActionPlanForExecution?.(plan, items, {
+        confirmed: Boolean(options.confirmed),
+        todayIso: hadongTodayIso()
+      });
+      if (!validation?.ok) {
+        return `${icon} ${validation?.reason || '안전 확인을 통과하지 못해 재고를 변경하지 않았다멍.'}`;
+      }
+      plan = validation.plan || plan;
       const candidates = Array.isArray(plan?.candidates) ? plan.candidates : [];
       const changes = [];
       const processed = [];
@@ -8982,7 +8990,8 @@
       saveData(items);
       refreshAll();
       recordHadongAudit({
-        action: plan.operation || 'dispose',
+        operationType: plan.operationType || 'write',
+        action: plan.action || plan.operation || 'dispose',
         intent: plan.intent,
         source: plan.source || 'local',
         message: plan.originalMessage || '',
@@ -9403,7 +9412,7 @@
         _hadongPendingPlans.delete(btn.dataset.planId);
         const profile = getManagerProfile();
         const icon = profile.id === 'cookie' ? '🐾' : '🐶';
-        addHadongMessage('bot', plan ? executeHadongActionPlan(plan) : `${icon} 멍, 확인할 작업이 만료됐다멍. 다시 말해달라멍.`);
+        addHadongMessage('bot', plan ? executeHadongActionPlan(plan, { confirmed: true }) : `${icon} 멍, 확인할 작업이 만료됐다멍. 다시 말해달라멍.`);
         return;
       }
 

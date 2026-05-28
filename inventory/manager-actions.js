@@ -7,13 +7,16 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const ACTION_WORD_RE = /(폐기|버려|버리|빼줘|빼|제거|삭제|처리\s*(해|해줘|줘)|정리\s*(해|해줘|줘)|차감)/i;
+  const ACTION_WORD_RE = /(폐기|버려|버리|빼줘|빼|제거|삭제|차감)/i;
+  const BROAD_CHANGE_RE = /(^|\s)(정리|처리)\s*(해|해줘|줘|할래|하자)?\s*$/i;
   const DISPOSAL_CONTEXT_RE = /(폐기|버릴|버려|유통기한|소비기한|기한|지난|초과|만료|상한|상했|상함|이상|찝찝|오늘\s*정리|오늘\s*처리|정리할|처리할)/i;
   const SPOILAGE_RE = /(상한|상했|상함|이상|찝찝|냄새|변색|곰팡|상태\s*이상)/i;
   const EXPIRED_RE = /(유통기한|소비기한|기한|지난|초과|만료|폐기해야|폐기\s*해야)/i;
   const TODAY_RE = /(오늘|마감|먼저|우선|급한|처리할|정리할)/i;
   const ALL_RE = /(다|전부|모두|전체|싹|전량)/i;
-  const READ_ONLY_RE = /(목록|리스트|후보|보여|알려|찾아|조회|있어|뭐|어떤|확인만|보기만)/i;
+  const READ_ONLY_RE = /(목록|리스트|후보|보여|알려|찾아|조회|있어|뭐|어떤|확인|확인만|보기만)/i;
+  const LOW_STOCK_RE = /(부족|떨어질|떨어져|모자라|최소|발주|주문|사야|low\s*stock)/i;
+  const EXCESS_STOCK_RE = /(많이\s*남|많은\s*재고|과잉|넘치|쌓인|남는|excess|overstock)/i;
   const GENERIC_TARGET_RE = /(폐기\s*해야\s*할\s*(거|것)|폐기할\s*(거|것)|버릴\s*(거|것)|유통기한\s*지난\s*(거|것)|기한\s*지난\s*(거|것)|지난\s*(거|것)|만료된\s*(거|것)|오늘\s*(정리|처리)할\s*(거|것)|정리할\s*(거|것)|처리할\s*(거|것))/i;
   const VAGUE_RE = /(이상한\s*(거|것)|문제\s*있는\s*(거|것)|찝찝한\s*(거|것)|뭔가\s*이상)/i;
 
@@ -190,6 +193,7 @@
     const genericTarget = GENERIC_TARGET_RE.test(text) || GENERIC_TARGET_RE.test(compact);
     const vague = VAGUE_RE.test(text);
     const readOnly = READ_ONLY_RE.test(text);
+    const broadChange = BROAD_CHANGE_RE.test(text);
     const query = extractItemQuery(text);
 
     if (vague) {
@@ -203,6 +207,28 @@
       };
     }
 
+    if (LOW_STOCK_RE.test(text)) {
+      return {
+        intent: 'low_stock_report',
+        operation: 'brief',
+        confidence: 0.84,
+        criteria: { lowStock: true, readOnly: true },
+        query,
+        amount: null
+      };
+    }
+
+    if (EXCESS_STOCK_RE.test(text)) {
+      return {
+        intent: 'excess_stock_report',
+        operation: 'brief',
+        confidence: 0.76,
+        criteria: { excessStock: true, readOnly: true },
+        query,
+        amount: null
+      };
+    }
+
     if (readOnly && TODAY_RE.test(text) && !EXPIRED_RE.test(text) && !SPOILAGE_RE.test(text) && !/폐기|버릴|버려|만료|초과|지난/.test(text)) {
       return {
         intent: 'brief_today',
@@ -211,6 +237,17 @@
         criteria: { today: true, expired: true, readOnly: true },
         query,
         amount: null
+      };
+    }
+
+    if (broadChange && !ACTION_WORD_RE.test(text) && !EXPIRED_RE.test(text) && !SPOILAGE_RE.test(text)) {
+      return {
+        intent: 'ask_clarification',
+        operation: 'clarify_work_scope',
+        confidence: 0.74,
+        criteria: { broadAction: true },
+        query,
+        amount
       };
     }
 
@@ -265,7 +302,7 @@
     return '재고 목록을 확인했는데, 지금 자동 폐기할 기한 초과/폐기 예정 재고는 없다멍.';
   }
 
-  function buildManagerActionPlan(message, items, options = {}) {
+  function buildManagerActionPlanRaw(message, items, options = {}) {
     const baseIso = options.todayIso || todayIso(options.now || new Date());
     const intent = parseManagerIntent(message);
     const rows = (items || []).map(item => enrichItem(item, baseIso));
@@ -274,6 +311,9 @@
     if (intent.intent === 'unknown') return null;
 
     if (intent.intent === 'ask_clarification') {
+      const reply = intent.criteria?.broadAction
+        ? '정리/처리는 범위가 넓어서 바로 바꾸지 않겠다멍. 유통기한 지난 것, 부족 재고, 특정 품목/수량 중 무엇을 처리할지 골라달라멍.'
+        : '무엇을 “이상한 거”로 볼지 기준이 더 필요하다멍. 유통기한 지난 것, 상한 것으로 확인한 것, 오늘 마감 중에서 골라달라멍.';
       return {
         source: 'local',
         intent: intent.intent,
@@ -283,7 +323,54 @@
         execution: 'ask',
         criteria: intent.criteria,
         candidates: [],
-        reply: '무엇을 “이상한 거”로 볼지 기준이 더 필요하다멍. 유통기한 지난 것, 상한 것으로 확인한 것, 오늘 마감 중에서 골라달라멍.'
+        reply
+      };
+    }
+
+    if (intent.intent === 'low_stock_report') {
+      const low = inStockRows
+        .filter(row => {
+          const minQuantity = row.source.min_quantity ?? row.source.minQuantity;
+          return minQuantity != null && Number(row.source.quantity) <= Number(minQuantity);
+        })
+        .sort((a, b) => Number(a.source.quantity || 0) - Number(b.source.quantity || 0));
+      return {
+        source: 'local',
+        intent: intent.intent,
+        operation: 'brief',
+        confidence: intent.confidence,
+        requiresConfirmation: false,
+        execution: 'reply',
+        criteria: intent.criteria,
+        candidates: low.map(row => candidateFromItem(row, '부족 재고', 'inspect', null)),
+        reply: low.length
+          ? `부족 재고 ${low.length}개를 찾았다멍. 아직 수량은 바꾸지 않고 목록만 보여준다멍.`
+          : '부족 기준에 걸린 재고는 없다멍.'
+      };
+    }
+
+    if (intent.intent === 'excess_stock_report') {
+      const excess = inStockRows
+        .filter(row => {
+          const minQuantity = row.source.min_quantity ?? row.source.minQuantity;
+          return minQuantity != null
+            ? Number(row.source.quantity) >= Math.max(Number(minQuantity) * 2, Number(minQuantity) + 5)
+            : Number(row.source.quantity) >= 10;
+        })
+        .sort((a, b) => Number(b.source.quantity || 0) - Number(a.source.quantity || 0))
+        .slice(0, 8);
+      return {
+        source: 'local',
+        intent: intent.intent,
+        operation: 'brief',
+        confidence: intent.confidence,
+        requiresConfirmation: false,
+        execution: 'reply',
+        criteria: intent.criteria,
+        candidates: excess.map(row => candidateFromItem(row, '많이 남은 재고', 'inspect', null)),
+        reply: excess.length
+          ? `많이 남은 재고 후보 ${excess.length}개를 찾았다멍. 처리하지 않고 목록만 보여준다멍.`
+          : '많이 남은 것으로 볼 재고는 뚜렷하지 않다멍.'
       };
     }
 
@@ -459,6 +546,101 @@
     return null;
   }
 
+  function operationTypeForPlan(plan) {
+    if (!plan) return 'none';
+    if (plan.execution === 'ask') return 'ask';
+    if (['dispose', 'adjust_quantity'].includes(plan.operation)) return 'write';
+    return 'read';
+  }
+
+  function operationFromCandidate(candidate, plan) {
+    const actionKind = candidate.actionKind || 'remove';
+    return {
+      type: actionKind === 'decrement' ? 'adjust_quantity' : plan.operation || 'inspect_candidates',
+      itemId: candidate.id,
+      itemName: candidate.name,
+      quantity: actionKind === 'decrement' ? Number(candidate.actionQuantity || 0) : Number(candidate.quantity || 0),
+      unit: candidate.unit || '개',
+      reason: candidate.reason || '',
+      mode: actionKind === 'decrement' ? 'decrement' : actionKind
+    };
+  }
+
+  function finalizePlan(plan) {
+    if (!plan) return null;
+    const operationType = operationTypeForPlan(plan);
+    const action = plan.action || (
+      plan.intent === 'low_stock_report' ? 'low_stock_report' :
+      plan.intent === 'excess_stock_report' ? 'excess_stock_report' :
+      plan.operation === 'dispose' ? 'dispose' :
+      plan.operation === 'brief' ? 'inspect_candidates' :
+      plan.operation === 'clarify_work_scope' || plan.operation === 'clarify_disposal_criteria' ? 'ask_clarification' :
+      'none'
+    );
+    const candidates = Array.isArray(plan.candidates) ? plan.candidates : [];
+    return {
+      ...plan,
+      operationType,
+      action,
+      operations: Array.isArray(plan.operations)
+        ? plan.operations
+        : candidates.map(candidate => operationFromCandidate(candidate, { ...plan, action }))
+    };
+  }
+
+  function buildManagerActionPlan(message, items, options = {}) {
+    return finalizePlan(buildManagerActionPlanRaw(message, items, options));
+  }
+
+  function validateActionPlanForExecution(plan, currentItems, options = {}) {
+    const finalPlan = finalizePlan(plan);
+    if (!finalPlan) return { ok: false, reason: '실행할 작업 계획이 없다멍.' };
+    if (finalPlan.operationType !== 'write') {
+      return { ok: false, reason: '조회 요청이라 재고를 변경하지 않았다멍.' };
+    }
+    if (!['dispose', 'adjust_quantity'].includes(finalPlan.action)) {
+      return { ok: false, reason: '허용되지 않은 작업이라 재고를 변경하지 않았다멍.' };
+    }
+    if (finalPlan.criteria?.readOnly) {
+      return { ok: false, reason: '목록/확인 요청이라 재고를 변경하지 않았다멍.' };
+    }
+    if (finalPlan.requiresConfirmation && !options.confirmed) {
+      return { ok: false, reason: '확인이 필요한 작업이라 아직 재고를 변경하지 않았다멍.' };
+    }
+    if (finalPlan.execution === 'confirm' && !options.confirmed) {
+      return { ok: false, reason: '확인 버튼을 눌러야 처리할 수 있다멍.' };
+    }
+    if (finalPlan.execution !== 'auto' && !(finalPlan.execution === 'confirm' && options.confirmed)) {
+      return { ok: false, reason: '자동 실행 대상이 아니라 재고를 변경하지 않았다멍.' };
+    }
+    if (!options.confirmed && Number(finalPlan.confidence || 0) < 0.85) {
+      return { ok: false, reason: '판단 확신도가 낮아서 자동 처리를 멈췄다멍.' };
+    }
+
+    const candidates = Array.isArray(finalPlan.candidates) ? finalPlan.candidates : [];
+    if (!candidates.length) return { ok: false, reason: '처리할 후보가 없다멍.' };
+
+    const rows = (currentItems || []).map(item => enrichItem(item, options.todayIso || todayIso()));
+    const rowById = new Map(rows.map(row => [row.id, row]));
+    for (const candidate of candidates) {
+      const row = rowById.get(candidate.id);
+      if (!row) return { ok: false, reason: `${candidate.name || '후보'} 재고를 찾지 못해 멈췄다멍.` };
+      if (row.quantity <= 0) return { ok: false, reason: `${row.name} 수량이 0이라 변경하지 않았다멍.` };
+      if (candidate.actionKind === 'decrement') {
+        const amount = Number(candidate.actionQuantity || 0);
+        if (!Number.isFinite(amount) || amount <= 0) {
+          return { ok: false, reason: `${row.name} 차감 수량이 명확하지 않아 멈췄다멍.` };
+        }
+        continue;
+      }
+      if (!options.confirmed && !(row.expired || row.markedForDisposal)) {
+        return { ok: false, reason: `${row.name}은 기한 초과/폐기 예정 근거가 없어 자동 폐기하지 않았다멍.` };
+      }
+    }
+
+    return { ok: true, plan: finalPlan };
+  }
+
   function coerceGeminiActionPlan(geminiPlan, message, items, options = {}) {
     const localPlan = buildManagerActionPlan(message, items, options);
     if (!geminiPlan || typeof geminiPlan !== 'object') return localPlan;
@@ -492,6 +674,7 @@
     findInventoryMatches,
     parseManagerIntent,
     buildManagerActionPlan,
+    validateActionPlanForExecution,
     coerceGeminiActionPlan
   };
 });

@@ -94,14 +94,24 @@ const ACTION_RESPONSE_SCHEMA = {
         'dispose_candidates',
         'dispose_named_item',
         'brief_today',
+        'low_stock_report',
+        'excess_stock_report',
         'ask_clarification',
         'search_inventory',
         'unknown'
       ]
     },
+    operationType: {
+      type: 'string',
+      enum: ['read', 'write', 'ask', 'none']
+    },
     operation: {
       type: 'string',
-      enum: ['dispose', 'brief', 'ask', 'search', 'none']
+      enum: ['dispose', 'adjust_quantity', 'brief', 'ask', 'search', 'none']
+    },
+    action: {
+      type: 'string',
+      enum: ['dispose', 'adjust_quantity', 'inspect_candidates', 'low_stock_report', 'excess_stock_report', 'ask_clarification', 'none']
     },
     confidence: { type: 'number' },
     requiresConfirmation: { type: 'boolean' },
@@ -122,9 +132,22 @@ const ACTION_RESPONSE_SCHEMA = {
       type: 'array',
       items: { type: 'string' }
     },
+    operations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          type: { type: 'string' },
+          itemName: { type: 'string' },
+          quantity: { type: 'number' },
+          reason: { type: 'string' }
+        }
+      }
+    },
+    userMessage: { type: 'string' },
     reply: { type: 'string' }
   },
-  required: ['intent', 'operation', 'confidence', 'requiresConfirmation', 'criteria', 'candidateNames', 'reply']
+  required: ['intent', 'operationType', 'operation', 'action', 'confidence', 'requiresConfirmation', 'criteria', 'candidateNames', 'operations', 'userMessage', 'reply']
 };
 
 function buildActionSystemPrompt({ manager, inventory, todayIso }) {
@@ -136,8 +159,10 @@ function buildActionSystemPrompt({ manager, inventory, todayIso }) {
     '반드시 JSON만 출력한다. 마크다운, 설명문, <think> 태그, 코드블록은 금지한다.',
     '모델은 DB를 직접 변경하지 않는다. 코드가 JSON을 검증한 뒤 안전한 작업만 실행한다.',
     '사용자가 "폐기해야 할 거", "버릴 거", "유통기한 지난 거", "상한 거", "오늘 정리할 거"라고 말하면 품목명이 아니라 작업 조건으로 해석한다.',
-    '"목록만 보여줘", "후보 알려줘", "있어?"처럼 조회 표현이 있으면 폐기 실행이 아니라 목록 확인으로 판단한다.',
+    '"보여줘", "알려줘", "확인해줘", "뭐 있어?", "목록 보여줘", "찾아줘"처럼 조회 표현이 있으면 operationType="read"로 둔다.',
+    '"정리해줘", "처리해줘"처럼 넓은 표현은 대상/기준/수량이 명확하지 않으면 operationType="ask", action="ask_clarification"으로 둔다.',
     '폐기 자동 실행은 기한 초과, 폐기 예정 표시, 또는 사용자가 특정 품목과 수량을 명확히 말한 경우에만 가능하다고 판단한다.',
+    '부족 재고는 low_stock_report, 많이 남은 재고는 excess_stock_report로 분류하고 기본은 read-only다.',
     '상함/이상함처럼 현장 감각이 필요한 조건은 후보를 찾되 requiresConfirmation=true로 둔다.',
     '후보가 여러 개이거나 수량/품목이 모호하면 ask_clarification 또는 requiresConfirmation=true로 둔다.',
     'candidateNames에는 현재 재고 JSON의 name 값만 그대로 넣는다. 없는 품목명은 만들지 않는다.',
