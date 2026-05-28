@@ -1071,28 +1071,6 @@
       white-space: nowrap;
     }
 
-    .crisis-manager-cta {
-      width: 100%;
-      min-height: 44px;
-      border: 0;
-      border-radius: 14px;
-      background: var(--manager-accent, var(--ink));
-      color: #fff;
-      font-family: inherit;
-      font-size: .88rem;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0,0,0,.12);
-    }
-
-    .crisis-manager-note {
-      margin: 8px 2px 0;
-      color: var(--g1);
-      font-size: .73rem;
-      line-height: 1.35;
-      text-align: center;
-    }
-
     @keyframes crisisItemIn {
       from { opacity: 0; transform: translateY(5px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -3889,10 +3867,10 @@
             </span>
             <div class="cookie-manager-copy">
               <div class="cookie-manager-title" id="manager-bridge-title">마감 브리핑을 같이 정리한다멍</div>
-              <div class="cookie-manager-subtitle" id="manager-bridge-subtitle">오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있다멍.</div>
+              <div class="cookie-manager-subtitle" id="manager-bridge-subtitle">대화하면서 오늘 처리할 일을 같이 정리한다멍.</div>
             </div>
             <div class="manager-strip-actions">
-              <button type="button" class="manager-strip-btn" id="manager-briefing-open">열기</button>
+              <button type="button" class="manager-strip-btn" id="manager-briefing-open">같이 일하기</button>
               <button type="button" class="manager-strip-btn secondary" id="manager-change-open">매니저 변경</button>
             </div>
           </div>
@@ -4292,7 +4270,7 @@
         themeColor: '#8C4F36',
         headerSubtitle: '마감 전에 같이 정리하는 재고 파트너',
         bridgeTitle: '마감 브리핑을 같이 정리한다멍',
-        bridgeSubtitle: '오늘 정리할 일과 내일 오픈 준비를 한 번에 볼 수 있다멍.',
+        bridgeSubtitle: '대화하면서 오늘 처리할 일을 같이 정리한다멍.',
         opening: '하동이 매니저다멍🐶',
         empty: '오늘 마감 전에 크게 걸리는 일은 없어 보인다멍.',
         workPrefix: '같이 볼게멍🐶'
@@ -4306,7 +4284,7 @@
         themeColor: '#202020',
         headerSubtitle: '장난은 쳐도 마감 순서는 똑부러지게 보는 매니저',
         bridgeTitle: '마감 순서, 쿠키가 깔끔하게 잡아준다멍',
-        bridgeSubtitle: '오늘 처리할 것과 내일 아침에 터질 일을 나눠서 본다멍.',
+        bridgeSubtitle: '대화하면서 마감 순서를 같이 정리한다멍.',
         opening: '쿠키 매니저다멍🐾',
         empty: '마감 전에 크게 찔리는 재고는 없어 보인다멍.',
         workPrefix: '좋아, 이건 쿠키가 같이 볼게멍.'
@@ -4577,7 +4555,8 @@
     document.getElementById('manager-briefing-open').addEventListener('click', e => {
       bumpFeedback(e.currentTarget);
       openHadongChat();
-      setHadongView('overview');
+      setHadongView('chat');
+      requestAnimationFrame(() => document.getElementById('hadong-input')?.focus());
     });
 
     document.getElementById('manager-change-open').addEventListener('click', e => {
@@ -5076,12 +5055,7 @@
         </div>
         <div class="crisis-metrics">${metricHtml}</div>
       `;
-      document.getElementById('crisis-item-list').innerHTML = `
-        <button type="button" class="crisis-manager-cta" data-open-hadong-manager>
-          ${escHtml(manager.fullName)}와 한 번에 보기
-        </button>
-        <div class="crisis-manager-note">마감 순서는 한 번에 보기에서, 개별 상태는 상세 점검에서 이어서 볼 수 있어요.</div>
-      `;
+      document.getElementById('crisis-item-list').innerHTML = '';
       popoverTitle.textContent = `알림 ${notificationCount}개`;
       popoverList.innerHTML = [
         ...urgent.map(i => {
@@ -5097,15 +5071,6 @@
 
       alertEl.hidden = false;
     }
-
-    document.getElementById('crisis-alert').addEventListener('click', e => {
-      const btn = e.target.closest('[data-open-hadong-manager]');
-      if (!btn) return;
-      bumpFeedback(btn);
-      openHadongChat();
-      renderHadongOverview('all');
-      setHadongView('overview');
-    });
 
     // ──────────────────────────────────────────────────────────────
     // RENDER — Red Hero card template
