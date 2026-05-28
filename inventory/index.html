@@ -2989,14 +2989,53 @@
     }
 
     .manager-task-chip {
+      display: inline-flex;
+      align-items: center;
       min-height: 23px;
+      border: 1px solid var(--chip-border, #e5e7eb);
       border-radius: 999px;
       padding: 3px 8px;
-      background: var(--card-soft, var(--cream));
-      color: var(--card-ink, var(--ink));
+      background: var(--chip-bg, #f8fafc);
+      color: var(--chip-ink, #475569);
       font-size: .68rem;
       font-weight: 900;
       line-height: 1.1;
+    }
+
+    .manager-task-chip.is-danger {
+      --chip-bg: #fff0ed;
+      --chip-border: #ffd2cc;
+      --chip-ink: #b42318;
+    }
+
+    .manager-task-chip.is-today {
+      --chip-bg: #fff7e6;
+      --chip-border: #fed7aa;
+      --chip-ink: #b54708;
+    }
+
+    .manager-task-chip.is-date {
+      --chip-bg: #edf6ff;
+      --chip-border: #bfdbfe;
+      --chip-ink: #175cd3;
+    }
+
+    .manager-task-chip.is-category {
+      --chip-bg: #fdf2f8;
+      --chip-border: #fbcfe8;
+      --chip-ink: #9d174d;
+    }
+
+    .manager-task-chip.is-storage {
+      --chip-bg: #eef2ff;
+      --chip-border: #c7d2fe;
+      --chip-ink: #3730a3;
+    }
+
+    .manager-task-chip.is-quantity {
+      --chip-bg: #ecfdf3;
+      --chip-border: #bbf7d0;
+      --chip-ink: #166534;
     }
 
     .manager-task-actions {
@@ -7473,17 +7512,28 @@
           icon: managerTaskIcon(row.status),
           title,
           copy: managerTaskReason(row),
-          chips: row.tags.map(tag => tag.label)
+          chips: row.tags.map(tag => ({
+            label: tag.label,
+            kind: tag.type === 'expired' || tag.type === 'low' ? 'danger'
+              : tag.type === 'today' ? 'today'
+              : 'date'
+          }))
         };
       });
+    }
+
+    function managerTaskChipHtml(chip) {
+      const item = typeof chip === 'string' ? { label: chip, kind: '' } : chip;
+      const kind = item.kind ? ` is-${escAttr(item.kind)}` : '';
+      return `<span class="manager-task-chip${kind}">${escHtml(item.label)}</span>`;
     }
 
     function renderManagerTaskCard(task) {
       const item = task.item;
       const meta = [
-        item.category || '미분류',
-        item.storage_method || '',
-        `${item.quantity}${item.unit || '개'}`
+        { label: item.category || '미분류', kind: 'category' },
+        item.storage_method ? { label: item.storage_method, kind: 'storage' } : null,
+        { label: `${item.quantity}${item.unit || '개'}`, kind: 'quantity' }
       ].filter(Boolean);
       return `
         <article class="manager-task-card is-${escAttr(task.status)}">
@@ -7491,7 +7541,7 @@
             <div class="manager-task-title"><span>${task.icon}</span><span>${escHtml(task.title)}</span></div>
             <div class="manager-task-copy">${escHtml(task.copy)}</div>
             <div class="manager-task-meta">
-              ${[...task.chips, ...meta].map(label => `<span class="manager-task-chip">${escHtml(label)}</span>`).join('')}
+              ${[...task.chips, ...meta].map(managerTaskChipHtml).join('')}
             </div>
           </div>
           <div class="manager-task-actions">
