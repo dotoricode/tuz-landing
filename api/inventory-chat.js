@@ -2,6 +2,10 @@ const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 const MAX_MESSAGE_LENGTH = 800;
 const MAX_HISTORY_ITEMS = 8;
 const MAX_INVENTORY_ITEMS = 80;
+const DEV_ORIGINS = new Set([
+  'http://localhost:4173',
+  'http://127.0.0.1:4173'
+]);
 
 function sendJson(res, status, payload) {
   res.statusCode = status;
@@ -9,15 +13,24 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function sameOrigin(req) {
+function allowedOrigin(req) {
   const origin = req.headers.origin;
-  if (!origin) return true;
+  if (!origin) return '';
   try {
     const host = req.headers['x-forwarded-host'] || req.headers.host;
-    return new URL(origin).host === host;
+    if (new URL(origin).host === host || DEV_ORIGINS.has(origin)) return origin;
+    return null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function applyCors(req, res, origin) {
+  if (!origin) return;
+  res.setHeader('access-control-allow-origin', origin);
+  res.setHeader('access-control-allow-methods', 'POST, OPTIONS');
+  res.setHeader('access-control-allow-headers', 'content-type');
+  res.setHeader('vary', 'Origin');
 }
 
 function cleanText(value, maxLength = MAX_MESSAGE_LENGTH) {
@@ -64,10 +77,12 @@ function buildInstructions(manager, inventory) {
     `너는 Tuz 카페 재고 마감 업무를 같이 처리하는 "${manager.fullName}"다.`,
     `성격은 ${persona}이다.`,
     '응답은 반드시 한국어만 사용한다. 내부 추론이나 분석 과정을 출력하지 않는다.',
+    '사용자는 재고 업무 중에도 인사, 잡담, 감정 표현, 짧은 일상 대화를 할 수 있다. 이런 경우에도 자연스럽게 받아준다.',
+    '일상 대화에는 재고 요약을 억지로 붙이지 않는다. 다만 길게 수다 떨기보다 매니저답게 짧고 따뜻하게 답한다.',
     '마감 때 쓰는 앱이므로 오늘 정리할 일과 내일 오픈 준비를 우선한다.',
     '답변은 짧게 한다. 제목 1줄, 안내 1줄, 필요하면 2~4개 항목만 쓴다.',
     '말끝에 가끔 "~다멍"을 쓰되 과하게 쓰지 않는다.',
-    '재고 데이터 안에서만 판단하고, 모르면 확인이 필요하다고 말한다.',
+    '재고 판단은 제공된 재고 데이터 안에서만 한다. 재고와 무관한 일상 대화는 가볍게 답하되, 외부 사실을 단정하지 않는다.',
     '상태 이모지는 기한 초과 🚨, 오늘 마감 ⏰, 이번 주 📅, 부족 📦, 정상 ✅를 우선 사용한다.',
     `개별 품목의 상세 점검은 "${manager.name}가 이어서 봐줄거다멍"이라고 안내한다.`,
     `현재 재고 JSON: ${JSON.stringify(inventory)}`
@@ -84,13 +99,20 @@ function extractOutputText(data) {
 }
 
 module.exports = async function handler(req, res) {
+  const origin = allowedOrigin(req);
+  if (origin === null) {
+    return sendJson(res, 403, { error: '허용된 도메인에서만 사용할 수 있습니다.' });
+  }
+  applyCors(req, res, origin);
+
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 204;
+    return res.end();
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('allow', 'POST');
     return sendJson(res, 405, { error: 'POST만 지원합니다.' });
-  }
-
-  if (!sameOrigin(req)) {
-    return sendJson(res, 403, { error: '같은 도메인에서만 사용할 수 있습니다.' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;

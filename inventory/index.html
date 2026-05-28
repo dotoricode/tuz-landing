@@ -6489,7 +6489,9 @@
     };
     const WEBLLM_PACKAGE_URL = 'https://esm.run/@mlc-ai/web-llm@0.2.83';
     const USE_CLOUD_AI = true;
-    const CLOUD_AI_CHAT_ENDPOINT = '/api/inventory-chat';
+    const CLOUD_AI_CHAT_ENDPOINT = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+      ? 'https://tuz.kr/api/inventory-chat'
+      : '/api/inventory-chat';
     const CLOUD_AI_TIMEOUT_MS = 18000;
     let _aiRunToken = 0;
 
@@ -7829,6 +7831,53 @@
         .trim();
     }
 
+    function isManagerCasualMessage(message) {
+      const text = String(message || '').replace(/\s+/g, ' ').trim();
+      if (!text) return false;
+      if (/^(안녕|안녕하세요|하이|ㅎㅇ|hello|hi|멍|하동아|쿠키야|고마워|감사|땡큐|thanks?|thank you|아|앗|오|오케이|ㅇㅋ|그래|좋아|헐|음|흠|ㅋㅋ+|ㅎㅎ+)[!.?。,\s]*$/i.test(text)) {
+        return true;
+      }
+      if (/^(안녕|하이|hello|hi)\s+(하동아|하동이|쿠키야|쿠키)/i.test(text)) return true;
+      if (/(심심|졸려|피곤|힘들|배고|뭐해|기분|잡담|수다|괜찮아|좋은\s*하루|오늘\s*어때)/i.test(text)) return true;
+
+      const inventoryIntent = /마감|브리핑|한\s*번에|업무|할\s*일|같이\s*일|재고|수량|기한|유통기한|오늘\s*(마감|정리|처리|확인)|내일|이번\s*주|부족|최소|적정|폐기|버릴|지난|초과|만료|기한\s*없|발주|주문|구매|찾아|검색|수정|변경|추가|입고|사용|썼|소진|차감|삭제|점검|도움|사용법/i;
+      return text.length <= 24 && !inventoryIntent.test(text);
+    }
+
+    function managerCasualFallback(message) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const text = String(message || '').replace(/\s+/g, ' ').trim();
+      if (/^(안녕|안녕하세요|하이|ㅎㅇ|hello|hi)|^(안녕|하이|hello|hi)\s+/i.test(text)) {
+        return `${profile.opening}\n나 여기 있다멍${icon}\n지금 Gemini 연결 확인 중이라 짧게만 답할게요. 잡담도 재고도 같이 볼 수 있다멍.`;
+      }
+      if (/고마워|감사|땡큐|thanks?/i.test(text)) {
+        return `천만에멍${icon}\n필요하면 바로 불러줘요.`;
+      }
+      if (/^(아|앗|오|헐|음|흠|ㅋㅋ+|ㅎㅎ+)/i.test(text)) {
+        return `멍, 방금 답답했죠${icon}\nGemini 연결이 잠깐 안 잡히면 내가 재고 기준으로 먼저 도와줄게요.`;
+      }
+      return `${profile.name}가 듣고 있다멍${icon}\n짧은 대화도 괜찮고, 재고 일도 바로 같이 볼 수 있어요.`;
+    }
+
+    function managerInventoryFallback(message) {
+      const text = String(message || '').replace(/\s+/g, ' ').trim();
+      const dated = items
+        .map(i => ({ ...i, dday: calcDDay(i.expiry_date) }))
+        .filter(i => i.dday !== null);
+      const expired = dated.filter(i => i.dday < 0).length;
+      const today = dated.filter(i => i.dday === 0).length;
+      const week = dated.filter(i => i.dday >= 0 && i.dday <= 6).length;
+      const low = items.filter(i => i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity)).length;
+      const parts = [];
+      if (expired) parts.push(`기한 초과 ${expired}개`);
+      if (today) parts.push(`오늘 마감 ${today}개`);
+      if (week) parts.push(`이번 주 ${week}개`);
+      if (low) parts.push(`부족 ${low}개`);
+      if (isManagerCasualMessage(text)) return managerCasualFallback(text);
+      return `Gemini 연결이 아직 안정적이지 않아서 재고 데이터로 먼저 정리했어요.\n${parts.length ? parts.join(' | ') : '급한 재고는 없어요.'}`;
+    }
+
     function inventorySnapshotForCloud() {
       try {
         return JSON.parse(summarizeInventoryForHadong());
@@ -8412,12 +8461,7 @@
       }
 
       if (fallback) {
-        const parts = [];
-        if (expired.length) parts.push(`기한 초과 ${expired.length}개`);
-        if (today.length) parts.push(`오늘 마감 ${today.length}개`);
-        if (week.length) parts.push(`이번 주 ${week.length}개`);
-        if (low.length) parts.push(`부족 ${low.length}개`);
-        return `🐶 멍… 모델 답변이 불안정해서 재고 데이터로 바로 정리했어요.\n${parts.length ? parts.join(' | ') : '급한 재고는 없어요.'}`;
+        return managerInventoryFallback(text);
       }
 
       return '';
@@ -8466,7 +8510,8 @@
         return;
       }
 
-      const localReply = hadongLocalInventoryReply(msg);
+      const preferGemini = USE_CLOUD_AI && isManagerCasualMessage(msg);
+      const localReply = preferGemini ? '' : hadongLocalInventoryReply(msg);
       if (localReply) {
         addHadongMessage('bot', localReply);
         if (typeof localReply === 'object' && localReply.overviewFilter) {
@@ -8478,7 +8523,7 @@
 
       const runToken = ++_hadongRunToken;
       const profile = getManagerProfile();
-      const botEl = addHadongMessage('bot', `${profile.fullName}가 서버에 물어보는 중이에요…`, false);
+      const botEl = addHadongMessage('bot', `${profile.fullName}가 Gemini에 물어보는 중이에요…`, false);
       updateAiModelStatus('loading');
 
       try {
@@ -8491,9 +8536,9 @@
       } catch (err) {
         if (runToken !== _hadongRunToken) return;
         console.warn('[Manager cloud chat]', err);
-        const fallback = hadongLocalInventoryReply(msg, { fallback: true });
-        const errorText = fallback ||
-          `멍… 서버 AI 연결이 아직 안 됐어요.\nVercel 환경변수 GEMINI_API_KEY를 설정하면 바로 답변할 수 있다멍.`;
+        const errorText = isManagerCasualMessage(msg)
+          ? managerCasualFallback(msg)
+          : (hadongLocalInventoryReply(msg, { fallback: true }) || managerCasualFallback(msg));
         renderHadongMessageContent(botEl, errorText);
         updateAiModelStatus('failed');
         if (runToken === _hadongRunToken) {
