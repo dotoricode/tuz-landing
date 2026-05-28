@@ -557,16 +557,6 @@
       letter-spacing: 0;
     }
 
-    .ai-model-provider {
-      flex-shrink: 0;
-      padding: 4px 7px;
-      border-radius: 999px;
-      background: var(--manager-soft, var(--cream));
-      color: var(--manager-accent, var(--red));
-      font-size: .63rem;
-      font-weight: 900;
-    }
-
     .ai-model-status {
       position: absolute;
       width: 1px;
@@ -3774,7 +3764,6 @@
             <div class="ai-model-content">
               <div class="ai-model-title">
                 <strong id="ai-model-title">AI 작동 중</strong>
-                <span class="ai-model-provider" id="ai-model-provider">AI + 현재 목록</span>
               </div>
               <div class="ai-model-meta">
                 <span id="ai-model-size-note">AI 작동 중</span>
@@ -4388,13 +4377,11 @@
       const panel = document.getElementById('ai-model-panel');
       const title = document.getElementById('ai-model-title');
       const note = document.getElementById('ai-model-size-note');
-      const provider = document.getElementById('ai-model-provider');
       const summary = panel?.querySelector('.ai-model-summary');
       const profile = getManagerProfile();
       const copy = managerAiPanelCopy(profile, state);
       if (title) title.textContent = copy.title;
       if (note) note.textContent = copy.copy;
-      if (provider) provider.textContent = 'AI + 현재 목록';
       if (summary) summary.title = `${profile.name}의 AI 설명 보기`;
     }
 
