@@ -3960,6 +3960,10 @@
           </div>
         </label>
         <label>
+          <span class="field-label">최소 재고량</span>
+          <input type="number" id="edit-min-qty-input" min="0" step="1" class="form-input" placeholder="비워두면 기준 없음">
+        </label>
+        <label>
           <span class="field-label">기한 유형</span>
           <div class="edit-type-segment">
             <button type="button" class="edit-type-btn active" data-edit-expiry-type="SELL-BY">유통기한</button>
@@ -4248,6 +4252,7 @@
     const AUTH_TTL = 30 * 24 * 60 * 60 * 1000;
     const INV_KEY  = 'tuz_inv_data_v1';
     const DEMO_KEY = 'tuz_inv_demo_seeded_v1';
+    const MIN_QTY_PROFILE_KEY = 'tuz_inv_min_qty_profile_v1';
     const MANAGER_PROFILE_KEY = 'tuz_inv_manager_profile_v1';
     const MANAGER_PROFILES = {
       hadong: {
@@ -4844,6 +4849,113 @@
       return Number.isFinite(num) ? num : null;
     }
 
+    function normalizeMinQuantityName(name) {
+      return String(name || '')
+        .normalize('NFKC')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+    }
+
+    function compactMinQuantityName(name) {
+      return normalizeMinQuantityName(name).replace(/\s+/g, '');
+    }
+
+    function minQuantityFieldValue(value) {
+      const num = optionalNumber(value);
+      if (num === null || num < 0) return '';
+      return String(num);
+    }
+
+    function loadMinQuantityProfiles() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(MIN_QTY_PROFILE_KEY) || '{}');
+        return Object.fromEntries(
+          Object.entries(parsed || {})
+            .map(([key, value]) => {
+              const entry = typeof value === 'object' && value ? value : { min_quantity: value };
+              const name = String(entry.name || key || '').trim();
+              const normalizedKey = normalizeMinQuantityName(key || name);
+              const minQuantity = optionalNumber(entry.min_quantity);
+              if (!normalizedKey || minQuantity === null || minQuantity < 0) return null;
+              return [normalizedKey, {
+                name: name || normalizedKey,
+                min_quantity: minQuantity,
+                updated_at: entry.updated_at || ''
+              }];
+            })
+            .filter(Boolean)
+        );
+      } catch {
+        return {};
+      }
+    }
+
+    let _minQuantityProfiles = loadMinQuantityProfiles();
+
+    function saveMinQuantityProfiles() {
+      localStorage.setItem(MIN_QTY_PROFILE_KEY, JSON.stringify(_minQuantityProfiles));
+    }
+
+    function setMinQuantityProfile(name, value, { clearWhenNull = false, persist = true } = {}) {
+      const key = normalizeMinQuantityName(name);
+      if (!key) return false;
+      const minQuantity = optionalNumber(value);
+      if (minQuantity === null || minQuantity < 0) {
+        if (!clearWhenNull || !_minQuantityProfiles[key]) return false;
+        delete _minQuantityProfiles[key];
+        if (persist) saveMinQuantityProfiles();
+        return true;
+      }
+      const prev = _minQuantityProfiles[key];
+      if (prev && Number(prev.min_quantity) === minQuantity && prev.name === String(name || '').trim()) return false;
+      _minQuantityProfiles[key] = {
+        name: String(name || '').trim(),
+        min_quantity: minQuantity,
+        updated_at: new Date().toISOString()
+      };
+      if (persist) saveMinQuantityProfiles();
+      return true;
+    }
+
+    function rememberMinQuantityForItem(item, options = {}) {
+      if (!item?.name) return false;
+      return setMinQuantityProfile(item.name, item.min_quantity, options);
+    }
+
+    function learnMinQuantitiesFromItems(list) {
+      let changed = false;
+      (list || []).forEach(item => {
+        if (item?.min_quantity !== null && item?.min_quantity !== undefined && item?.min_quantity !== '') {
+          changed = setMinQuantityProfile(item.name, item.min_quantity, { persist: false }) || changed;
+        }
+      });
+      if (changed) saveMinQuantityProfiles();
+    }
+
+    function learnedMinQuantityForName(name) {
+      const key = normalizeMinQuantityName(name);
+      if (!key) return '';
+      const exact = _minQuantityProfiles[key];
+      if (exact) return minQuantityFieldValue(exact.min_quantity);
+
+      const compact = compactMinQuantityName(name);
+      if (compact.length < 3) return '';
+      const candidates = Object.entries(_minQuantityProfiles)
+        .map(([profileKey, profile]) => ({
+          profile,
+          compactKey: compactMinQuantityName(profileKey),
+          distance: Math.abs(compactMinQuantityName(profileKey).length - compact.length)
+        }))
+        .filter(row => row.compactKey && (
+          row.compactKey === compact ||
+          row.compactKey.includes(compact) ||
+          compact.includes(row.compactKey)
+        ))
+        .sort((a, b) => a.distance - b.distance || String(b.profile.updated_at || '').localeCompare(String(a.profile.updated_at || '')));
+      return candidates.length ? minQuantityFieldValue(candidates[0].profile.min_quantity) : '';
+    }
+
     function normalizeStoredItem(item) {
       if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
       const quantity = Number(item.quantity);
@@ -4956,6 +5068,7 @@
     function loadInventory() {
       const seedDemo = shouldSeedMockData();
       items = seedDemo ? makeMockInventoryData() : loadData();
+      learnMinQuantitiesFromItems(items);
       if (seedDemo) {
         saveData(items);
         localStorage.setItem(DEMO_KEY, '1');
@@ -5234,7 +5347,7 @@
       e.preventDefault();
       const fd = new FormData(e.target);
       const expiryType = _addExpiryPresence === 'none' ? 'NONE' : fd.get('expiry_type');
-      items.push(buildItem({
+      const item = buildItem({
         name:           fd.get('name'),
         quantity:       fd.get('quantity'),
         unit:           fd.get('unit'),
@@ -5244,7 +5357,9 @@
         expiry_type:    expiryType,
         storage_method: fd.get('storage_method'),
         origin:         fd.get('origin')
-      }));
+      });
+      items.push(item);
+      rememberMinQuantityForItem(item);
       saveData(items);
       refreshAll();
       e.target.reset();
@@ -5324,6 +5439,7 @@
       document.getElementById('item-edit-subtitle').textContent =
         `${item.category || '미분류'} · 현재 ${item.quantity}${item.unit || '개'}`;
       document.getElementById('edit-qty-input').value = item.quantity;
+      document.getElementById('edit-min-qty-input').value = minQuantityFieldValue(item.min_quantity);
       document.getElementById('edit-expiry-date').value = item.expiry_date || '';
       setEditExpiryType(item.expiry_type);
 
@@ -5364,11 +5480,21 @@
         document.getElementById('edit-qty-input').focus();
         return;
       }
+      const minQtyInput = document.getElementById('edit-min-qty-input');
+      const minQtyRaw = String(minQtyInput.value || '').trim();
+      const minQty = minQtyRaw ? Number(minQtyRaw) : null;
+      if (minQtyRaw && (!Number.isFinite(minQty) || minQty < 0)) {
+        showToast('최소 재고량은 0 이상의 숫자로 입력하세요.');
+        minQtyInput.focus();
+        return;
+      }
       const managerEditBeforeTask = buildManagerBriefingTasks().find(task => task.item.id === item.id) || null;
       item.quantity = qty;
+      item.min_quantity = minQty;
       item.expiry_type = _editingExpiryType;
       item.expiry_date = _editingExpiryType === 'NONE' ? null : document.getElementById('edit-expiry-date').value || null;
       item.updated_at  = new Date().toISOString();
+      rememberMinQuantityForItem(item, { clearWhenNull: true });
       saveData(items);
       refreshAll();
       queueManagerEditFeedback(managerEditBeforeTask, buildManagerBriefingTasks().find(task => task.item.id === item.id) || null, item);
@@ -5773,12 +5899,13 @@
       const byName = name ? items.find(i => i.name?.toLowerCase() === name) : null;
       const byCategory = fields.category ? items.find(i => i.category === fields.category) : null;
       const src = byName || byCategory;
-      if (!src) return fields;
+      const learnedMinQuantity = learnedMinQuantityForName(fields.name);
+      if (!src) return { ...fields, min_quantity: learnedMinQuantity || fields.min_quantity || '' };
       return {
         ...fields,
         unit: fields.unit || src.unit || '',
         category: fields.category || src.category || '',
-        min_quantity: fields.min_quantity || src.min_quantity || '',
+        min_quantity: learnedMinQuantity || fields.min_quantity || minQuantityFieldValue(src.min_quantity),
         storage_method: fields.storage_method || src.storage_method || '',
         origin: fields.origin || src.origin || ''
       };
@@ -5890,9 +6017,11 @@
 
     function normalizePhotoFields(fields = {}) {
       const qty = Number(fields.quantity);
-      const minQty = fields.min_quantity === null || fields.min_quantity === undefined || fields.min_quantity === ''
+      const learnedMinQuantity = learnedMinQuantityForName(fields.name);
+      const minQtySource = learnedMinQuantity || fields.min_quantity;
+      const minQty = minQtySource === null || minQtySource === undefined || minQtySource === ''
         ? ''
-        : String(fields.min_quantity);
+        : String(minQtySource);
       return {
         name: String(fields.name || '').trim(),
         quantity: Number.isFinite(qty) && qty >= 0 ? String(qty) : '1',
@@ -6295,10 +6424,12 @@
       const similar = findSimilarInventoryRecord(name);
       const fromText = parseInventoryFieldsFromText(name);
       const rule = addNameRulePrediction(name);
+      const learnedMinQuantity = learnedMinQuantityForName(name);
+      const similarMinQuantity = minQuantityFieldValue(similar?.min_quantity);
       return {
         unit: similar?.unit || rule.unit || fromText.unit || '',
         category: similar?.category || rule.category || '',
-        min_quantity: similar?.min_quantity ?? rule.min_quantity ?? fromText.min_quantity ?? '',
+        min_quantity: learnedMinQuantity || similarMinQuantity || rule.min_quantity || fromText.min_quantity || '',
         storage_method: similar?.storage_method || rule.storage_method || fromText.storage_method || '',
         origin: similar?.origin || rule.origin || fromText.origin || ''
       };
@@ -6649,7 +6780,7 @@
       const qty = Number(document.getElementById('ocr-qty').value);
       if (isNaN(qty) || qty < 0) { alert('올바른 수량을 입력하세요.'); return; }
 
-      items.push(buildItem({
+      const item = buildItem({
         name,
         quantity:       qty,
         unit:           document.getElementById('ocr-unit').value.trim(),
@@ -6659,7 +6790,9 @@
         expiry_type:    document.getElementById('ocr-type-hidden').value,
         storage_method: document.getElementById('ocr-storage').value,
         origin:         document.getElementById('ocr-origin').value.trim()
-      }));
+      });
+      items.push(item);
+      rememberMinQuantityForItem(item);
 
       saveData(items);
       refreshAll();
