@@ -50,6 +50,9 @@ assert.deepEqual(disposeExpired.candidates.map(item => item.id).sort(), ['strawb
   '폐기해야할 거 보여줘',
   '폐기해야할 거 알려줘',
   '폐기해야할거 목록만 보여줘',
+  '폐기처리해야할 목록 보여줘',
+  '폐기 처리해야할 목록 보여줘',
+  '폐기처리해야할거 목록 보여줘',
   '유통기한 지난 거 확인해줘'
 ].forEach(message => {
   const listOnly = plan(message);
