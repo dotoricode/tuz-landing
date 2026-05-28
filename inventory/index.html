@@ -8164,8 +8164,16 @@
       addHadongMessage('bot', makeManagerWorkReply(item));
     }
 
+    function sanitizeAiProviderName(text) {
+      return String(text || '')
+        .replace(/gemini(?:[-\s]*\d+(?:\.\d+)?(?:[-\s]*(?:flash|lite|pro))*)?/gi, 'AI')
+        .replace(/제미나이/g, 'AI');
+    }
+
     function cleanKoreanChatText(text) {
-      const raw = String(text || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<\/?think>/gi, '');
+      const raw = sanitizeAiProviderName(text)
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<\/?think>/gi, '');
       return raw
         .split(/\r?\n/)
         .map(line => line.trimEnd())
@@ -8232,7 +8240,7 @@
     function cloudHistoryForManager() {
       return _hadongMessages.slice(-9, -1).map(message => ({
         role: message.role === 'assistant' ? 'assistant' : 'user',
-        content: String(message.content || '').slice(0, 900)
+        content: sanitizeAiProviderName(message.content).slice(0, 900)
       }));
     }
 
@@ -8936,8 +8944,8 @@
         return;
       }
 
-      const preferGemini = USE_CLOUD_AI && isManagerCasualMessage(msg);
-      const localReply = preferGemini ? '' : hadongLocalInventoryReply(msg);
+      const preferCloudAi = USE_CLOUD_AI && isManagerCasualMessage(msg);
+      const localReply = preferCloudAi ? '' : hadongLocalInventoryReply(msg);
       if (localReply) {
         const replyPayload = withManagerReplyActions(localReply, msg);
         addHadongMessage('bot', replyPayload);

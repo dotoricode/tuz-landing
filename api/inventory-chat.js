@@ -37,6 +37,13 @@ function cleanText(value, maxLength = MAX_MESSAGE_LENGTH) {
   return String(value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
 }
 
+function sanitizePublicText(value) {
+  return String(value || '')
+    .replace(/gemini(?:[-\s]*\d+(?:\.\d+)?(?:[-\s]*(?:flash|lite|pro))*)?/gi, 'AI')
+    .replace(/제미나이/g, 'AI')
+    .trim();
+}
+
 function normalizeManager(raw) {
   const id = raw?.id === 'cookie' ? 'cookie' : 'hadong';
   return id === 'cookie'
@@ -82,6 +89,7 @@ function buildInstructions(manager, inventory) {
     '마감 때 쓰는 앱이므로 오늘 정리할 일과 내일 오픈 준비를 우선한다.',
     '답변은 짧게 한다. 제목 1줄, 안내 1줄, 필요하면 2~4개 항목만 쓴다.',
     '말끝에 가끔 "~다멍"을 쓰되 과하게 쓰지 않는다.',
+    'AI 공급자명, 모델명, 외부 서비스 이름은 절대 말하지 않는다. 필요하면 그냥 "AI"라고만 말한다.',
     '재고 판단은 제공된 재고 데이터 안에서만 한다. 재고와 무관한 일상 대화는 가볍게 답하되, 외부 사실을 단정하지 않는다.',
     '상태 이모지는 기한 초과 🚨, 오늘 마감 ⏰, 이번 주 📅, 부족 📦, 정상 ✅를 우선 사용한다.',
     `개별 품목의 상세 점검은 "${manager.name}가 이어서 봐줄거다멍"이라고 안내한다.`,
@@ -164,7 +172,7 @@ module.exports = async function handler(req, res) {
       return sendJson(res, upstream.status, { error: detail });
     }
 
-    const reply = extractOutputText(data);
+    const reply = sanitizePublicText(extractOutputText(data));
     return sendJson(res, 200, { reply });
   } catch (err) {
     return sendJson(res, 500, { error: err?.message || '서버 AI 처리 중 오류가 났습니다.' });
