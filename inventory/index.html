@@ -7587,6 +7587,8 @@
     const _hadongUndoStack = [];
     let _hadongRunToken = 0;
     let _hadongOverviewFilter = 'all';
+    let _hadongInputComposing = false;
+    let _hadongInputCompositionEndedAt = 0;
 
     function summarizeInventoryForHadong() {
       const rows = items.map(i => {
@@ -8672,8 +8674,20 @@
     document.getElementById('hadong-send').addEventListener('click', () => {
       sendHadongMessage(document.getElementById('hadong-input').value);
     });
-    document.getElementById('hadong-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') sendHadongMessage(e.currentTarget.value);
+    const hadongInputEl = document.getElementById('hadong-input');
+    hadongInputEl.addEventListener('compositionstart', () => {
+      _hadongInputComposing = true;
+    });
+    hadongInputEl.addEventListener('compositionend', () => {
+      _hadongInputComposing = false;
+      _hadongInputCompositionEndedAt = Date.now();
+    });
+    hadongInputEl.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      if (_hadongInputComposing || e.isComposing || e.keyCode === 229) return;
+      if (Date.now() - _hadongInputCompositionEndedAt < 80) return;
+      e.preventDefault();
+      sendHadongMessage(e.currentTarget.value);
     });
     document.getElementById('hadong-messages').addEventListener('click', e => {
       const btn = e.target.closest('[data-hadong-action]');
