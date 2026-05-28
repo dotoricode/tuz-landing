@@ -5163,12 +5163,14 @@
         document.getElementById('edit-qty-input').focus();
         return;
       }
+      const managerEditBeforeTask = buildManagerBriefingTasks().find(task => task.item.id === item.id) || null;
       item.quantity = qty;
       item.expiry_type = _editingExpiryType;
       item.expiry_date = _editingExpiryType === 'NONE' ? null : document.getElementById('edit-expiry-date').value || null;
       item.updated_at  = new Date().toISOString();
       saveData(items);
       refreshAll();
+      queueManagerEditFeedback(managerEditBeforeTask, buildManagerBriefingTasks().find(task => task.item.id === item.id) || null, item);
       closeItemEditSheet();
       showToast(`[${item.name}] 수정됐습니다.`);
     }
@@ -6917,13 +6919,17 @@
         } else {
           setHadongView('chat');
         }
+        const hasFeedback = context.view === 'chat' && context.feedbackMessage;
+        if (hasFeedback) addHadongMessage('bot', context.feedbackMessage);
         requestAnimationFrame(() => {
           const target = context.view === 'overview'
             ? document.getElementById('hadong-overview')
             : document.getElementById('hadong-messages');
-          if (target) target.scrollTop = context.view === 'overview'
-            ? context.overviewScrollTop
-            : context.messagesScrollTop;
+          if (target) target.scrollTop = hasFeedback
+            ? target.scrollHeight
+            : context.view === 'overview'
+              ? context.overviewScrollTop
+              : context.messagesScrollTop;
         });
       }, 120);
     }
@@ -7526,6 +7532,35 @@
       const item = typeof chip === 'string' ? { label: chip, kind: '' } : chip;
       const kind = item.kind ? ` is-${escAttr(item.kind)}` : '';
       return `<span class="manager-task-chip${kind}">${escHtml(item.label)}</span>`;
+    }
+
+    function managerTaskIssueLabels(task) {
+      return (task?.chips || [])
+        .map(chip => typeof chip === 'string' ? chip : chip.label)
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    function makeManagerEditFeedback(beforeTask, afterTask, item) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      if (beforeTask && !afterTask) {
+        return `${profile.name}가 확인했다멍${icon}\n${topicName(item.name)} 걸리던 조건은 해소됐어요. 다음 항목으로 넘어가도 된다멍.`;
+      }
+      if (beforeTask && afterTask) {
+        const labels = managerTaskIssueLabels(afterTask);
+        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 수정은 됐지만 아직 ${labels || '확인할 조건'}이 남아있다멍. 남은 부분만 한 번 더 보면 돼요.`;
+      }
+      if (!beforeTask && !afterTask) {
+        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 지금 마감 브리핑에 걸리는 조건은 없어요.`;
+      }
+      return '';
+    }
+
+    function queueManagerEditFeedback(beforeTask, afterTask, item) {
+      if (!_managerReturnContext || _managerReturnContext.view !== 'chat') return;
+      const message = makeManagerEditFeedback(beforeTask, afterTask, item);
+      if (message) _managerReturnContext.feedbackMessage = message;
     }
 
     function renderManagerTaskCard(task) {
