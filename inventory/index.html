@@ -1275,6 +1275,7 @@
     .inv-badge.storage  { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
     .inv-badge.origin   { background: #f7fee7; border-color: #d9f99d; color: #4d7c0f; }
     .inv-badge.qty      { background: #fff; color: var(--ink); }
+    .inv-badge.threshold { background: #ecfeff; border-color: #a5f3fc; color: #0e7490; }
     .inv-badge.low      { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
     .inv-badge.expired  { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
     .inv-badge.today    { background: #ffedd5; border-color: #fed7aa; color: #9a3412; }
@@ -5062,6 +5063,10 @@
       listEl.innerHTML = data.map(item => {
         const dday       = calcDDay(item.expiry_date);
         const low        = item.min_quantity != null && item.quantity <= item.min_quantity;
+        const unit       = item.unit || '개';
+        const noExpiry   = item.expiry_type === 'NONE';
+        const storageText = String(item.storage_method || '').trim();
+        const showStorage = storageText && !(noExpiry && /^(실온|상온)$/.test(storageText));
         const isExpired  = dday !== null && dday < 0;
         const isToday    = dday === 0;
         const isTomorrow = dday === 1;
@@ -5076,8 +5081,12 @@
                                : dday !== null ? 'safe'
                                : 'none';
 
-        const ddayBadges = item.expiry_type === 'NONE'
-          ? '<span class="inv-badge none">기한 없음</span><span class="inv-badge none">재고량 기준</span>'
+        const minStockBadge = item.min_quantity != null && item.min_quantity !== ''
+          ? `<span class="inv-badge threshold">최소 기준 <strong>${escHtml(item.min_quantity)}${escHtml(unit)}</strong></span>`
+          : '';
+
+        const ddayBadges = noExpiry
+          ? minStockBadge
           : item.expiry_date
           ? `<span class="inv-badge expiry ${expiryBadgeClass}">${expiryTypeLabel(item.expiry_type)} <strong>${ddayLabel(dday)}</strong></span><span class="inv-badge date ${expiryBadgeClass}">${escHtml(item.expiry_date)}</span>`
           : '';
@@ -5091,9 +5100,9 @@
                 <div class="inv-name">${escHtml(item.name)}</div>
                 <div class="inv-badge-grid">
                   <span class="inv-badge category">${escHtml(item.category || '미분류')}</span>
-                  ${item.storage_method ? `<span class="inv-badge storage">${escHtml(item.storage_method)}</span>` : ''}
+                  ${showStorage ? `<span class="inv-badge storage">${escHtml(storageText)}</span>` : ''}
                   ${item.origin ? `<span class="inv-badge origin">${originFlagMarkup(item.origin)}${escHtml(item.origin)}</span>` : ''}
-                  <span class="inv-badge qty">수량 <strong>${escHtml(item.quantity)}${escHtml(item.unit || '개')}</strong></span>
+                  <span class="inv-badge qty">남은 수량 <strong>${escHtml(item.quantity)}${escHtml(unit)}</strong></span>
                   ${low ? '<span class="inv-badge low">부족</span>' : ''}
                   ${ddayBadges}
                 </div>
