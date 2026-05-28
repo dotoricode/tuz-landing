@@ -4239,7 +4239,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        SCRIPT
   ═══════════════════════════════════════════════════════════ -->
-  <script src="manager-actions.js?v=2026052905"></script>
+  <script src="manager-actions.js?v=2026052906"></script>
   <script>
     'use strict';
 
@@ -6078,27 +6078,15 @@
     }
 
     async function requestPhotoAnalysis(dataUrl) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 26000);
-      try {
-        const response = await fetch(CLOUD_AI_PHOTO_ENDPOINT, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            image: dataUrl,
-            currentDate: todayIsoForPhotoAnalysis()
-          })
-        });
-        let payload = {};
-        try { payload = await response.json(); } catch {}
-        if (!response.ok) {
-          throw new Error(payload?.error || `사진 분석 실패 (${response.status})`);
+      const payload = await fetchCloudAiJson(CLOUD_AI_PHOTO_ENDPOINT, {
+        timeoutMs: 26000,
+        errorLabel: '사진 분석 실패',
+        payload: {
+          image: dataUrl,
+          currentDate: todayIsoForPhotoAnalysis()
         }
-        return normalizePhotoFields(payload.fields || {});
-      } finally {
-        clearTimeout(timer);
-      }
+      });
+      return normalizePhotoFields(payload.fields || {});
     }
 
     async function fallbackPhotoTextAnalysis(dataUrl) {
@@ -6874,10 +6862,58 @@
     };
     const WEBLLM_PACKAGE_URL = 'https://esm.run/@mlc-ai/web-llm@0.2.83';
     const USE_CLOUD_AI = true;
+    const CLOUD_AI_API_ORIGIN = 'https://tuz.kr';
     const CLOUD_AI_CHAT_ENDPOINT = '/api/inventory-chat';
     const CLOUD_AI_PHOTO_ENDPOINT = '/api/inventory-photo';
     const CLOUD_AI_TIMEOUT_MS = 18000;
+    const _cloudAiEndpointCache = new Map();
     let _aiRunToken = 0;
+
+    function isLocalCloudAiHost() {
+      return /^(localhost|127\.0\.0\.1|::1|\[::1\])$/i.test(location.hostname || '');
+    }
+
+    function cloudAiEndpointCandidates(endpoint) {
+      const cached = _cloudAiEndpointCache.get(endpoint);
+      const isAbsolute = /^https?:\/\//i.test(endpoint);
+      const sameOrigin = endpoint;
+      const production = isAbsolute ? endpoint : `${CLOUD_AI_API_ORIGIN}${endpoint}`;
+      const candidates = cached
+        ? [cached, production, sameOrigin]
+        : isLocalCloudAiHost() && !isAbsolute
+          ? [production, sameOrigin]
+          : [sameOrigin];
+      return [...new Set(candidates)];
+    }
+
+    async function fetchCloudAiJson(endpoint, { timeoutMs = CLOUD_AI_TIMEOUT_MS, payload = {}, errorLabel = 'AI 요청 실패' } = {}) {
+      const errors = [];
+      for (const candidate of cloudAiEndpointCandidates(endpoint)) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(candidate, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify(payload)
+          });
+          let data = {};
+          try { data = await response.json(); } catch {}
+          if (!response.ok) {
+            throw new Error(data?.error || `${errorLabel} (${response.status})`);
+          }
+          _cloudAiEndpointCache.set(endpoint, candidate);
+          return data;
+        } catch (err) {
+          errors.push(`${candidate}: ${err?.message || err}`);
+          console.warn('[Cloud AI endpoint failed]', candidate, err);
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      throw new Error(errors.join(' / ') || errorLabel);
+    }
 
     function checkWebGPU() {
       return typeof navigator.gpu !== 'undefined';
@@ -8371,41 +8407,22 @@
     }
 
     async function requestManagerCloudReply(message, profile, options = {}) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), CLOUD_AI_TIMEOUT_MS);
-      try {
-        const response = await fetch(CLOUD_AI_CHAT_ENDPOINT, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            mode: options.mode || 'chat',
-            message,
-            todayIso: hadongTodayIso(),
-            manager: {
-              id: profile.id,
-              name: profile.name,
-              fullName: profile.fullName
-            },
-            inventory: inventorySnapshotForCloud(),
-            recentMessages: cloudHistoryForManager()
-          })
-        });
-
-        if (!response.ok) {
-          let detail = `서버 AI 응답 실패 (${response.status})`;
-          try {
-            const errorPayload = await response.json();
-            if (errorPayload?.error) detail = errorPayload.error;
-          } catch {}
-          throw new Error(detail);
+      const payload = await fetchCloudAiJson(CLOUD_AI_CHAT_ENDPOINT, {
+        errorLabel: '서버 AI 응답 실패',
+        payload: {
+          mode: options.mode || 'chat',
+          message,
+          todayIso: hadongTodayIso(),
+          manager: {
+            id: profile.id,
+            name: profile.name,
+            fullName: profile.fullName
+          },
+          inventory: inventorySnapshotForCloud(),
+          recentMessages: cloudHistoryForManager()
         }
-
-        const payload = await response.json();
-        return options.raw ? payload : String(payload.reply || '').trim();
-      } finally {
-        clearTimeout(timer);
-      }
+      });
+      return options.raw ? payload : String(payload.reply || '').trim();
     }
 
     function parseHadongRichReply(text) {
