@@ -1475,6 +1475,7 @@
     .add-sheet-handle,
     .add-sheet-title,
     .picker-handle,
+    .picker-title,
     .manager-select-handle,
     .manager-select-head,
     .ai-sheet-header,
@@ -4238,6 +4239,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        SCRIPT
   ═══════════════════════════════════════════════════════════ -->
+  <script src="manager-actions.js?v=20260529"></script>
   <script>
     'use strict';
 
@@ -4254,6 +4256,7 @@
     const DEMO_KEY = 'tuz_inv_demo_seeded_v1';
     const MIN_QTY_PROFILE_KEY = 'tuz_inv_min_qty_profile_v1';
     const MANAGER_PROFILE_KEY = 'tuz_inv_manager_profile_v1';
+    const HADONG_AUDIT_KEY = 'tuz_inv_hadong_audit_v1';
     const MANAGER_PROFILES = {
       hadong: {
         id: 'hadong',
@@ -4601,6 +4604,7 @@
       let velocityY = 0;
       let scrollEl = null;
       let dragging = false;
+      let cleanupDragListeners = null;
 
       const findScrollParent = target => {
         for (let el = target; el && el !== panel.parentElement; el = el.parentElement) {
@@ -4611,7 +4615,14 @@
         return null;
       };
 
+      const clearDragListeners = () => {
+        if (!cleanupDragListeners) return;
+        cleanupDragListeners();
+        cleanupDragListeners = null;
+      };
+
       const reset = () => {
+        clearDragListeners();
         pointerId = null;
         dragging = false;
         velocityY = 0;
@@ -4691,69 +4702,99 @@
         }
       };
 
+      const installPointerDragListeners = () => {
+        const onMove = e => {
+          if (pointerId !== e.pointerId) return;
+          if (updateDrag(e.clientX, e.clientY)) e.preventDefault();
+        };
+        const onUp = e => {
+          if (pointerId !== e.pointerId) return;
+          finishDrag(e.clientX, e.clientY);
+        };
+        const onCancel = e => {
+          if (pointerId !== e.pointerId) return;
+          cancelOrFinish(e);
+        };
+
+        window.addEventListener('pointermove', onMove, { passive: false });
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onCancel);
+        cleanupDragListeners = () => {
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onCancel);
+        };
+      };
+
+      const installMouseDragListeners = () => {
+        const onMove = e => {
+          if (pointerId !== 'mouse') return;
+          if (updateDrag(e.clientX, e.clientY)) e.preventDefault();
+        };
+        const onUp = e => {
+          if (pointerId !== 'mouse') return;
+          finishDrag(e.clientX, e.clientY);
+        };
+
+        window.addEventListener('mousemove', onMove, { passive: false });
+        window.addEventListener('mouseup', onUp);
+        cleanupDragListeners = () => {
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+        };
+      };
+
+      const installTouchDragListeners = () => {
+        const onMove = e => {
+          if (pointerId !== 'touch' || e.touches.length !== 1) return;
+          const touch = e.touches[0];
+          if (updateDrag(touch.clientX, touch.clientY)) e.preventDefault();
+        };
+        const onEnd = e => {
+          if (pointerId !== 'touch') return;
+          const touch = e.changedTouches?.[0];
+          finishDrag(touch?.clientX, touch?.clientY);
+        };
+        const onCancel = () => cancelOrFinish();
+
+        window.addEventListener('touchmove', onMove, { passive: false });
+        window.addEventListener('touchend', onEnd);
+        window.addEventListener('touchcancel', onCancel);
+        cleanupDragListeners = () => {
+          window.removeEventListener('touchmove', onMove);
+          window.removeEventListener('touchend', onEnd);
+          window.removeEventListener('touchcancel', onCancel);
+        };
+      };
+
       panel.addEventListener('pointerdown', e => {
         if (pointerId !== null || e.button !== 0) return;
-        if (e.pointerType === 'mouse') return;
         const dragZone = getDragZone(e.target, e.clientY);
         if (!dragZone) return;
 
         if (!begin(e.pointerId, e.clientX, e.clientY, e.target)) return;
-        panel.setPointerCapture?.(pointerId);
-        e.preventDefault();
-      });
-
-      panel.addEventListener('pointermove', e => {
-        if (pointerId !== e.pointerId) return;
-        if (updateDrag(e.clientX, e.clientY)) e.preventDefault();
-      });
-
-      const finish = e => {
-        if (pointerId !== e.pointerId) return;
-        finishDrag(e.clientX, e.clientY);
-      };
-
-      panel.addEventListener('pointerup', finish);
-      panel.addEventListener('pointercancel', cancelOrFinish);
-      panel.addEventListener('lostpointercapture', cancelOrFinish);
-
-      panel.addEventListener('mousedown', e => {
-        if (pointerId !== null || e.button !== 0) return;
-        if (!getDragZone(e.target, e.clientY)) return;
-        begin('mouse', e.clientX, e.clientY, e.target);
-      });
-
-      document.addEventListener('mousemove', e => {
-        if (pointerId !== 'mouse') return;
-        if (updateDrag(e.clientX, e.clientY)) e.preventDefault();
-      });
-
-      document.addEventListener('mouseup', e => {
-        if (pointerId !== 'mouse') return;
-        finishDrag(e.clientX, e.clientY);
-      });
-
-      panel.addEventListener('touchstart', e => {
-        if (pointerId !== null || e.touches.length !== 1) return;
-        const touch = e.touches[0];
-        const dragZone = getDragZone(e.target, touch.clientY);
-        if (!dragZone) return;
-        if (!begin('touch', touch.clientX, touch.clientY, e.target)) return;
+        installPointerDragListeners();
         e.preventDefault();
       }, { passive: false });
 
-      panel.addEventListener('touchmove', e => {
-        if (pointerId !== 'touch' || e.touches.length !== 1) return;
-        const touch = e.touches[0];
-        if (updateDrag(touch.clientX, touch.clientY)) e.preventDefault();
-      }, { passive: false });
+      if (!window.PointerEvent) {
+        panel.addEventListener('mousedown', e => {
+          if (pointerId !== null || e.button !== 0) return;
+          if (!getDragZone(e.target, e.clientY)) return;
+          if (!begin('mouse', e.clientX, e.clientY, e.target)) return;
+          installMouseDragListeners();
+        });
 
-      panel.addEventListener('touchend', e => {
-        if (pointerId !== 'touch') return;
-        const touch = e.changedTouches?.[0];
-        finishDrag(touch?.clientX, touch?.clientY);
-      });
-
-      panel.addEventListener('touchcancel', () => cancelOrFinish());
+        panel.addEventListener('touchstart', e => {
+          if (pointerId !== null || e.touches.length !== 1) return;
+          const touch = e.touches[0];
+          const dragZone = getDragZone(e.target, touch.clientY);
+          if (!dragZone) return;
+          if (!begin('touch', touch.clientX, touch.clientY, e.target)) return;
+          installTouchDragListeners();
+          e.preventDefault();
+        }, { passive: false });
+      }
     }
 
     document.getElementById('rh-add-btn')
@@ -7888,6 +7929,7 @@
     // ──────────────────────────────────────────────────────────────
     const _hadongMessages = [];
     const _hadongUndoStack = [];
+    const _hadongPendingPlans = new Map();
     let _hadongRunToken = 0;
     let _hadongOverviewFilter = 'all';
     let _hadongInputComposing = false;
@@ -7898,13 +7940,16 @@
         const dday = calcDDay(i.expiry_date);
         const low = i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity);
         return {
+          id: i.id,
           name: i.name,
-          quantity: `${i.quantity}${i.unit || '개'}`,
+          quantity: Number(i.quantity) || 0,
+          unit: i.unit || '개',
           category: i.category || '미분류',
           storage: i.storage_method || '미입력',
           origin: i.origin || '미입력',
           expiryType: expiryTypeLabel(i.expiry_type),
           expiryDate: i.expiry_date || '미입력',
+          minQuantity: i.min_quantity,
           dday: dday === null ? '기한 미입력' : ddayLabel(dday),
           lowStock: low ? '부족' : '정상'
         };
@@ -8325,7 +8370,7 @@
       }));
     }
 
-    async function requestManagerCloudReply(message, profile) {
+    async function requestManagerCloudReply(message, profile, options = {}) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), CLOUD_AI_TIMEOUT_MS);
       try {
@@ -8334,7 +8379,9 @@
           headers: { 'content-type': 'application/json' },
           signal: controller.signal,
           body: JSON.stringify({
+            mode: options.mode || 'chat',
             message,
+            todayIso: hadongTodayIso(),
             manager: {
               id: profile.id,
               name: profile.name,
@@ -8355,7 +8402,7 @@
         }
 
         const payload = await response.json();
-        return String(payload.reply || '').trim();
+        return options.raw ? payload : String(payload.reply || '').trim();
       } finally {
         clearTimeout(timer);
       }
@@ -8575,6 +8622,7 @@
         if (action.itemId) btn.dataset.itemId = action.itemId;
         if (action.overviewFilter) btn.dataset.overviewFilter = action.overviewFilter;
         if (action.question) btn.dataset.question = action.question;
+        if (action.planId) btn.dataset.planId = action.planId;
         btn.textContent = action.label;
         panel.appendChild(btn);
       });
@@ -8721,6 +8769,23 @@
         refreshAll();
         return `${icon} ${last.before.name} 재고를 다시 살려뒀다멍.`;
       }
+      if (last.type === 'batch') {
+        [...(last.changes || [])].reverse().forEach(change => {
+          if (!change?.before?.id) return;
+          const idx = items.findIndex(item => item.id === change.before.id);
+          if (change.type === 'delete') {
+            if (idx >= 0) items.splice(idx, 1);
+            const insertAt = Math.min(Math.max(change.index || 0, 0), items.length);
+            items.splice(insertAt, 0, { ...change.before });
+          } else if (change.type === 'update') {
+            if (idx >= 0) items[idx] = { ...change.before, updated_at: new Date().toISOString() };
+            else items.push({ ...change.before, updated_at: new Date().toISOString() });
+          }
+        });
+        saveData(items);
+        refreshAll();
+        return `${icon} 방금 처리한 재고 ${last.changes?.length || 0}건을 되돌렸다멍.`;
+      }
       return `${icon} 멍, 되돌리기를 완료했다멍.`;
     }
 
@@ -8774,6 +8839,175 @@
           { type: 'overview-low', label: '한 번에 보기', variant: 'primary' }
         ]
       };
+    }
+
+    function hadongTodayIso() {
+      return window.TuzInventoryManager?.todayIso?.() || new Date().toISOString().slice(0, 10);
+    }
+
+    function buildHadongActionPlan(message, geminiAction = null) {
+      const engine = window.TuzInventoryManager;
+      if (!engine?.buildManagerActionPlan) return null;
+      const options = { todayIso: hadongTodayIso() };
+      if (geminiAction && engine.coerceGeminiActionPlan) {
+        return engine.coerceGeminiActionPlan(geminiAction, message, items, options);
+      }
+      return engine.buildManagerActionPlan(message, items, options);
+    }
+
+    function recordHadongAudit(entry) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(HADONG_AUDIT_KEY) || '[]');
+        const next = Array.isArray(parsed) ? parsed : [];
+        next.unshift({
+          id: makeId(),
+          at: new Date().toISOString(),
+          manager: getManagerProfile().id,
+          ...entry
+        });
+        localStorage.setItem(HADONG_AUDIT_KEY, JSON.stringify(next.slice(0, 100)));
+      } catch (err) {
+        console.warn('[Hadong audit]', err);
+      }
+    }
+
+    function formatHadongPlanCandidates(candidates = [], limit = 6) {
+      return candidates.slice(0, limit).map(candidate => {
+        const qty = Number(candidate.actionQuantity || candidate.quantity || 0);
+        const unit = candidate.unit || '개';
+        const actionText = candidate.actionKind === 'decrement'
+          ? `${qty}${unit} 차감`
+          : `전량 ${candidate.quantity}${unit}`;
+        return `- ${candidate.name}: ${candidate.reason || '확인 필요'} · ${actionText}`;
+      }).join('\n');
+    }
+
+    function rememberHadongPendingPlan(plan) {
+      const planId = makeId();
+      _hadongPendingPlans.set(planId, plan);
+      while (_hadongPendingPlans.size > 8) {
+        const first = _hadongPendingPlans.keys().next().value;
+        _hadongPendingPlans.delete(first);
+      }
+      return planId;
+    }
+
+    function renderHadongActionPlan(plan) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const candidates = Array.isArray(plan?.candidates) ? plan.candidates : [];
+
+      if (plan?.execution === 'reply') {
+        return {
+          text: `${icon} ${plan.reply || '오늘 정리할 재고를 확인했다멍.'}`,
+          actions: [
+            { type: 'overview', overviewFilter: 'all', label: '한 번에 보기', variant: 'primary' }
+          ]
+        };
+      }
+
+      if (plan?.execution === 'ask') {
+        return {
+          text: `${icon} ${plan.reply || '자동 처리 전에 기준 확인이 필요하다멍.'}`,
+          actions: [
+            { type: 'overview', overviewFilter: 'expired', label: '기한 초과 보기', variant: 'primary' },
+            { type: 'overview', overviewFilter: 'all', label: '오늘 정리 보기' }
+          ]
+        };
+      }
+
+      if (plan?.execution === 'confirm') {
+        const planId = rememberHadongPendingPlan(plan);
+        const lines = formatHadongPlanCandidates(candidates);
+        return {
+          text:
+            `${icon} ${plan.reply || `폐기 후보 ${candidates.length}개를 찾았다멍.`}\n` +
+            `${lines ? `\n${lines}\n` : ''}\n` +
+            '이대로 처리할지 확인해달라멍.',
+          actions: [
+            { type: 'confirm-plan', planId, label: '후보 폐기 처리', variant: 'danger' },
+            { type: 'overview', overviewFilter: 'all', label: '한 번에 보기' }
+          ]
+        };
+      }
+
+      return '';
+    }
+
+    function executeHadongActionPlan(plan) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const candidates = Array.isArray(plan?.candidates) ? plan.candidates : [];
+      const changes = [];
+      const processed = [];
+
+      candidates.forEach(candidate => {
+        const index = items.findIndex(item => item.id === candidate.id);
+        if (index < 0) return;
+        const item = items[index];
+        const before = hadongSnapshotItem(item);
+        const current = Number(item.quantity) || 0;
+        const unit = item.unit || candidate.unit || '개';
+
+        if (candidate.actionKind === 'decrement') {
+          const amount = Math.max(0, Math.min(Number(candidate.actionQuantity) || 0, current));
+          if (!amount) return;
+          const nextQty = Math.max(0, Number((current - amount).toFixed(3)));
+          if (nextQty <= 0) {
+            items.splice(index, 1);
+            changes.push({ type: 'delete', before, index });
+          } else {
+            item.quantity = nextQty;
+            item.updated_at = new Date().toISOString();
+            changes.push({ type: 'update', before });
+          }
+          processed.push(`${item.name} ${amount}${unit}`);
+          return;
+        }
+
+        items.splice(index, 1);
+        changes.push({ type: 'delete', before, index });
+        processed.push(`${before.name} ${before.quantity}${before.unit || unit}`);
+      });
+
+      if (!changes.length) {
+        return `${icon} 처리할 수 있는 재고가 이미 없거나 수량이 0이다멍. 목록을 다시 확인해달라멍.`;
+      }
+
+      _hadongUndoStack.push({ type: 'batch', changes });
+      if (_hadongUndoStack.length > 12) _hadongUndoStack.shift();
+      saveData(items);
+      refreshAll();
+      recordHadongAudit({
+        action: plan.operation || 'dispose',
+        intent: plan.intent,
+        source: plan.source || 'local',
+        message: plan.originalMessage || '',
+        candidates: candidates.map(candidate => ({
+          id: candidate.id,
+          name: candidate.name,
+          actionKind: candidate.actionKind || 'remove',
+          actionQuantity: candidate.actionQuantity || null,
+          reason: candidate.reason || ''
+        }))
+      });
+      showToast(`재고 ${changes.length}건을 처리했습니다.`);
+
+      return {
+        text:
+          `${icon} 폐기 처리 완료했다멍.\n` +
+          `${processed.map(name => `- ${name}`).join('\n')}\n\n` +
+          '실수였다면 바로 되돌릴 수 있다멍.',
+        actions: [{ type: 'undo', label: '되돌리기', variant: 'primary' }]
+      };
+    }
+
+    function handleHadongActionPlan(message, geminiAction = null) {
+      const plan = buildHadongActionPlan(message, geminiAction);
+      if (!plan) return '';
+      plan.originalMessage = message;
+      if (plan.execution === 'auto') return executeHadongActionPlan(plan);
+      return renderHadongActionPlan(plan);
     }
 
     function hadongInventoryCommandReply(message) {
@@ -9019,6 +9253,43 @@
       document.getElementById('hadong-input').value = '';
       addHadongMessage('user', msg);
 
+      const structuredPlan = buildHadongActionPlan(msg);
+      if (structuredPlan) {
+        if (!USE_CLOUD_AI) {
+          addHadongMessage('bot', handleHadongActionPlan(msg));
+          return;
+        }
+
+        const runToken = ++_hadongRunToken;
+        const profile = getManagerProfile();
+        const botEl = addHadongMessage('bot', `${profile.fullName}가 재고와 요청을 같이 확인하는 중이다멍…`, false);
+        updateAiModelStatus('loading');
+
+        try {
+          const cloudPayload = await requestManagerCloudReply(msg, profile, { mode: 'manager_action', raw: true });
+          if (runToken !== _hadongRunToken) return;
+          const replyPayload = handleHadongActionPlan(msg, cloudPayload?.action);
+          renderHadongMessageContent(botEl, replyPayload || handleHadongActionPlan(msg));
+          _hadongMessages.push({
+            role: 'assistant',
+            content: typeof replyPayload === 'object' && replyPayload ? replyPayload.text : String(replyPayload || '')
+          });
+          updateAiModelStatus('ready');
+          return;
+        } catch (err) {
+          if (runToken !== _hadongRunToken) return;
+          console.warn('[Manager structured action]', err);
+          const replyPayload = handleHadongActionPlan(msg);
+          renderHadongMessageContent(botEl, replyPayload);
+          _hadongMessages.push({
+            role: 'assistant',
+            content: typeof replyPayload === 'object' && replyPayload ? replyPayload.text : String(replyPayload || '')
+          });
+          updateAiModelStatus('failed');
+          return;
+        }
+      }
+
       const commandReply = hadongInventoryCommandReply(msg);
       if (commandReply) {
         addHadongMessage('bot', withManagerReplyActions(commandReply, msg));
@@ -9121,6 +9392,15 @@
       if (action === 'overview') {
         renderHadongOverview(btn.dataset.overviewFilter || 'all');
         setHadongView('overview');
+        return;
+      }
+
+      if (action === 'confirm-plan') {
+        const plan = _hadongPendingPlans.get(btn.dataset.planId);
+        _hadongPendingPlans.delete(btn.dataset.planId);
+        const profile = getManagerProfile();
+        const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+        addHadongMessage('bot', plan ? executeHadongActionPlan(plan) : `${icon} 멍, 확인할 작업이 만료됐다멍. 다시 말해달라멍.`);
         return;
       }
 

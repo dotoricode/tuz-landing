@@ -1,6 +1,7 @@
 const DEFAULT_MODEL = 'gemini-2.5-flash';
 const MAX_PROMPT_CHARS = 14000;
 const MAX_HISTORY = 8;
+const managerActions = require('../inventory/manager-actions.js');
 
 const ALLOWED_ORIGINS = [
   /^https:\/\/(www\.)?tuz\.kr$/,
@@ -84,7 +85,92 @@ function buildSystemPrompt({ manager, inventory }) {
   ].join('\n');
 }
 
-async function callGemini({ systemPrompt, contents, temperature = 0.35, maxOutputTokens = 260 }) {
+const ACTION_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    intent: {
+      type: 'string',
+      enum: [
+        'dispose_candidates',
+        'dispose_named_item',
+        'brief_today',
+        'ask_clarification',
+        'search_inventory',
+        'unknown'
+      ]
+    },
+    operation: {
+      type: 'string',
+      enum: ['dispose', 'brief', 'ask', 'search', 'none']
+    },
+    confidence: { type: 'number' },
+    requiresConfirmation: { type: 'boolean' },
+    criteria: {
+      type: 'object',
+      properties: {
+        expired: { type: 'boolean' },
+        markedForDisposal: { type: 'boolean' },
+        spoiled: { type: 'boolean' },
+        today: { type: 'boolean' },
+        all: { type: 'boolean' },
+        itemQuery: { type: 'string' },
+        quantity: { type: 'number' },
+        quantityMode: { type: 'string', enum: ['all', 'amount', 'unknown'] }
+      }
+    },
+    candidateNames: {
+      type: 'array',
+      items: { type: 'string' }
+    },
+    reply: { type: 'string' }
+  },
+  required: ['intent', 'operation', 'confidence', 'requiresConfirmation', 'criteria', 'candidateNames', 'reply']
+};
+
+function buildActionSystemPrompt({ manager, inventory, todayIso }) {
+  const managerName = String(manager?.fullName || manager?.name || '하동이 매니저').trim();
+  const inventoryJson = JSON.stringify(Array.isArray(inventory) ? inventory.slice(0, 100) : []);
+  return [
+    `너는 Tuz 카페 재고를 같이 정리하는 "${managerName}"다.`,
+    '목표는 사용자의 자연어를 실행 가능한 재고 작업 의도로 구조화하는 것이다.',
+    '반드시 JSON만 출력한다. 마크다운, 설명문, <think> 태그, 코드블록은 금지한다.',
+    '모델은 DB를 직접 변경하지 않는다. 코드가 JSON을 검증한 뒤 안전한 작업만 실행한다.',
+    '사용자가 "폐기해야 할 거", "버릴 거", "유통기한 지난 거", "상한 거", "오늘 정리할 거"라고 말하면 품목명이 아니라 작업 조건으로 해석한다.',
+    '폐기 자동 실행은 기한 초과, 폐기 예정 표시, 또는 사용자가 특정 품목과 수량을 명확히 말한 경우에만 가능하다고 판단한다.',
+    '상함/이상함처럼 현장 감각이 필요한 조건은 후보를 찾되 requiresConfirmation=true로 둔다.',
+    '후보가 여러 개이거나 수량/품목이 모호하면 ask_clarification 또는 requiresConfirmation=true로 둔다.',
+    'candidateNames에는 현재 재고 JSON의 name 값만 그대로 넣는다. 없는 품목명은 만들지 않는다.',
+    'reply는 짧고 업무적으로, Tuz 말투 "~다멍/~해달라멍"을 유지한다.',
+    `오늘 날짜: ${todayIso || new Date().toISOString().slice(0, 10)}`,
+    `현재 재고 JSON: ${inventoryJson}`
+  ].join('\n');
+}
+
+function parseJsonObject(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {}
+
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    try {
+      return JSON.parse(raw.slice(start, end + 1));
+    } catch {}
+  }
+  return null;
+}
+
+async function callGemini({
+  systemPrompt,
+  contents,
+  temperature = 0.35,
+  maxOutputTokens = 260,
+  responseMimeType = null,
+  responseSchema = null
+}) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
@@ -105,6 +191,8 @@ async function callGemini({ systemPrompt, contents, temperature = 0.35, maxOutpu
       thinkingConfig: { thinkingBudget: 0 }
     }
   };
+  if (responseMimeType) payload.generationConfig.responseMimeType = responseMimeType;
+  if (responseSchema) payload.generationConfig.responseSchema = responseSchema;
 
   const upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
@@ -171,7 +259,11 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const systemPrompt = buildSystemPrompt(body);
+    const mode = body.mode === 'manager_action' ? 'manager_action' : 'chat';
+    const todayIso = String(body.todayIso || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const systemPrompt = mode === 'manager_action'
+      ? buildActionSystemPrompt({ ...body, todayIso })
+      : buildSystemPrompt(body);
     const contents = [
       ...historyContents(body.recentMessages),
       { role: 'user', parts: [{ text: message.slice(0, 1200) }] }
@@ -185,17 +277,31 @@ module.exports = async function handler(req, res) {
     }
 
     const startedAt = Date.now();
-    const result = await callGemini({ systemPrompt, contents });
+    const result = await callGemini({
+      systemPrompt,
+      contents,
+      temperature: mode === 'manager_action' ? 0.15 : 0.35,
+      maxOutputTokens: mode === 'manager_action' ? 700 : 260,
+      responseMimeType: mode === 'manager_action' ? 'application/json' : null,
+      responseSchema: mode === 'manager_action' ? ACTION_RESPONSE_SCHEMA : null
+    });
+    const action = mode === 'manager_action' ? parseJsonObject(result.text) : null;
+    const serverPlan = mode === 'manager_action'
+      ? managerActions.buildManagerActionPlan(message, body.inventory || [], { todayIso })
+      : null;
     console.log('[inventory-chat]', JSON.stringify({
       requestId: id,
       model: result.model,
+      mode,
       promptChars,
       latencyMs: Date.now() - startedAt,
       usageMetadata: result.usageMetadata
     }));
 
     sendJson(res, 200, {
-      reply: result.text,
+      reply: action?.reply || result.text,
+      action,
+      serverPlan,
       requestId: id,
       model: result.model,
       usageMetadata: result.usageMetadata
