@@ -1639,6 +1639,29 @@
       transform: translateY(0);
     }
 
+    .stock-group-panel {
+      padding-bottom: max(18px, env(safe-area-inset-bottom));
+    }
+
+    .stock-group-candidate {
+      margin: 10px 0 14px;
+      padding: 12px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 14px;
+      background: var(--manager-card, var(--cream));
+      color: var(--ink);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .stock-group-candidate strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--manager-ink, var(--ink));
+      font-size: .92rem;
+      font-weight: 950;
+    }
+
     .delete-confirm-icon {
       width: 44px;
       height: 44px;
@@ -3999,6 +4022,21 @@
     </div>
   </div>
 
+  <div id="stock-group-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="stock-group-backdrop"></div>
+    <div class="delete-confirm-panel stock-group-panel" role="dialog" aria-modal="true" aria-labelledby="stock-group-title">
+      <div class="add-sheet-handle"></div>
+      <div class="delete-confirm-icon">📦</div>
+      <div class="delete-confirm-title" id="stock-group-title">비슷한 재고가 있어요</div>
+      <p class="delete-confirm-text" id="stock-group-text"></p>
+      <div class="stock-group-candidate" id="stock-group-candidate"></div>
+      <div class="delete-confirm-actions">
+        <button type="button" class="delete-confirm-cancel" id="stock-group-cancel">따로 관리</button>
+        <button type="button" class="delete-confirm-accept" id="stock-group-accept">같은 재고로 보기</button>
+      </div>
+    </div>
+  </div>
+
   <div id="date-picker-sheet" class="date-picker-sheet" aria-hidden="true">
     <div class="date-picker-backdrop" id="date-picker-backdrop"></div>
     <div class="date-picker-panel" role="dialog" aria-modal="true" aria-labelledby="date-picker-title">
@@ -5025,7 +5063,8 @@
       'expiry_date',
       'expiry_type',
       'storage_method',
-      'origin'
+      'origin',
+      'stock_group'
     ];
     let inventorySupabase = null;
     let inventoryRealtimeChannel = null;
@@ -5056,6 +5095,7 @@
         expiry_type:    item.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY',
         storage_method: item.storage_method || '',
         origin:         String(item.origin ?? '').trim(),
+        stock_group:    String(item.stock_group ?? '').trim(),
         created_at:     item.created_at || now,
         updated_at:     item.updated_at || item.created_at || now
       };
@@ -5097,6 +5137,7 @@
         expiry_type:    normalized.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY',
         storage_method: normalized.storage_method || '',
         origin:         normalized.origin || '',
+        stock_group:    normalized.stock_group || null,
         updated_by:     INVENTORY_CLIENT_ID
       };
     }
@@ -5114,6 +5155,7 @@
         expiry_type:    row.expiry_type,
         storage_method: row.storage_method,
         origin:         row.origin,
+        stock_group:    row.stock_group,
         created_at:     row.created_at,
         updated_at:     row.updated_at
       }, index);
@@ -5155,7 +5197,7 @@
       const supabase = await ensureInventorySupabase();
       const { data, error } = await supabase
         .from(INVENTORY_TABLE)
-        .select('id,sort_order,name,quantity,unit,category,min_quantity,expiry_date,expiry_type,storage_method,origin,updated_by,created_at,updated_at')
+        .select('id,sort_order,name,quantity,unit,category,min_quantity,expiry_date,expiry_type,storage_method,origin,stock_group,updated_by,created_at,updated_at')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
       if (error) throw error;
@@ -5304,6 +5346,7 @@
         expiry_type:    f.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY',
         storage_method: f.storage_method  || '',
         origin:         (f.origin         ?? '').trim(),
+        stock_group:    (f.stock_group    ?? '').trim(),
         created_at:     new Date().toISOString(),
         updated_at:     new Date().toISOString()
       };
@@ -5331,12 +5374,12 @@
     }
 
     function inventoryStockKey(item) {
+      if (item?.stock_group) return `group:${normalizeInventoryMergeText(item.stock_group)}`;
       return [
         normalizeInventoryMergeText(item?.name),
         normalizeInventoryMergeText(item?.unit || '개'),
         normalizeInventoryMergeText(item?.category),
-        normalizeInventoryMergeText(item?.storage_method),
-        normalizeInventoryMergeText(item?.origin)
+        normalizeInventoryMergeText(item?.storage_method)
       ].join('|');
     }
 
@@ -5378,6 +5421,60 @@
 
     function isInventoryStockLow(item, sourceItems = items) {
       return inventoryStockSummary(item, sourceItems).low;
+    }
+
+    function compactInventoryName(name) {
+      return normalizeInventoryMergeText(name).replace(/\s+/g, '');
+    }
+
+    function inventoryNameTokens(name) {
+      const normalized = normalizeInventoryMergeText(name);
+      const compact = compactInventoryName(name);
+      const tokens = normalized.split(/\s+/).filter(token => token.length >= 2);
+      if (compact.length >= 2) tokens.push(compact);
+      return [...new Set(tokens)];
+    }
+
+    function inventorySimilarityScore(a, b) {
+      const aName = normalizeInventoryMergeText(a?.name);
+      const bName = normalizeInventoryMergeText(b?.name);
+      const aCompact = compactInventoryName(a?.name);
+      const bCompact = compactInventoryName(b?.name);
+      if (!aCompact || !bCompact) return 0;
+      if (aCompact === bCompact) return 100;
+      if (aCompact.length >= 3 && bCompact.length >= 3 && (aCompact.includes(bCompact) || bCompact.includes(aCompact))) return 82;
+
+      const aTokens = inventoryNameTokens(aName);
+      const bTokens = inventoryNameTokens(bName);
+      const shared = aTokens.filter(token =>
+        bTokens.includes(token) ||
+        (token.length >= 2 && bCompact.includes(token)) ||
+        bTokens.some(other => other.length >= 2 && token.includes(other))
+      );
+      if (!shared.length) return 0;
+
+      let score = Math.min(78, 34 + shared.join('').length * 6);
+      if (normalizeInventoryMergeText(a?.category) && normalizeInventoryMergeText(a?.category) === normalizeInventoryMergeText(b?.category)) score += 8;
+      if (normalizeInventoryMergeText(a?.unit || '개') === normalizeInventoryMergeText(b?.unit || '개')) score += 8;
+      if (normalizeInventoryMergeText(a?.storage_method) && normalizeInventoryMergeText(a?.storage_method) === normalizeInventoryMergeText(b?.storage_method)) score += 4;
+      return score;
+    }
+
+    function findSimilarInventoryForGrouping(item) {
+      const existingAutoKey = inventoryStockKey(item);
+      const bestByKey = new Map();
+      items.forEach(candidate => {
+        if (!candidate || candidate.id === item.id) return;
+        if (inventoryStockKey(candidate) === existingAutoKey) return;
+        const score = inventorySimilarityScore(item, candidate);
+        if (score < 42) return;
+        const key = inventoryStockKey(candidate);
+        const prev = bestByKey.get(key);
+        if (!prev || score > prev.score) bestByKey.set(key, { item: candidate, score });
+      });
+      return [...bestByKey.values()]
+        .sort((a, b) => b.score - a.score || String(a.item.name || '').localeCompare(String(b.item.name || ''), 'ko'))
+        .slice(0, 3);
     }
 
     function mergeOrAppendInventoryItem(item) {
@@ -5703,6 +5800,7 @@
     // CRUD
     // ──────────────────────────────────────────────────────────────
     let _addExpiryPresence = 'dated';
+    let _stockGroupSuggestion = null;
 
     function setAddExpiryPresence(mode) {
       _addExpiryPresence = mode === 'none' ? 'none' : 'dated';
@@ -5759,6 +5857,7 @@
       showToast(addResult.merged
         ? `[${addResult.item.name}] 수량에 ${addResult.addedQuantity}${addResult.item.unit || '개'} 합산했습니다.`
         : '재고 항목이 추가됐습니다.');
+      if (!addResult.merged) maybeOpenStockGroupSuggestion(addResult.item);
     });
 
     document.getElementById('expiry-type-toggle').addEventListener('click', function () {
@@ -5804,6 +5903,73 @@
     document.getElementById('delete-confirm-cancel').addEventListener('click', closeDeleteConfirm);
     document.getElementById('delete-confirm-backdrop').addEventListener('click', closeDeleteConfirm);
     document.getElementById('delete-confirm-accept').addEventListener('click', confirmDeleteItem);
+
+    function stockGroupLabel(item) {
+      const unit = item?.unit || '개';
+      const stock = inventoryStockSummary(item);
+      return `${item.name} · 전체 ${stock.totalQuantity}${unit}${stock.minQuantity !== null ? ` · 기준 ${stock.minQuantity}${unit}` : ''}`;
+    }
+
+    function maybeOpenStockGroupSuggestion(item) {
+      const candidates = findSimilarInventoryForGrouping(item);
+      if (!candidates.length) return;
+      const candidate = candidates[0].item;
+      const unit = item.unit || '개';
+      _stockGroupSuggestion = {
+        itemId: item.id,
+        candidateId: candidate.id,
+        candidateKey: inventoryStockKey(candidate),
+        itemKey: inventoryStockKey(item)
+      };
+      document.getElementById('stock-group-text').textContent =
+        `방금 추가한 ${item.name} ${item.quantity}${unit}를 기존 재고와 같은 부족 기준으로 볼까요? 유통기한 카드는 따로 유지됩니다.`;
+      document.getElementById('stock-group-candidate').innerHTML =
+        `<strong>${escHtml(stockGroupLabel(candidate))}</strong>` +
+        `<span>새 항목: ${escHtml(item.name)} · ${escHtml(item.quantity)}${escHtml(unit)}</span>`;
+      const sheet = document.getElementById('stock-group-sheet');
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeStockGroupSuggestion() {
+      const sheet = document.getElementById('stock-group-sheet');
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+      _stockGroupSuggestion = null;
+    }
+
+    function acceptStockGroupSuggestion() {
+      const suggestion = _stockGroupSuggestion;
+      if (!suggestion) return;
+      const target = items.find(item => item.id === suggestion.itemId);
+      const candidate = items.find(item => item.id === suggestion.candidateId);
+      if (!target || !candidate) {
+        closeStockGroupSuggestion();
+        return;
+      }
+
+      const groupId = candidate.stock_group || target.stock_group || `stock_${makeId()}`;
+      const now = new Date().toISOString();
+      items.forEach(item => {
+        if (
+          item.id === target.id ||
+          item.id === candidate.id ||
+          inventoryStockKey(item) === suggestion.candidateKey ||
+          inventoryStockKey(item) === suggestion.itemKey
+        ) {
+          item.stock_group = groupId;
+          item.updated_at = now;
+        }
+      });
+      saveData(items);
+      refreshAll();
+      closeStockGroupSuggestion();
+      showToast(`[${target.name}] 재고를 같은 부족 기준으로 묶었습니다.`);
+    }
+
+    document.getElementById('stock-group-cancel').addEventListener('click', closeStockGroupSuggestion);
+    document.getElementById('stock-group-backdrop').addEventListener('click', closeStockGroupSuggestion);
+    document.getElementById('stock-group-accept').addEventListener('click', acceptStockGroupSuggestion);
 
     let _editingItemId = null;
     let _editingExpiryType = 'SELL-BY';
@@ -9841,6 +10007,7 @@
     installSwipeDownClose('#photo-source-sheet .picker-panel', closePhotoSourceSheet, { threshold: 56 });
     installSwipeDownClose('#date-picker-sheet .date-picker-panel', closeDatePicker, { threshold: 56 });
     installSwipeDownClose('#delete-confirm-sheet .delete-confirm-panel', closeDeleteConfirm, { threshold: 56 });
+    installSwipeDownClose('#stock-group-sheet .stock-group-panel', closeStockGroupSuggestion, { threshold: 56 });
     installSwipeDownClose('#manager-select-sheet .manager-select-panel', closeManagerSelectSheet, { threshold: 56 });
     installSwipeDownClose('#ai-sheet', closeAiSheet);
     installSwipeDownClose('#hadong-sheet', closeHadongChat);

@@ -85,6 +85,7 @@ create table if not exists public.inventory_items (
   expiry_type text not null default 'SELL-BY' check (expiry_type in ('SELL-BY', 'NONE')),
   storage_method text default '',
   origin text default '',
+  stock_group text,
   updated_by text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -238,3 +239,6 @@ ALTER TABLE menu DROP COLUMN IF EXISTS is_signature;
 -- ─── 2026-05 카테고리 재편: SIGNATURE / COFFEE / NON-COFFEE ─────────
 UPDATE menu SET category = 'NON-COFFEE · 논커피'
   WHERE category IN ('BAKERY · 베이커리', 'DESSERT · 디저트');
+
+-- ─── 2026-05 inventory: explicit stock grouping for low-stock checks ─────────
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS stock_group TEXT;
