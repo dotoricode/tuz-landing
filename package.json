@@ -5,6 +5,7 @@
   "description": "Static landing page for Tuz cafe",
   "scripts": {
     "test:syntax": "node --input-type=module --check < app.js && node --check admin.js",
-    "test:inventory-manager": "node scripts/verify-inventory-manager-actions.cjs"
+    "test:inventory-manager": "node scripts/verify-inventory-manager-actions.cjs",
+    "test:inventory-stock": "node scripts/verify-inventory-stock-groups.cjs"
   }
 }

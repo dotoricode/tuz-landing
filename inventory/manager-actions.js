@@ -145,6 +145,54 @@
       .map(row => row.item);
   }
 
+  function inventoryStockKey(item) {
+    if (item?.stock_group) return `group:${normalizeText(item.stock_group)}`;
+    return [
+      normalizeText(item?.name),
+      normalizeText(item?.unit || '개'),
+      normalizeText(item?.category),
+      normalizeText(item?.storage_method)
+    ].join('|');
+  }
+
+  function inventoryStockSummary(targetItem, sourceItems = []) {
+    const key = inventoryStockKey(targetItem);
+    const lots = (sourceItems || []).filter(item => inventoryStockKey(item) === key);
+    const totalQuantity = lots.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    const minQuantity = lots.reduce((max, item) => {
+      const raw = item.min_quantity ?? item.minQuantity;
+      const value = raw === null || raw === undefined || raw === '' ? null : Number(raw);
+      if (!Number.isFinite(value)) return max;
+      return max === null ? value : Math.max(max, value);
+    }, null);
+    return {
+      key,
+      item: targetItem,
+      lots,
+      totalQuantity: Number(totalQuantity.toFixed(3)),
+      minQuantity,
+      low: minQuantity !== null && totalQuantity < minQuantity
+    };
+  }
+
+  function lowStockRows(rows) {
+    const sourceItems = (rows || []).map(row => row.source);
+    const seen = new Set();
+    return (rows || [])
+      .map(row => {
+        const summary = inventoryStockSummary(row.source, sourceItems);
+        if (seen.has(summary.key)) return null;
+        seen.add(summary.key);
+        return summary.low ? { row, summary } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) =>
+        (a.summary.totalQuantity - a.summary.minQuantity) - (b.summary.totalQuantity - b.summary.minQuantity) ||
+        String(a.row.name || '').localeCompare(String(b.row.name || ''), 'ko')
+      )
+      .map(entry => entry.row);
+  }
+
   function enrichItem(item, baseIso = todayIso()) {
     const quantity = Number(item.quantity) || 0;
     const expiryDate = item.expiry_date || item.expiryDate || null;
@@ -328,12 +376,7 @@
     }
 
     if (intent.intent === 'low_stock_report') {
-      const low = inStockRows
-        .filter(row => {
-          const minQuantity = row.source.min_quantity ?? row.source.minQuantity;
-          return minQuantity != null && Number(row.source.quantity) <= Number(minQuantity);
-        })
-        .sort((a, b) => Number(a.source.quantity || 0) - Number(b.source.quantity || 0));
+      const low = lowStockRows(inStockRows);
       return {
         source: 'local',
         intent: intent.intent,
@@ -377,10 +420,7 @@
     if (intent.intent === 'brief_today') {
       const expired = inStockRows.filter(row => row.expired);
       const today = inStockRows.filter(row => row.today);
-      const low = inStockRows.filter(row => {
-        const minQuantity = row.source.min_quantity ?? row.source.minQuantity;
-        return minQuantity != null && Number(row.source.quantity) <= Number(minQuantity);
-      });
+      const low = lowStockRows(inStockRows);
       return {
         source: 'local',
         intent: intent.intent,

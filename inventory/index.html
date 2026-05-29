@@ -5399,7 +5399,7 @@
         totalQuantity: Number(totalQuantity.toFixed(3)),
         minQuantity,
         unit: targetItem?.unit || lots[0]?.unit || '개',
-        low: minQuantity !== null && totalQuantity <= minQuantity
+        low: minQuantity !== null && totalQuantity < minQuantity
       };
     }
 
@@ -8614,6 +8614,7 @@
     }
 
     function getHadongAlertRows() {
+      const seenLowStockKeys = new Set();
       return items.map(item => {
         const dday = calcDDay(item.expiry_date);
         const stock = inventoryStockSummary(item);
@@ -8625,6 +8626,11 @@
         if (dday !== null && dday > 1 && dday <= 6) tags.push({ type: 'week', label: ddayLabel(dday) });
         if (low) tags.push({ type: 'low', label: `부족 · 전체 ${stock.totalQuantity}${stock.unit} / 기준 ${stock.minQuantity}${stock.unit}` });
         if (!tags.length) return null;
+        const hasImmediateExpiry = tags.some(t => t.type === 'expired' || t.type === 'today' || t.type === 'tomorrow');
+        if (low && !hasImmediateExpiry) {
+          if (seenLowStockKeys.has(stock.key)) return null;
+          seenLowStockKeys.add(stock.key);
+        }
         const priority = tags.some(t => t.type === 'expired') ? 0
           : tags.some(t => t.type === 'today') ? 1
           : tags.some(t => t.type === 'tomorrow') ? 2

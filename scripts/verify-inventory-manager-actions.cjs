@@ -106,6 +106,20 @@ assert.equal(low.operationType, 'read');
 assert.equal(low.execution, 'reply');
 assert(low.candidates.some(item => item.id === 'strawberry'));
 
+const lemonLots = [
+  { id: 'lemon-old', name: '레몬즙', quantity: 1, unit: '팩', category: '과일/토핑', min_quantity: 2, expiry_date: '2026-06-03', expiry_type: 'SELL-BY', storage_method: '냉장' },
+  { id: 'lemon-new', name: '레몬즙', quantity: 1, unit: '팩', category: '과일/토핑', min_quantity: 2, expiry_date: '2026-06-16', expiry_type: 'SELL-BY', storage_method: '냉장' }
+];
+const lemonOk = manager.buildManagerActionPlan('부족 재고 알려줘', lemonLots, { todayIso: TODAY });
+assert.equal(lemonOk.intent, 'low_stock_report');
+assert.equal(lemonOk.candidates.length, 0);
+
+const lemonShort = manager.buildManagerActionPlan('부족 재고 알려줘', [
+  { ...lemonLots[0], quantity: 0.5 },
+  lemonLots[1]
+], { todayIso: TODAY });
+assert.equal(lemonShort.candidates.length, 1);
+
 const excess = plan('많이 남은 것 보여줘');
 assert.equal(excess.intent, 'excess_stock_report');
 assert.equal(excess.operationType, 'read');
