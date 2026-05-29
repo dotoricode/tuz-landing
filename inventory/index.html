@@ -5330,6 +5330,56 @@
       ].join('|');
     }
 
+    function inventoryStockKey(item) {
+      return [
+        normalizeInventoryMergeText(item?.name),
+        normalizeInventoryMergeText(item?.unit || '개'),
+        normalizeInventoryMergeText(item?.category),
+        normalizeInventoryMergeText(item?.storage_method),
+        normalizeInventoryMergeText(item?.origin)
+      ].join('|');
+    }
+
+    function inventoryStockSummary(targetItem, sourceItems = items) {
+      const key = inventoryStockKey(targetItem);
+      const lots = (sourceItems || []).filter(item => inventoryStockKey(item) === key);
+      const totalQuantity = lots.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+      const minQuantity = lots.reduce((max, item) => {
+        const value = optionalNumber(item.min_quantity);
+        return value === null ? max : Math.max(max ?? value, value);
+      }, null);
+      return {
+        key,
+        item: targetItem,
+        lots,
+        lotCount: lots.length,
+        totalQuantity: Number(totalQuantity.toFixed(3)),
+        minQuantity,
+        unit: targetItem?.unit || lots[0]?.unit || '개',
+        low: minQuantity !== null && totalQuantity <= minQuantity
+      };
+    }
+
+    function lowInventorySummaries(sourceItems = items) {
+      const seen = new Set();
+      return (sourceItems || [])
+        .map(item => {
+          const key = inventoryStockKey(item);
+          if (seen.has(key)) return null;
+          seen.add(key);
+          return inventoryStockSummary(item, sourceItems);
+        })
+        .filter(summary => summary?.low)
+        .sort((a, b) =>
+          (a.totalQuantity - a.minQuantity) - (b.totalQuantity - b.minQuantity) ||
+          String(a.item?.name || '').localeCompare(String(b.item?.name || ''), 'ko')
+        );
+    }
+
+    function isInventoryStockLow(item, sourceItems = items) {
+      return inventoryStockSummary(item, sourceItems).low;
+    }
+
     function mergeOrAppendInventoryItem(item) {
       const mergeKey = inventoryMergeKey(item);
       const existing = items.find(row => row.id !== item.id && inventoryMergeKey(row) === mergeKey);
@@ -5440,9 +5490,7 @@
       document.getElementById('tile-basis-tomorrow').textContent = '하루 남음';
 
       const urgent = withDday.filter(i => i.dday <= 0);
-      const lowStock = sourceItems.filter(i =>
-        i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity)
-      );
+      const lowStock = lowInventorySummaries(sourceItems);
       const alertEl = document.getElementById('crisis-alert');
       const badgeEl = document.getElementById('notification-badge');
       const notifyBtn = document.getElementById('notification-btn');
@@ -5501,8 +5549,8 @@
             : `${escHtml(i.name)} · 오늘 마감`;
           return `<li>${label}</li>`;
         }),
-        ...lowStock.map(i =>
-          `<li class="low">${escHtml(i.name)} · 재고 부족 (${escHtml(i.quantity)}${escHtml(i.unit)})</li>`
+        ...lowStock.map(row =>
+          `<li class="low">${escHtml(row.item.name)} · 재고 부족 (전체 ${escHtml(row.totalQuantity)}${escHtml(row.unit)})</li>`
         )
       ].join('');
 
@@ -5582,7 +5630,8 @@
 
       listEl.innerHTML = data.map(item => {
         const dday       = calcDDay(item.expiry_date);
-        const low        = item.min_quantity != null && item.quantity <= item.min_quantity;
+        const stock      = inventoryStockSummary(item);
+        const low        = stock.low;
         const unit       = item.unit || '개';
         const noExpiry   = item.expiry_type === 'NONE';
         const storageText = String(item.storage_method || '').trim();
@@ -5601,8 +5650,8 @@
                                : dday !== null ? 'safe'
                                : 'none';
 
-        const minStockBadge = item.min_quantity != null && item.min_quantity !== ''
-          ? `<span class="inv-badge threshold">최소 기준 <strong>${escHtml(item.min_quantity)}${escHtml(unit)}</strong></span>`
+        const minStockBadge = stock.minQuantity !== null
+          ? `<span class="inv-badge threshold">${stock.lotCount > 1 ? `전체 <strong>${escHtml(stock.totalQuantity)}${escHtml(unit)}</strong> · ` : ''}최소 기준 <strong>${escHtml(stock.minQuantity)}${escHtml(unit)}</strong></span>`
           : '';
 
         const ddayBadges = noExpiry
@@ -8048,7 +8097,7 @@
 
     function buildCookieSuggestion(item) {
       const dday = calcDDay(item.expiry_date);
-      const low = item.min_quantity != null && Number(item.quantity) <= Number(item.min_quantity);
+      const low = isInventoryStockLow(item);
       const profile = cookieRuleProfile(item);
       const lines = [];
 
@@ -8274,7 +8323,7 @@
     function summarizeInventoryForHadong() {
       const rows = items.map(i => {
         const dday = calcDDay(i.expiry_date);
-        const low = i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity);
+        const stock = inventoryStockSummary(i);
         return {
           id: i.id,
           name: i.name,
@@ -8285,9 +8334,10 @@
           origin: i.origin || '미입력',
           expiryType: expiryTypeLabel(i.expiry_type),
           expiryDate: i.expiry_date || '미입력',
-          minQuantity: i.min_quantity,
+          totalQuantity: stock.totalQuantity,
+          minQuantity: stock.minQuantity,
           dday: dday === null ? '기한 미입력' : ddayLabel(dday),
-          lowStock: low ? '부족' : '정상'
+          lowStock: stock.low ? '부족' : '정상'
         };
       });
       return JSON.stringify(rows.slice(0, 80));
@@ -8301,7 +8351,7 @@
         expired: withDday.filter(i => i.dday < 0).length,
         today: withDday.filter(i => i.dday === 0).length,
         week: withDday.filter(i => i.dday >= 0 && i.dday <= 6).length,
-        low: items.filter(i => i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity)).length
+        low: lowInventorySummaries(items).length
       };
     }
 
@@ -8348,11 +8398,14 @@
     function formatHadongItem(item, { includeDday = true, includeLow = true } = {}) {
       const dday = calcDDay(item.expiry_date);
       const unit = item.unit || '개';
+      const stock = inventoryStockSummary(item);
       const icon = includeDday ? hadongDdayIcon(dday) : '📦';
       const details = [`재고 ${item.quantity}${unit}`];
       if (item.category) details.push(item.category);
       if (includeDday && dday !== null) details.push(ddayLabel(dday));
-      if (includeLow && item.min_quantity != null) details.push(`기준 ${item.min_quantity}${unit}`);
+      if (includeLow && stock.minQuantity !== null) {
+        details.push(`${stock.lotCount > 1 ? `전체 ${stock.totalQuantity}${unit} · ` : ''}기준 ${stock.minQuantity}${unit}`);
+      }
       return `${icon} ${item.name}\n   ${details.join(' | ')}`;
     }
 
@@ -8363,10 +8416,13 @@
     function hadongCardFromItem(item, { includeDday = true, includeLow = true } = {}) {
       const dday = calcDDay(item.expiry_date);
       const unit = item.unit || '개';
+      const stock = inventoryStockSummary(item);
       const details = [`재고 ${item.quantity}${unit}`];
       if (item.category) details.push(item.category);
       if (includeDday && dday !== null) details.push(ddayLabel(dday));
-      if (includeLow && item.min_quantity != null) details.push(`기준 ${item.min_quantity}${unit}`);
+      if (includeLow && stock.minQuantity !== null) {
+        details.push(`${stock.lotCount > 1 ? `전체 ${stock.totalQuantity}${unit} · ` : ''}기준 ${stock.minQuantity}${unit}`);
+      }
       return {
         icon: includeDday ? hadongDdayIcon(dday) : '📦',
         name: item.name,
@@ -8375,7 +8431,7 @@
         status: dday !== null && dday < 0 ? 'expired'
           : dday === 0 ? 'today'
           : dday !== null && dday <= 6 ? 'week'
-          : includeLow && item.min_quantity != null && Number(item.quantity) <= Number(item.min_quantity) ? 'low'
+          : includeLow && stock.low ? 'low'
           : 'normal'
       };
     }
@@ -8394,13 +8450,14 @@
     function getHadongAlertRows() {
       return items.map(item => {
         const dday = calcDDay(item.expiry_date);
-        const low = item.min_quantity != null && Number(item.quantity) <= Number(item.min_quantity);
+        const stock = inventoryStockSummary(item);
+        const low = stock.low;
         const tags = [];
         if (dday !== null && dday < 0) tags.push({ type: 'expired', label: ddayLabel(dday) });
         if (dday === 0) tags.push({ type: 'today', label: '오늘 마감' });
         if (dday === 1) tags.push({ type: 'tomorrow', label: '내일 마감' });
         if (dday !== null && dday > 1 && dday <= 6) tags.push({ type: 'week', label: ddayLabel(dday) });
-        if (low) tags.push({ type: 'low', label: `부족 · 기준 ${item.min_quantity}${item.unit || '개'}` });
+        if (low) tags.push({ type: 'low', label: `부족 · 전체 ${stock.totalQuantity}${stock.unit} / 기준 ${stock.minQuantity}${stock.unit}` });
         if (!tags.length) return null;
         const priority = tags.some(t => t.type === 'expired') ? 0
           : tags.some(t => t.type === 'today') ? 1
@@ -8446,10 +8503,11 @@
     function managerTaskReason(row) {
       const item = row.item;
       const unit = item.unit || '개';
+      const stock = inventoryStockSummary(item);
       if (row.status === 'expired') return `${ddayLabel(row.dday)}라 마감 전에 사용 여부를 정리해야 한다멍.`;
       if (row.status === 'today') return '오늘 마감이라 남은 양과 상태를 마감 전에 확인하면 좋다멍.';
       if (row.status === 'tomorrow') return '내일 마감이라 오픈 전에 바로 쓸지 따로 둘지 정해두면 좋다멍.';
-      if (row.status === 'low') return `현재 ${item.quantity}${unit}, 기준 ${item.min_quantity}${unit} 이하라 내일 오픈 전에 수량을 확인하면 좋다멍.`;
+      if (row.status === 'low') return `전체 ${stock.totalQuantity}${unit}, 기준 ${stock.minQuantity}${unit} 이하라 내일 오픈 전에 수량을 확인하면 좋다멍.`;
       if (row.status === 'week') return '이번 주 안에 마감돼서 내일 준비 목록에 올려두면 좋다멍.';
       return '마감 전에 한 번 확인하면 좋다멍.';
     }
@@ -8596,11 +8654,12 @@
     function managerWorkReason(item) {
       const dday = calcDDay(item.expiry_date);
       const unit = item.unit || '개';
-      const low = item.min_quantity != null && Number(item.quantity) <= Number(item.min_quantity);
+      const stock = inventoryStockSummary(item);
+      const low = stock.low;
       if (dday !== null && dday < 0) return `${ddayLabel(dday)}라 마감 전에 사용 여부를 먼저 봐야 한다멍.`;
       if (dday === 0) return '오늘 마감이라 남은 양과 상태를 마감 전에 나눠두면 좋다멍.';
       if (dday === 1) return '내일 마감이라 오픈 전에 바로 쓸지 확인해두면 좋다멍.';
-      if (low) return `현재 ${item.quantity}${unit}, 기준 ${item.min_quantity}${unit} 이하라 내일 오픈 전에 수량을 봐야 한다멍.`;
+      if (low) return `전체 ${stock.totalQuantity}${unit}, 기준 ${stock.minQuantity}${unit} 이하라 내일 오픈 전에 수량을 봐야 한다멍.`;
       if (dday !== null && dday <= 6) return `${ddayLabel(dday)}라 이번 주 준비 목록에 올려두면 좋다멍.`;
       return '마감 전에 수량과 보관 상태만 한 번 확인하면 좋다멍.';
     }
@@ -8681,7 +8740,7 @@
       const expired = dated.filter(i => i.dday < 0).length;
       const today = dated.filter(i => i.dday === 0).length;
       const week = dated.filter(i => i.dday >= 0 && i.dday <= 6).length;
-      const low = items.filter(i => i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity)).length;
+      const low = lowInventorySummaries(items).length;
       const parts = [];
       if (expired) parts.push(`기한 초과 ${expired}개`);
       if (today) parts.push(`오늘 마감 ${today}개`);
@@ -9141,14 +9200,12 @@
     function makeHadongOrderReply() {
       const profile = getManagerProfile();
       const icon = profile.id === 'cookie' ? '🐾' : '🐶';
-      const low = items
-        .filter(item => item.min_quantity != null && Number(item.quantity) <= Number(item.min_quantity))
-        .sort((a, b) => (Number(a.quantity) - Number(a.min_quantity)) - (Number(b.quantity) - Number(b.min_quantity)));
+      const low = lowInventorySummaries(items);
       if (!low.length) return `${icon} 멍! 지금은 발주가 급한 부족 재고가 없다멍.`;
-      const lines = low.map(item => {
-        const unit = item.unit || '개';
-        const need = Math.max(0, Number(item.min_quantity) - Number(item.quantity));
-        return `- ${item.name}: 현재 ${item.quantity}${unit}, 기준 ${item.min_quantity}${unit}, 추천 ${need || 1}${unit}`;
+      const lines = low.map(stock => {
+        const unit = stock.unit || '개';
+        const need = Math.max(0, Number(stock.minQuantity) - Number(stock.totalQuantity));
+        return `- ${stock.item.name}: 전체 ${stock.totalQuantity}${unit}, 기준 ${stock.minQuantity}${unit}, 추천 ${need || 1}${unit}`;
       });
       return {
         text: `${icon} 발주 후보 ${low.length}개를 골랐다멍.\n부족한 순서로 보면 된다멍.\n\n${lines.join('\n')}`,
@@ -9418,9 +9475,7 @@
       const expired = dated.filter(i => i.dday < 0).sort((a, b) => a.dday - b.dday);
       const today = dated.filter(i => i.dday === 0);
       const week = dated.filter(i => i.dday >= 0 && i.dday <= 6).sort((a, b) => a.dday - b.dday);
-      const low = items
-        .filter(i => i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity))
-        .sort((a, b) => (Number(a.quantity) - Number(a.min_quantity)) - (Number(b.quantity) - Number(b.min_quantity)));
+      const low = lowInventorySummaries(items);
       const noExpiry = items.filter(i => i.expiry_type === 'NONE');
 
       const wantsLow = /부족|최소|적정|low/i.test(text);
