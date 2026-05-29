@@ -16,8 +16,12 @@ const stockFunctions = extractBlock(
   'function normalizeInventoryMergeText',
   'function compactInventoryName'
 );
+const renderHelperFunctions = extractBlock(
+  'function quantityLabel',
+  'function renderList'
+);
 const alertFunctions = extractBlock(
-  'function getHadongAlertRows',
+  'function hasFresherStockLot',
   'function setHadongView'
 );
 
@@ -46,10 +50,20 @@ function loadInventoryDebug(fixture) {
       return dday + '일 남음';
     }
 
+    function inventorySortOrder(item, index = 0) {
+      const value = Number(item?.sort_order);
+      return Number.isFinite(value) ? value : index;
+    }
+
+    function getVisibleItems() {
+      return items;
+    }
+
     ${stockFunctions}
+    ${renderHelperFunctions}
     ${alertFunctions}
 
-    return { inventoryStockSummary, lowInventorySummaries, getHadongAlertRows };
+    return { detailStatusLabel, groupAdvice, inventoryStockSummary, lowInventorySummaries, getHadongAlertRows, stockRiskProfile };
   `)(fixture);
 }
 
@@ -63,6 +77,41 @@ assert.equal(exact.inventoryStockSummary(lemonLots[0]).totalQuantity, 2);
 assert.equal(exact.inventoryStockSummary(lemonLots[0]).low, false);
 assert.equal(exact.lowInventorySummaries().length, 0);
 assert.equal(exact.getHadongAlertRows().length, 0);
+
+const mixedExpiryLots = [
+  { ...lemonLots[0], expiry_date: '2026-06-03' },
+  { ...lemonLots[1], expiry_date: '2026-06-18' }
+];
+const mixed = loadInventoryDebug(mixedExpiryLots);
+const mixedStock = mixed.inventoryStockSummary(mixedExpiryLots[0]);
+const mixedProfile = mixed.stockRiskProfile(mixedStock);
+assert.equal(mixedStock.totalQuantity, 2);
+assert.equal(mixedProfile.status, 'watch');
+assert.equal(mixedProfile.shortAfterAttention, true);
+assert.equal(
+  mixed.groupAdvice(mixedStock, mixedProfile).text,
+  '전체 수량은 괜찮지만, 곧 써야 하는 걸 빼면 여유가 1팩뿐이에요. 가까운 기한부터 먼저 쓰고, 부족하면 새로 채워 주세요.'
+);
+assert.equal(mixed.detailStatusLabel(mixedStock, mixedProfile), '임박분 빼면 기준 부족 · 이번 주 임박 1팩 · 여유 1팩');
+assert.equal(mixed.getHadongAlertRows().length, 0);
+
+const butterLots = [
+  { id: 'butter-soon', name: '버터', quantity: 7, unit: '개', category: '유제품', min_quantity: 3, expiry_date: '2026-05-30', expiry_type: 'SELL-BY', storage_method: '냉장' },
+  { id: 'butter-fresh', name: '버터', quantity: 3, unit: '개', category: '유제품', min_quantity: 3, expiry_date: '2026-06-18', expiry_type: 'SELL-BY', storage_method: '냉장' }
+];
+const butter = loadInventoryDebug(butterLots);
+const butterStock = butter.inventoryStockSummary(butterLots[0]);
+const butterProfile = butter.stockRiskProfile(butterStock);
+assert.equal(butter.detailStatusLabel(butterStock, butterProfile), '내일 마감 7개 · 여유 3개');
+assert.equal(
+  butter.groupAdvice(butterStock, butterProfile).text,
+  '곧 써야 하는 재고가 7개 있어요. 기한이 넉넉한 것보다 먼저 사용해 주세요.'
+);
+
+const singleSoonLot = [{ ...lemonLots[0], min_quantity: null, expiry_date: '2026-06-03' }];
+const singleSoon = loadInventoryDebug(singleSoonLot);
+assert.equal(singleSoon.getHadongAlertRows().length, 1);
+assert.equal(singleSoon.getHadongAlertRows()[0].status, 'week');
 
 const shortLots = [{ ...lemonLots[0], quantity: 0.5 }, lemonLots[1]];
 const short = loadInventoryDebug(shortLots);

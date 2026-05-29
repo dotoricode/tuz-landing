@@ -8,6 +8,7 @@
 # Local/env/build artifacts
 .env.local
 .vercel/
+backups/
 node_modules/
 .next/
 next-env.d.ts
