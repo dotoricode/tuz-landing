@@ -4,7 +4,7 @@
 --         이 파일 전체 내용 복사-붙여넣기 → Run (Ctrl+Enter)
 -- ============================================================
 
--- ─── 1. 테이블 5개 ─────────────────────────────
+-- ─── 1. 테이블 ─────────────────────────────
 
 create table if not exists public.news (
   id uuid primary key default gen_random_uuid(),
@@ -73,6 +73,23 @@ create table if not exists public.menu (
   updated_at timestamptz default now()
 );
 
+create table if not exists public.inventory_items (
+  id uuid primary key default gen_random_uuid(),
+  sort_order int not null default 0,
+  name text not null,
+  quantity numeric not null default 0 check (quantity >= 0),
+  unit text not null default '개',
+  category text default '',
+  min_quantity numeric check (min_quantity is null or min_quantity >= 0),
+  expiry_date date,
+  expiry_type text not null default 'SELL-BY' check (expiry_type in ('SELL-BY', 'NONE')),
+  storage_method text default '',
+  origin text default '',
+  updated_by text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- ─── 2. Row Level Security (보안 정책) ──────────
 
 alter table public.news     enable row level security;
@@ -81,6 +98,7 @@ alter table public.winners  enable row level security;
 alter table public.greeting enable row level security;
 alter table public.menu     enable row level security;
 alter table public.settings enable row level security;
+alter table public.inventory_items enable row level security;
 
 -- 공개 읽기 — 방문자 누구나 사이트 내용 볼 수 있음
 drop policy if exists "public_read_news"     on public.news;
@@ -89,6 +107,7 @@ drop policy if exists "public_read_winners"  on public.winners;
 drop policy if exists "public_read_greeting" on public.greeting;
 drop policy if exists "public_read_menu"     on public.menu;
 drop policy if exists "public_read_settings" on public.settings;
+drop policy if exists "public_read_inventory_items" on public.inventory_items;
 
 create policy "public_read_news"     on public.news     for select using (true);
 create policy "public_read_pick"     on public.pick     for select using (true);
@@ -96,6 +115,7 @@ create policy "public_read_winners"  on public.winners  for select using (true);
 create policy "public_read_greeting" on public.greeting for select using (true);
 create policy "public_read_menu"     on public.menu     for select using (true);
 create policy "public_read_settings" on public.settings for select using (true);
+create policy "public_read_inventory_items" on public.inventory_items for select using (true);
 
 -- 인증된 사용자만 쓰기 — 관리자 로그인 시에만 수정 가능
 drop policy if exists "auth_write_news"     on public.news;
@@ -104,6 +124,7 @@ drop policy if exists "auth_write_winners"  on public.winners;
 drop policy if exists "auth_write_greeting" on public.greeting;
 drop policy if exists "auth_write_menu"     on public.menu;
 drop policy if exists "auth_write_settings" on public.settings;
+drop policy if exists "public_write_inventory_items" on public.inventory_items;
 
 create policy "auth_write_news"     on public.news     for all to authenticated using (true) with check (true);
 create policy "auth_write_pick"     on public.pick     for all to authenticated using (true) with check (true);
@@ -111,6 +132,10 @@ create policy "auth_write_winners"  on public.winners  for all to authenticated 
 create policy "auth_write_greeting" on public.greeting for all to authenticated using (true) with check (true);
 create policy "auth_write_menu"     on public.menu     for all to authenticated using (true) with check (true);
 create policy "auth_write_settings" on public.settings for all to authenticated using (true) with check (true);
+
+-- inventory는 별도 PIN 게이트가 있는 정적 관리 화면에서 anon client로 동작한다.
+-- 더 강한 보호가 필요해지면 서버 함수 + service role 쓰기로 옮긴다.
+create policy "public_write_inventory_items" on public.inventory_items for all using (true) with check (true);
 
 -- ─── 3. Storage 버킷 + 정책 ─────────────────────
 
@@ -149,12 +174,26 @@ drop trigger if exists trg_pick_updated     on public.pick;
 drop trigger if exists trg_greeting_updated on public.greeting;
 drop trigger if exists trg_menu_updated     on public.menu;
 drop trigger if exists trg_settings_updated on public.settings;
+drop trigger if exists trg_inventory_items_updated on public.inventory_items;
 
 create trigger trg_news_updated     before update on public.news     for each row execute function public.tz_touch_updated_at();
 create trigger trg_pick_updated     before update on public.pick     for each row execute function public.tz_touch_updated_at();
 create trigger trg_greeting_updated before update on public.greeting for each row execute function public.tz_touch_updated_at();
 create trigger trg_menu_updated     before update on public.menu     for each row execute function public.tz_touch_updated_at();
 create trigger trg_settings_updated before update on public.settings for each row execute function public.tz_touch_updated_at();
+create trigger trg_inventory_items_updated before update on public.inventory_items for each row execute function public.tz_touch_updated_at();
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'inventory_items'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.inventory_items;
+  END IF;
+END $$;
 
 -- 끝. 오류 없이 끝났다면 설정 완료.
 

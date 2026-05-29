@@ -4257,6 +4257,10 @@
     const MIN_QTY_PROFILE_KEY = 'tuz_inv_min_qty_profile_v1';
     const MANAGER_PROFILE_KEY = 'tuz_inv_manager_profile_v1';
     const HADONG_AUDIT_KEY = 'tuz_inv_hadong_audit_v1';
+    const INVENTORY_CLIENT_KEY = 'tuz_inv_client_id_v1';
+    const INVENTORY_REMOTE_READY_KEY = 'tuz_inv_remote_ready_v1';
+    const INVENTORY_TABLE = 'inventory_items';
+    const SUPABASE_MODULE_URL = '/shared/supabase.js?v=54';
     const MANAGER_PROFILES = {
       hadong: {
         id: 'hadong',
@@ -4997,12 +5001,52 @@
       return candidates.length ? minQuantityFieldValue(candidates[0].profile.min_quantity) : '';
     }
 
-    function normalizeStoredItem(item) {
+    function getInventoryClientId() {
+      try {
+        const saved = localStorage.getItem(INVENTORY_CLIENT_KEY);
+        if (saved) return saved;
+        const id = makeId();
+        localStorage.setItem(INVENTORY_CLIENT_KEY, id);
+        return id;
+      } catch {
+        return makeId();
+      }
+    }
+
+    const INVENTORY_CLIENT_ID = getInventoryClientId();
+    const INVENTORY_SYNC_FIELDS = [
+      'id',
+      'sort_order',
+      'name',
+      'quantity',
+      'unit',
+      'category',
+      'min_quantity',
+      'expiry_date',
+      'expiry_type',
+      'storage_method',
+      'origin'
+    ];
+    let inventorySupabase = null;
+    let inventoryRealtimeChannel = null;
+    let inventorySyncReady = false;
+    let inventoryRemoteBaseline = new Map();
+    let inventorySyncQueue = Promise.resolve();
+    let inventoryRemoteRefreshTimer = null;
+    let inventoryRemoteRefreshPromise = null;
+
+    function inventorySortOrder(item, index = 0) {
+      const value = Number(item?.sort_order);
+      return Number.isFinite(value) ? value : index;
+    }
+
+    function normalizeStoredItem(item, index = 0) {
       if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
       const quantity = Number(item.quantity);
       const now = new Date().toISOString();
       return {
         id:             item.id || makeId(),
+        sort_order:     inventorySortOrder(item, index),
         name:           String(item.name ?? '').trim(),
         quantity:       Number.isFinite(quantity) ? quantity : 0,
         unit:           String(item.unit ?? '').trim() || '개',
@@ -5017,6 +5061,64 @@
       };
     }
 
+    function inventoryComparable(item, index = 0) {
+      const normalized = normalizeStoredItem(item, index);
+      if (!normalized) return '';
+      return JSON.stringify(Object.fromEntries(
+        INVENTORY_SYNC_FIELDS.map(field => [field, normalized[field] ?? null])
+      ));
+    }
+
+    function inventoryFingerprint(list) {
+      return (list || []).map((item, index) => inventoryComparable(item, index)).join('\n');
+    }
+
+    function updateInventoryBaseline(list) {
+      inventoryRemoteBaseline = new Map(
+        (list || [])
+          .map((item, index) => normalizeStoredItem(item, index))
+          .filter(Boolean)
+          .map((item, index) => [item.id, inventoryComparable(item, index)])
+      );
+    }
+
+    function inventoryRowFromItem(item, index = 0) {
+      const normalized = normalizeStoredItem(item, index);
+      if (!normalized || !normalized.name) return null;
+      return {
+        id:             normalized.id,
+        sort_order:     inventorySortOrder(normalized, index),
+        name:           normalized.name,
+        quantity:       normalized.quantity,
+        unit:           normalized.unit || '개',
+        category:       normalized.category || '',
+        min_quantity:   normalized.min_quantity,
+        expiry_date:    normalized.expiry_type === 'NONE' ? null : normalized.expiry_date,
+        expiry_type:    normalized.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY',
+        storage_method: normalized.storage_method || '',
+        origin:         normalized.origin || '',
+        updated_by:     INVENTORY_CLIENT_ID
+      };
+    }
+
+    function inventoryItemFromRow(row, index = 0) {
+      return normalizeStoredItem({
+        id:             row.id,
+        sort_order:     row.sort_order ?? index,
+        name:           row.name,
+        quantity:       row.quantity,
+        unit:           row.unit,
+        category:       row.category,
+        min_quantity:   row.min_quantity,
+        expiry_date:    row.expiry_date,
+        expiry_type:    row.expiry_type,
+        storage_method: row.storage_method,
+        origin:         row.origin,
+        created_at:     row.created_at,
+        updated_at:     row.updated_at
+      }, index);
+    }
+
     function loadData() {
       try {
         const parsed = JSON.parse(localStorage.getItem(INV_KEY));
@@ -5029,12 +5131,138 @@
       }
     }
 
-    function saveData(list) {
+    function writeInventoryCache(list) {
       localStorage.setItem(INV_KEY, JSON.stringify(list));
       list.forEach(item => {
         saveCustomPickerOption('add-category', item.category);
         saveCustomPickerOption('add-origin', item.origin);
       });
+    }
+
+    function saveData(list) {
+      writeInventoryCache(list);
+      queueInventoryRemoteSync(list);
+    }
+
+    async function ensureInventorySupabase() {
+      if (inventorySupabase) return inventorySupabase;
+      const mod = await import(SUPABASE_MODULE_URL);
+      inventorySupabase = mod.supabase;
+      return inventorySupabase;
+    }
+
+    async function fetchInventoryRows() {
+      const supabase = await ensureInventorySupabase();
+      const { data, error } = await supabase
+        .from(INVENTORY_TABLE)
+        .select('id,sort_order,name,quantity,unit,category,min_quantity,expiry_date,expiry_type,storage_method,origin,updated_by,created_at,updated_at')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(inventoryItemFromRow).filter(Boolean);
+    }
+
+    async function syncInventoryDiff(snapshot) {
+      if (!inventorySyncReady) return;
+      const entries = snapshot
+        .map((item, index) => ({ item, index, row: inventoryRowFromItem(item, index) }))
+        .filter(entry => entry.row);
+      const nextIds = new Set(entries.map(entry => entry.row.id));
+      const upserts = entries.filter(entry =>
+        inventoryRemoteBaseline.get(entry.row.id) !== inventoryComparable(entry.item, entry.index)
+      ).map(entry => entry.row);
+      const deletes = [...inventoryRemoteBaseline.keys()].filter(id => !nextIds.has(id));
+      if (!upserts.length && !deletes.length) return;
+
+      const supabase = await ensureInventorySupabase();
+      if (upserts.length) {
+        const { error } = await supabase
+          .from(INVENTORY_TABLE)
+          .upsert(upserts, { onConflict: 'id' });
+        if (error) throw error;
+      }
+      if (deletes.length) {
+        const { error } = await supabase
+          .from(INVENTORY_TABLE)
+          .delete()
+          .in('id', deletes);
+        if (error) throw error;
+      }
+      updateInventoryBaseline(snapshot);
+      try { localStorage.setItem(INVENTORY_REMOTE_READY_KEY, '1'); } catch (_) { /* ignore */ }
+    }
+
+    function queueInventoryRemoteSync(list) {
+      if (!inventorySyncReady || !inventorySupabase) return;
+      const snapshot = (list || [])
+        .map((item, index) => normalizeStoredItem({ ...item, sort_order: inventorySortOrder(item, index) }, index))
+        .filter(Boolean);
+      inventorySyncQueue = inventorySyncQueue
+        .catch(() => {})
+        .then(() => syncInventoryDiff(snapshot));
+      inventorySyncQueue.catch(err => {
+        console.warn('[Inventory sync]', err);
+        showToast('실시간 저장에 실패했습니다. 네트워크를 확인해주세요.', 3600);
+      });
+    }
+
+    function applyRemoteInventory(remoteItems, { notify = false } = {}) {
+      const before = inventoryFingerprint(items);
+      items = remoteItems;
+      learnMinQuantitiesFromItems(items);
+      writeInventoryCache(items);
+      updateInventoryBaseline(items);
+      refreshAll();
+      if (notify && before !== inventoryFingerprint(items)) {
+        showToast('다른 기기의 변경사항을 반영했습니다.', 2200);
+      }
+    }
+
+    async function refreshInventoryFromRemote(options = {}) {
+      if (inventoryRemoteRefreshPromise) return inventoryRemoteRefreshPromise;
+      inventoryRemoteRefreshPromise = (async () => {
+        await inventorySyncQueue.catch(() => {});
+        const remoteItems = await fetchInventoryRows();
+        applyRemoteInventory(remoteItems, options);
+      })()
+        .catch(err => {
+          console.warn('[Inventory realtime refresh]', err);
+        })
+        .finally(() => {
+          inventoryRemoteRefreshPromise = null;
+        });
+      return inventoryRemoteRefreshPromise;
+    }
+
+    function scheduleInventoryRemoteRefresh() {
+      if (!inventorySyncReady) return;
+      if (inventoryRemoteRefreshTimer) clearTimeout(inventoryRemoteRefreshTimer);
+      inventoryRemoteRefreshTimer = setTimeout(() => {
+        refreshInventoryFromRemote({ notify: true });
+      }, 180);
+    }
+
+    function subscribeInventoryRealtime() {
+      if (!inventorySupabase?.channel) return;
+      if (inventoryRealtimeChannel) {
+        inventorySupabase.removeChannel(inventoryRealtimeChannel);
+      }
+      inventoryRealtimeChannel = inventorySupabase
+        .channel('tuz-inventory-items')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: INVENTORY_TABLE
+        }, payload => {
+          const changedBy = payload?.new?.updated_by || payload?.old?.updated_by || '';
+          if (changedBy === INVENTORY_CLIENT_ID) return;
+          scheduleInventoryRemoteRefresh();
+        })
+        .subscribe(status => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('[Inventory realtime]', status);
+          }
+        });
     }
 
     function shouldSeedMockData() {
@@ -5081,6 +5309,45 @@
       };
     }
 
+    function normalizeInventoryMergeText(value) {
+      return String(value || '')
+        .normalize('NFKC')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+    }
+
+    function inventoryMergeKey(item) {
+      const expiryType = item?.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY';
+      return [
+        normalizeInventoryMergeText(item?.name),
+        normalizeInventoryMergeText(item?.unit || '개'),
+        normalizeInventoryMergeText(item?.category),
+        expiryType,
+        expiryType === 'NONE' ? '' : String(item?.expiry_date || ''),
+        normalizeInventoryMergeText(item?.storage_method),
+        normalizeInventoryMergeText(item?.origin)
+      ].join('|');
+    }
+
+    function mergeOrAppendInventoryItem(item) {
+      const mergeKey = inventoryMergeKey(item);
+      const existing = items.find(row => row.id !== item.id && inventoryMergeKey(row) === mergeKey);
+      if (!existing) {
+        items.push(item);
+        return { merged: false, item, addedQuantity: Number(item.quantity) || 0 };
+      }
+
+      const addedQuantity = Number(item.quantity) || 0;
+      const currentQuantity = Number(existing.quantity) || 0;
+      existing.quantity = Number((currentQuantity + addedQuantity).toFixed(3));
+      if (item.min_quantity !== null && item.min_quantity !== undefined && item.min_quantity !== '') {
+        existing.min_quantity = item.min_quantity;
+      }
+      existing.updated_at = new Date().toISOString();
+      return { merged: true, item: existing, addedQuantity };
+    }
+
     function makeMockInventoryData() {
       return [
         { name: '딸기 퓨레', quantity: 1, unit: '팩', category: '과일/토핑', min_quantity: 2, expiry_date: isoDaysFromToday(-1), expiry_type: 'SELL-BY', storage_method: '냉장', origin: '국내산' },
@@ -5106,15 +5373,44 @@
       return items.filter(item => item.expiry_type === currentExpiryType);
     }
 
-    function loadInventory() {
-      const seedDemo = shouldSeedMockData();
-      items = seedDemo ? makeMockInventoryData() : loadData();
+    async function loadInventory() {
+      items = loadData();
       learnMinQuantitiesFromItems(items);
-      if (seedDemo) {
-        saveData(items);
-        localStorage.setItem(DEMO_KEY, '1');
-      }
       refreshAll();
+
+      try {
+        await ensureInventorySupabase();
+        const remoteItems = await fetchInventoryRows();
+        inventorySyncReady = true;
+
+        if (remoteItems.length) {
+          applyRemoteInventory(remoteItems);
+        } else if (items.length && !localStorage.getItem(INVENTORY_REMOTE_READY_KEY)) {
+          updateInventoryBaseline([]);
+          saveData(items);
+          refreshAll();
+        } else {
+          items = [];
+          writeInventoryCache(items);
+          updateInventoryBaseline(items);
+          refreshAll();
+        }
+
+        try { localStorage.setItem(INVENTORY_REMOTE_READY_KEY, '1'); } catch (_) { /* ignore */ }
+        subscribeInventoryRealtime();
+      } catch (err) {
+        console.warn('[Inventory remote]', err);
+        inventorySyncReady = false;
+        const seedDemo = shouldSeedMockData();
+        if (!items.length && seedDemo) {
+          items = makeMockInventoryData();
+          writeInventoryCache(items);
+          localStorage.setItem(DEMO_KEY, '1');
+        }
+        updateInventoryBaseline(items);
+        refreshAll();
+        showToast('실시간 동기화 연결에 실패해 이 기기 캐시로 열었습니다.', 3600);
+      }
     }
 
     function refreshAll() {
@@ -5399,8 +5695,8 @@
         storage_method: fd.get('storage_method'),
         origin:         fd.get('origin')
       });
-      items.push(item);
-      rememberMinQuantityForItem(item);
+      const addResult = mergeOrAppendInventoryItem(item);
+      rememberMinQuantityForItem(addResult.item);
       saveData(items);
       refreshAll();
       e.target.reset();
@@ -5411,7 +5707,9 @@
       updateAddPickerButtons();
       setGlobalExpiryType(expiryType === 'NONE' ? 'NONE' : currentExpiryType);
       closeAddSheet();
-      showToast('재고 항목이 추가됐습니다.');
+      showToast(addResult.merged
+        ? `[${addResult.item.name}] 수량에 ${addResult.addedQuantity}${addResult.item.unit || '개'} 합산했습니다.`
+        : '재고 항목이 추가됐습니다.');
     });
 
     document.getElementById('expiry-type-toggle').addEventListener('click', function () {
@@ -6820,13 +7118,15 @@
         storage_method: document.getElementById('ocr-storage').value,
         origin:         document.getElementById('ocr-origin').value.trim()
       });
-      items.push(item);
-      rememberMinQuantityForItem(item);
+      const addResult = mergeOrAppendInventoryItem(item);
+      rememberMinQuantityForItem(addResult.item);
 
       saveData(items);
       refreshAll();
       closeOcrModal();
-      showToast(`[${name}] 등록됐습니다.`);
+      showToast(addResult.merged
+        ? `[${addResult.item.name}] 수량에 ${addResult.addedQuantity}${addResult.item.unit || '개'} 합산했습니다.`
+        : `[${name}] 등록됐습니다.`);
     });
 
     document.getElementById('ocr-cancel-btn').addEventListener('click', closeOcrModal);
