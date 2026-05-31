@@ -869,8 +869,12 @@
         font-size: .66rem;
       }
 
-      .rh-stat-caption {
-        font-size: .56rem;
+    .rh-stat-caption {
+      font-size: .56rem;
+    }
+
+      .rh-stat-info {
+        font-size: .5rem;
       }
 
       .inv-badge {
@@ -980,6 +984,16 @@
       white-space: nowrap;
     }
 
+    .rh-stat-info {
+      display: block;
+      margin-top: 3px;
+      color: rgba(255,255,255,.62);
+      font-size: .56rem;
+      font-weight: 700;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+
     /* Toggle overlapping band/sheet boundary */
     .rh-toggle-row {
       position: absolute;
@@ -1078,6 +1092,10 @@
       max-width: 110px;
     }
 
+    #expiry-filter[hidden] {
+      display: none;
+    }
+
     #category-filter { display: none; }
 
     /* ── CATEGORY CHIPS ───────────────────────────────────────── */
@@ -1091,6 +1109,29 @@
     }
 
     #category-chips::-webkit-scrollbar { display: none; }
+
+    .filter-criteria-note {
+      margin: -4px 18px 14px;
+      padding: 11px 12px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 12px;
+      background: #fffaf3;
+      color: var(--manager-ink, var(--ink));
+      font-size: .78rem;
+      line-height: 1.42;
+      box-shadow: 0 6px 16px rgba(83, 42, 25, .05);
+    }
+
+    .filter-criteria-note[hidden] {
+      display: none;
+    }
+
+    .filter-criteria-note strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--manager-accent, var(--red));
+      font-size: .76rem;
+    }
 
     .chip {
       flex-shrink: 0;
@@ -4683,28 +4724,31 @@
       </div>
       <div class="rh-date" id="rh-date"></div>
       <div class="rh-stats">
-        <button type="button" class="rh-stat today" data-stat-filter="low" aria-label="부족 가능 재료 보기">
+        <button type="button" class="rh-stat today" data-stat-filter="low" aria-label="재고량 부족 재료 보기. 기준 수량보다 적거나 곧 써야 할 것을 빼면 부족한 재료입니다.">
           <span class="rh-stat-icon">📦</span>
           <span>
             <span class="rh-stat-count today" id="tile-today">0</span>
-            <span class="rh-stat-label today">부족 가능</span>
-            <span class="rh-stat-caption" id="tile-basis-today">주문 판단</span>
+            <span class="rh-stat-label today">재고량 부족</span>
+            <span class="rh-stat-caption" id="tile-basis-today">주문 확인</span>
+            <span class="rh-stat-info">기준보다 적음</span>
           </span>
         </button>
-        <button type="button" class="rh-stat tomorrow" data-stat-filter="attention" aria-label="지금 확인할 재료 보기">
+        <button type="button" class="rh-stat tomorrow" data-stat-filter="attention" aria-label="오늘 내일 기한 재료 보기. 기한 초과, 오늘까지, 내일까지인 재료입니다.">
           <span class="rh-stat-icon">👀</span>
           <span>
             <span class="rh-stat-count tomorrow" id="tile-tomorrow">0</span>
-            <span class="rh-stat-label">지금 확인</span>
-            <span class="rh-stat-caption" id="tile-basis-tomorrow">영업 중 우선</span>
+            <span class="rh-stat-label">오늘·내일</span>
+            <span class="rh-stat-caption" id="tile-basis-tomorrow">기한 확인</span>
+            <span class="rh-stat-info">초과 포함</span>
           </span>
         </button>
-        <button type="button" class="rh-stat week" data-stat-filter="week" aria-label="임박 재료 보기">
+        <button type="button" class="rh-stat week" data-stat-filter="week" aria-label="2일에서 6일 안에 기한이 오는 재료 보기">
           <span class="rh-stat-icon">📅</span>
           <span>
             <span class="rh-stat-count week" id="tile-week">0</span>
-            <span class="rh-stat-label">임박 재료</span>
-            <span class="rh-stat-caption">기한 주의</span>
+            <span class="rh-stat-label">2~6일 기한</span>
+            <span class="rh-stat-caption">먼저 쓰기</span>
+            <span class="rh-stat-info">기한 있는 재료만</span>
           </span>
         </button>
       </div>
@@ -4726,10 +4770,10 @@
         <!-- Search + expiry filter -->
         <div class="rh-search-row">
           <input id="search-input" type="search" placeholder="품목 검색…">
-          <select id="expiry-filter">
+          <select id="expiry-filter" hidden aria-hidden="true" tabindex="-1">
             <option value="">전체</option>
-            <option value="attention">지금 확인</option>
-            <option value="low">부족 가능</option>
+            <option value="attention">오늘·내일</option>
+            <option value="low">재고량 부족</option>
             <option value="expired">초과</option>
             <option value="today">오늘</option>
             <option value="tomorrow">내일</option>
@@ -4741,6 +4785,8 @@
 
         <!-- Category chips (populated by refreshCategories) -->
         <div id="category-chips"></div>
+
+        <div id="filter-criteria-note" class="filter-criteria-note" hidden></div>
 
         <div class="inventory-view-toggle" role="group" aria-label="목록 보기 방식">
           <button type="button" class="inventory-view-btn active" data-inventory-view="grouped" aria-pressed="true">묶음</button>
@@ -6572,6 +6618,31 @@
         );
     }
 
+    function isShortageAttentionSummary(summary) {
+      if (!summary) return false;
+      return summary.low || stockRiskProfile(summary).shortAfterAttention;
+    }
+
+    function shortageAttentionSummaries(sourceItems = items) {
+      const seen = new Set();
+      return (sourceItems || [])
+        .map(item => {
+          const key = inventoryStockKey(item);
+          if (seen.has(key)) return null;
+          seen.add(key);
+          return inventoryStockSummary(item, sourceItems);
+        })
+        .filter(isShortageAttentionSummary)
+        .sort((a, b) => {
+          const ap = stockRiskProfile(a);
+          const bp = stockRiskProfile(b);
+          return Number(!a.low) - Number(!b.low) ||
+            (a.totalQuantity - (a.minQuantity ?? 0)) - (b.totalQuantity - (b.minQuantity ?? 0)) ||
+            (ap.freshQuantity - (a.minQuantity ?? 0)) - (bp.freshQuantity - (b.minQuantity ?? 0)) ||
+            String(a.item?.name || '').localeCompare(String(b.item?.name || ''), 'ko');
+        });
+    }
+
     function isInventoryStockLow(item, sourceItems = items) {
       return inventoryStockSummary(item, sourceItems).low;
     }
@@ -6743,9 +6814,9 @@
       const withDday = sourceItems
         .map(i => ({ ...i, dday: calcDDay(i.expiry_date) }))
         .filter(i => i.dday !== null);
-      const lowStock = lowInventorySummaries(sourceItems);
-      const attentionRows = getHadongAlertRows(sourceItems);
-      const weekRows = withDday.filter(i => i.dday >= 0 && i.dday <= 6);
+      const lowStock = shortageAttentionSummaries(sourceItems);
+      const attentionRows = withDday.filter(i => i.dday <= 1);
+      const weekRows = withDday.filter(i => i.dday >= 2 && i.dday <= 6);
 
       document.getElementById('tile-today').textContent =
         lowStock.length;
@@ -6753,8 +6824,8 @@
         attentionRows.length;
       document.getElementById('tile-week').textContent =
         weekRows.length;
-      document.getElementById('tile-basis-today').textContent = lowStock.length ? '주문 판단' : '여유 있음';
-      document.getElementById('tile-basis-tomorrow').textContent = attentionRows.length ? '먼저 보기' : '안정';
+      document.getElementById('tile-basis-today').textContent = lowStock.length ? '주문 확인' : '여유 있음';
+      document.getElementById('tile-basis-tomorrow').textContent = attentionRows.length ? '기한 확인' : '안정';
 
       const urgent = withDday.filter(i => i.dday <= 0);
       const alertEl = document.getElementById('crisis-alert');
@@ -6897,10 +6968,10 @@
         label = '부족';
       } else if (shortAfterAttention) {
         status = 'watch';
-        label = '임박분 빼면 부족';
+        label = '곧 쓸 것 빼면 부족';
       } else if (weekQuantity > 0) {
         status = 'week';
-        label = `임박 ${quantityLabel(weekQuantity, unit)}`;
+        label = `곧 쓸 ${quantityLabel(weekQuantity, unit)}`;
       }
 
       return {
@@ -7009,8 +7080,8 @@
       else if (profile.todayQuantity > 0) push('today', `오늘까지 ${quantityLabel(profile.todayQuantity, unit)}`);
       else if (profile.tomorrowQuantity > 0) push('tomorrow', `내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
       else if (stock.low) push('low', '기준 미달');
-      else if (profile.shortAfterAttention) push('watch', '임박분 제외 시 부족');
-      else if (profile.weekQuantity > 0) push('week', `이번 주 ${quantityLabel(profile.weekQuantity, unit)}`);
+      else if (profile.shortAfterAttention) push('watch', '곧 쓸 것 빼면 부족');
+      else if (profile.weekQuantity > 0) push('week', `곧 쓸 ${quantityLabel(profile.weekQuantity, unit)}`);
 
       if (stock.low && !badges.some(badge => badge.className === 'low')) push('low', '기준 미달');
       if (profile.shortAfterAttention) {
@@ -7036,7 +7107,7 @@
       else if (profile.tomorrowQuantity > 0) parts.push(`내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
       else if (profile.weekQuantity > 0) parts.push(`이번 주 ${quantityLabel(profile.weekQuantity, unit)}`);
       if (stock.low) parts.push('기준 미달');
-      else if (profile.shortAfterAttention) parts.push('임박분 제외 시 부족');
+      else if (profile.shortAfterAttention) parts.push('곧 쓸 것 빼면 부족');
       if ((stock.low || profile.shortAfterAttention) && profile.freshQuantity > 0) parts.push(`여유 ${quantityLabel(profile.freshQuantity, unit)}`);
       if (!parts.length) parts.push('안정');
       return parts.slice(0, 2).join(' · ');
@@ -7047,7 +7118,7 @@
       if (dday !== null && dday < 0) return { status: 'expired', label: '기한 초과' };
       if (dday === 0) return { status: 'today', label: '오늘까지' };
       if (dday === 1) return { status: 'tomorrow', label: '내일까지' };
-      if (dday !== null && dday <= 6) return { status: 'week', label: '임박' };
+      if (dday !== null && dday <= 6) return { status: 'week', label: '곧 사용' };
       return { status: 'safe', label: dday === null ? '기한 없음' : '여유' };
     }
 
@@ -7657,6 +7728,42 @@
     const searchInput    = document.getElementById('search-input');
     const categoryFilter = document.getElementById('category-filter');
     const expiryFilter   = document.getElementById('expiry-filter');
+    const filterCriteriaNote = document.getElementById('filter-criteria-note');
+
+    const FILTER_CRITERIA_COPY = {
+      attention: {
+        title: '오늘·내일 기준',
+        text: '기한이 지났거나 오늘까지, 내일까지인 재료만 모았어요.'
+      },
+      low: {
+        title: '재고량 부족 기준',
+        text: '전체 수량이 기준보다 적거나, 곧 써야 할 것을 빼면 기준보다 적어지는 재료예요.'
+      },
+      week: {
+        title: '2~6일 기한 기준',
+        text: '모레부터 6일 안에 유통기한/소비기한이 오는 재료예요.'
+      },
+      expired: {
+        title: '초과 기준',
+        text: '입력된 유통기한/소비기한이 지난 재료예요.'
+      },
+      today: {
+        title: '오늘 기준',
+        text: '오늘까지 써야 하는 재료예요.'
+      },
+      tomorrow: {
+        title: '내일 기준',
+        text: '내일까지 써야 하는 재료예요.'
+      },
+      safe: {
+        title: '여유 기준',
+        text: '기한이 7일 이상 남아 있는 재료예요.'
+      },
+      none: {
+        title: '기한 없음 기준',
+        text: '기한이 없거나 날짜를 아직 입력하지 않은 재료예요.'
+      }
+    };
 
     function syncInventoryViewToggle() {
       document.querySelectorAll('[data-inventory-view]').forEach(btn => {
@@ -7752,15 +7859,10 @@
             case 'today':    if (d !== 0)                           return false; break;
             case 'tomorrow': if (d !== 1)                           return false; break;
             case 'week':     if (!(d !== null && d >= 2 && d <= 6)) return false; break;
-            case 'attention': {
-              const stock = inventoryStockSummary(item, getVisibleItems());
-              const profile = stockRiskProfile(stock);
-              if (!['expired', 'today', 'tomorrow', 'low', 'watch', 'week'].includes(profile.status)) return false;
-              break;
-            }
+            case 'attention': if (!(d !== null && d <= 1)) return false; break;
             case 'low': {
               const stock = inventoryStockSummary(item, getVisibleItems());
-              if (!stock.low && !stockRiskProfile(stock).shortAfterAttention) return false;
+              if (!isShortageAttentionSummary(stock)) return false;
               break;
             }
             case 'safe':     if (!(d !== null && d > 6))            return false; break;
@@ -7774,6 +7876,7 @@
     function refreshFilteredList() {
       refreshCategories();
       renderList(getFiltered());
+      updateFilterCriteriaNote();
     }
 
     searchInput.addEventListener('input', refreshFilteredList);
@@ -7786,6 +7889,18 @@
         btn.classList.toggle('active', !!isActive);
         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
+    }
+
+    function updateFilterCriteriaNote() {
+      if (!filterCriteriaNote) return;
+      const copy = FILTER_CRITERIA_COPY[expiryFilter.value || ''];
+      if (!copy) {
+        filterCriteriaNote.hidden = true;
+        filterCriteriaNote.innerHTML = '';
+        return;
+      }
+      filterCriteriaNote.hidden = false;
+      filterCriteriaNote.innerHTML = `<strong>${escHtml(copy.title)}</strong>${escHtml(copy.text)}`;
     }
 
     function applyExpiryFilter(nextFilter, { scroll = false } = {}) {
@@ -7806,6 +7921,7 @@
       });
     });
     syncStatFilterButtons();
+    updateFilterCriteriaNote();
 
     document.getElementById('category-chips').addEventListener('click', e => {
       const chip = e.target.closest('.chip');
@@ -10356,7 +10472,7 @@
       const parts = [];
       if (stats.expired) parts.push(`기한 지난 재료 ${stats.expired}개`);
       if (stats.today) parts.push(`오늘까지 ${stats.today}개`);
-      if (stats.week) parts.push(`임박 재료 ${stats.week}개`);
+      if (stats.week) parts.push(`곧 쓸 재료 ${stats.week}개`);
       if (stats.low) parts.push(`부족 가능 ${stats.low}개`);
       const summary = parts.length ? parts.join(', ') : '급한 재고 알림은 없다멍';
       const hasWork = parts.length > 0;
@@ -10371,7 +10487,7 @@
           metrics: [
             { kind: 'expired', icon: '🚨', label: '기한 지남', count: stats.expired },
             { kind: 'today', icon: '⏰', label: '오늘까지', count: stats.today },
-            { kind: 'week', icon: '📅', label: '임박 재료', count: stats.week },
+            { kind: 'week', icon: '📅', label: '곧 쓸 재료', count: stats.week },
             { kind: 'low', icon: '📦', label: '부족 가능', count: stats.low }
           ],
           note: hasWork
@@ -11242,7 +11358,7 @@
       if (dday !== null && dday < 0) return '기한 확인';
       if (dday === 0) return '오늘까지';
       if (dday === 1) return '내일까지';
-      if (dday !== null && dday <= 6) return '임박';
+      if (dday !== null && dday <= 6) return '곧 사용';
       return '안정';
     }
 
@@ -11652,7 +11768,7 @@
 
       if (wantsWeek) {
         if (!week.length) return `${icon} 멍! 이번 주 안에 기한이 오는 재료는 없다멍.`;
-        return { text: `📅 임박 재료 ${week.length}개를 한 번에 보기 탭에 올려뒀다멍.\n가까운 기한부터 먼저 쓰면 된다멍.`, overviewFilter: 'week' };
+        return { text: `📅 곧 쓸 재료 ${week.length}개를 한 번에 보기 탭에 올려뒀다멍.\n가까운 기한부터 먼저 쓰면 된다멍.`, overviewFilter: 'week' };
       }
 
       if (fallback) {

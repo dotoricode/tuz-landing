@@ -484,7 +484,7 @@
           return true;
         })
         .slice(0, 10)
-        .map(row => candidateFromItem(row, row.expired ? '기한 확인' : row.today ? '오늘까지' : lowIds.has(row.id) ? '부족 가능' : '임박 재료', 'inspect', null));
+        .map(row => candidateFromItem(row, row.expired ? '기한 확인' : row.today ? '오늘까지' : lowIds.has(row.id) ? '부족 가능' : '곧 쓸 재료', 'inspect', null));
       return {
         source: 'local',
         intent: intent.intent,

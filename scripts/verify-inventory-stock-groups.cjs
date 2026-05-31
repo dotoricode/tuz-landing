@@ -63,7 +63,7 @@ function loadInventoryDebug(fixture) {
     ${renderHelperFunctions}
     ${alertFunctions}
 
-    return { detailStatusLabel, groupAdvice, inventoryStockSummary, lowInventorySummaries, getHadongAlertRows, stockRiskProfile };
+    return { detailStatusLabel, groupAdvice, inventoryStockSummary, lowInventorySummaries, shortageAttentionSummaries, getHadongAlertRows, stockRiskProfile };
   `)(fixture);
 }
 
@@ -96,11 +96,12 @@ const mixedProfile = mixed.stockRiskProfile(mixedStock);
 assert.equal(mixedStock.totalQuantity, 2);
 assert.equal(mixedProfile.status, 'watch');
 assert.equal(mixedProfile.shortAfterAttention, true);
+assert.equal(mixed.shortageAttentionSummaries().length, 1);
 assert.equal(
   mixed.groupAdvice(mixedStock, mixedProfile).text,
   '전체 수량은 괜찮지만, 곧 써야 하는 걸 빼면 여유가 1팩뿐이에요. 가까운 기한부터 먼저 쓰고, 부족하면 새로 채워 주세요.'
 );
-assert.equal(mixed.detailStatusLabel(mixedStock, mixedProfile), '이번 주 1팩 · 임박분 제외 시 부족');
+assert.equal(mixed.detailStatusLabel(mixedStock, mixedProfile), '이번 주 1팩 · 곧 쓸 것 빼면 부족');
 assert.equal(mixed.getHadongAlertRows().length, 0);
 
 const butterLots = [
