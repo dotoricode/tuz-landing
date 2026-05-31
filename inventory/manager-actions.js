@@ -17,10 +17,11 @@
   const READ_ONLY_RE = /(목록|리스트|후보|보여|알려|찾아|조회|있어|뭐|어떤|확인|확인만|보기만)/i;
   const LOW_STOCK_RE = /(부족|떨어질|떨어져|모자라|최소|발주|주문|사야|low\s*stock)/i;
   const EXCESS_STOCK_RE = /(많이\s*남|많은\s*재고|과잉|넘치|쌓인|남는|excess|overstock)/i;
+  const STOCK_STATUS_RE = /(얼마|몇|남았|수량|재료\s*상태|상태\s*(한\s*)?번|괜찮|버틸|재고\s*봐|재료\s*봐)/i;
   const GENERIC_TARGET_RE = /(폐기\s*(처리\s*)?해야\s*할\s*(거|것|목록|리스트)?|처리\s*해야\s*할\s*(거|것|목록|리스트)|폐기할\s*(거|것|목록|리스트)?|버릴\s*(거|것|목록|리스트)?|유통기한\s*지난\s*(거|것|목록|리스트)?|기한\s*지난\s*(거|것|목록|리스트)?|지난\s*(거|것|목록|리스트)|만료된\s*(거|것|목록|리스트)?|오늘\s*(정리|처리)할\s*(거|것|목록|리스트)?|정리할\s*(거|것|목록|리스트)?|처리할\s*(거|것|목록|리스트)?)/i;
   const VAGUE_RE = /(이상한\s*(거|것)|문제\s*있는\s*(거|것)|찝찝한\s*(거|것)|뭔가\s*이상)/i;
 
-  const STOP_WORDS_RE = /(하동이|쿠키|매니저|재고|품목|수량|개수|현재|좀|제발|바로|오늘|마감|목록|리스트|후보|보여줘|보여|알려줘|알려|확인해줘|확인|조회|찾아줘|찾아|정리할|처리할|정리|처리|폐기\s*(처리\s*)?해야\s*할|처리\s*해야\s*할|해야\s*할|폐기할|폐기|버릴|버려|버리|빼줘|빼|제거|삭제|해줘|줘|해|다|전부|모두|전체|전량|상한|상했|상함|이상한|이상|유통기한|소비기한|기한|지난|초과|만료|거|것)/gi;
+  const STOP_WORDS_RE = /(하동이|쿠키|매니저|재고|품목|수량|개수|현재|좀|제발|바로|오늘|마감|목록|리스트|후보|보여줘|보여|봐줘|봐|알려줘|알려|확인해줘|확인|조회|찾아줘|찾아|정리할|처리할|정리|처리|폐기\s*(처리\s*)?해야\s*할|처리\s*해야\s*할|해야\s*할|폐기할|폐기|버릴|버려|버리|빼줘|빼|제거|삭제|해줘|줘|해|다|전부|모두|전체|전량|상한|상했|상함|이상한|이상|유통기한|소비기한|기한|지난|초과|만료|얼마나|얼마|몇|남았어|남아|있어|괜찮아|괜찮|버틸|상태|한\s*번|한번|재료|거|것)/gi;
 
   function todayIso(date = new Date()) {
     const d = new Date(date);
@@ -56,7 +57,7 @@
   function ddayLabel(dday) {
     if (dday === null || dday === undefined) return '기한 미입력';
     if (dday < 0) return `D+${Math.abs(dday)} 초과`;
-    if (dday === 0) return '오늘 마감';
+    if (dday === 0) return '오늘까지';
     return `${dday}일 남음`;
   }
 
@@ -143,6 +144,28 @@
       .filter(row => row.score > 0)
       .sort((a, b) => b.score - a.score || String(a.item.name || '').length - String(b.item.name || '').length)
       .map(row => row.item);
+  }
+
+  function findInventoryMatchesWithAliases(items, query) {
+    const direct = findInventoryMatches(items, query);
+    const compactQuery = compactText(query);
+    const exactDirect = direct.filter(item => compactText(item.name) === compactQuery);
+    if (exactDirect.length) return exactDirect;
+
+    const text = normalizeText(query);
+    const aliasTerms = /라떼|라테|카페라떼|바닐라라떼/.test(text)
+      ? ['우유', '원두', '커피', '시럽']
+      : /아메리카노|커피/.test(text)
+        ? ['원두', '커피', '콜드브루']
+        : [];
+    if (!aliasTerms.length) return direct;
+
+    const seen = new Set();
+    return aliasTerms.flatMap(term => findInventoryMatches(items, term)).filter(item => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
   }
 
   function inventoryStockKey(item) {
@@ -277,6 +300,18 @@
       };
     }
 
+    if (STOCK_STATUS_RE.test(text)) {
+      const genericStatusQuery = !query || query.length < 2 || /^(봐|상태|재료)$/.test(query);
+      return {
+        intent: genericStatusQuery ? 'stock_status_report' : 'search_inventory',
+        operation: 'brief',
+        confidence: 0.82,
+        criteria: { readOnly: true, itemQuery: genericStatusQuery ? '' : query },
+        query: genericStatusQuery ? '' : query,
+        amount: null
+      };
+    }
+
     if (readOnly && TODAY_RE.test(text) && !EXPIRED_RE.test(text) && !SPOILAGE_RE.test(text) && !/폐기|버릴|버려|만료|초과|지난/.test(text)) {
       return {
         intent: 'brief_today',
@@ -360,8 +395,8 @@
 
     if (intent.intent === 'ask_clarification') {
       const reply = intent.criteria?.broadAction
-        ? '정리/처리는 범위가 넓어서 바로 바꾸지 않겠다멍. 유통기한 지난 것, 부족 재고, 특정 품목/수량 중 무엇을 처리할지 골라달라멍.'
-        : '무엇을 “이상한 거”로 볼지 기준이 더 필요하다멍. 유통기한 지난 것, 상한 것으로 확인한 것, 오늘 마감 중에서 골라달라멍.';
+        ? '정리/처리는 범위가 넓어서 바로 바꾸지 않겠다멍. 유통기한 지난 것, 부족 가능 재료, 특정 품목/수량 중 무엇을 처리할지 골라달라멍.'
+        : '무엇을 “이상한 거”로 볼지 기준이 더 필요하다멍. 유통기한 지난 것, 상한 것으로 확인한 것, 오늘까지인 것 중에서 골라달라멍.';
       return {
         source: 'local',
         intent: intent.intent,
@@ -385,10 +420,10 @@
         requiresConfirmation: false,
         execution: 'reply',
         criteria: intent.criteria,
-        candidates: low.map(row => candidateFromItem(row, '부족 재고', 'inspect', null)),
+        candidates: low.map(row => candidateFromItem(row, '부족 가능', 'inspect', null)),
         reply: low.length
-          ? `부족 재고 ${low.length}개를 찾았다멍. 아직 수량은 바꾸지 않고 목록만 보여준다멍.`
-          : '부족 기준에 걸린 재고는 없다멍.'
+          ? `부족 가능 재료 ${low.length}개를 찾았다멍. 아직 수량은 바꾸지 않고 목록만 보여준다멍.`
+          : '부족 기준에 걸린 재료는 없다멍.'
       };
     }
 
@@ -417,6 +452,54 @@
       };
     }
 
+    if (intent.intent === 'search_inventory') {
+      const matches = intent.query ? findInventoryMatchesWithAliases(items, intent.query).map(item => enrichItem(item, baseIso)) : [];
+      return {
+        source: 'local',
+        intent: intent.intent,
+        operation: 'brief',
+        confidence: matches.length ? intent.confidence : 0.56,
+        requiresConfirmation: false,
+        execution: 'reply',
+        criteria: intent.criteria,
+        query: intent.query,
+        candidates: matches.slice(0, 8).map(row => candidateFromItem(row, '현재 재고', 'inspect', null)),
+        reply: matches.length
+          ? `${intent.query} 관련 재고 ${matches.length}개를 확인했다멍. 수량은 바꾸지 않았다멍.`
+          : `"${intent.query}"로 찾은 재고가 없다멍. 품목명이나 재료명을 조금 더 붙여달라멍.`
+      };
+    }
+
+    if (intent.intent === 'stock_status_report') {
+      const expired = inStockRows.filter(row => row.expired);
+      const today = inStockRows.filter(row => row.today);
+      const week = inStockRows.filter(row => row.dday !== null && row.dday >= 1 && row.dday <= 6);
+      const low = lowStockRows(inStockRows);
+      const lowIds = new Set(low.map(row => row.id));
+      const seen = new Set();
+      const candidates = [...low, ...expired, ...today, ...week]
+        .filter(row => {
+          if (seen.has(row.id)) return false;
+          seen.add(row.id);
+          return true;
+        })
+        .slice(0, 10)
+        .map(row => candidateFromItem(row, row.expired ? '기한 확인' : row.today ? '오늘까지' : lowIds.has(row.id) ? '부족 가능' : '임박 재료', 'inspect', null));
+      return {
+        source: 'local',
+        intent: intent.intent,
+        operation: 'brief',
+        confidence: intent.confidence,
+        requiresConfirmation: false,
+        execution: 'reply',
+        criteria: intent.criteria,
+        candidates,
+        reply: candidates.length
+          ? `지금 먼저 볼 재료 ${candidates.length}개를 확인했다멍. 수량은 바꾸지 않았다멍.`
+          : '지금 부족하거나 급한 재료는 뚜렷하지 않다멍.'
+      };
+    }
+
     if (intent.intent === 'brief_today') {
       const expired = inStockRows.filter(row => row.expired);
       const today = inStockRows.filter(row => row.today);
@@ -431,15 +514,15 @@
         criteria: intent.criteria,
         candidates: [
           ...expired.map(row => candidateFromItem(row, '기한 초과')),
-          ...today.filter(row => !expired.some(expiredRow => expiredRow.id === row.id)).map(row => candidateFromItem(row, '오늘 마감')),
-          ...low.filter(row => !expired.some(expiredRow => expiredRow.id === row.id) && !today.some(todayRow => todayRow.id === row.id)).map(row => candidateFromItem(row, '부족 재고'))
+          ...today.filter(row => !expired.some(expiredRow => expiredRow.id === row.id)).map(row => candidateFromItem(row, '오늘까지')),
+          ...low.filter(row => !expired.some(expiredRow => expiredRow.id === row.id) && !today.some(todayRow => todayRow.id === row.id)).map(row => candidateFromItem(row, '부족 가능'))
         ],
-        reply: `오늘 정리할 재고를 확인했다멍. 기한 초과 ${expired.length}개, 오늘 마감 ${today.length}개, 부족 재고 ${low.length}개다멍.`
+        reply: `지금 확인할 재료를 봤다멍. 기한 초과 ${expired.length}개, 오늘까지 ${today.length}개, 부족 가능 ${low.length}개다멍.`
       };
     }
 
     const query = intent.query;
-    const matches = query ? findInventoryMatches(items, query).map(item => enrichItem(item, baseIso)) : [];
+    const matches = query ? findInventoryMatchesWithAliases(items, query).map(item => enrichItem(item, baseIso)) : [];
     const expiredOrMarked = inStockRows.filter(row => row.expired || row.markedForDisposal);
 
     if (intent.intent === 'dispose_named_item') {
@@ -549,9 +632,9 @@
           requiresConfirmation: true,
           execution: 'confirm',
           criteria: intent.criteria,
-          candidates: todayRows.map(row => candidateFromItem(row, row.expired ? '기한 초과' : '오늘 마감')),
+          candidates: todayRows.map(row => candidateFromItem(row, row.expired ? '기한 초과' : '오늘까지')),
           reply: todayRows.length
-            ? `오늘 처리 후보가 ${todayRows.length}개 있다멍. 기한 초과는 폐기해도 되지만, 오늘 마감은 사용 여부 확인이 필요하다멍.`
+            ? `오늘 확인 후보가 ${todayRows.length}개 있다멍. 기한 초과는 폐기해도 되지만, 오늘까지인 재료는 사용 여부 확인이 필요하다멍.`
             : buildEmptyDisposalReply(intent, rows)
         };
       }
@@ -570,16 +653,19 @@
         };
       }
 
+      const needsBatchConfirmation = expiredOrMarked.length > 1;
       return {
         source: 'local',
         intent: intent.intent,
         operation: 'dispose',
         confidence: 0.93,
-        requiresConfirmation: false,
-        execution: 'auto',
+        requiresConfirmation: needsBatchConfirmation,
+        execution: needsBatchConfirmation ? 'confirm' : 'auto',
         criteria: intent.criteria,
         candidates: expiredOrMarked.map(row => candidateFromItem(row, row.expired ? '기한 초과' : '폐기 예정 표시')),
-        reply: `폐기 기준에 맞는 재고 ${expiredOrMarked.length}개를 찾았다멍.`
+        reply: needsBatchConfirmation
+          ? `폐기 기준에 맞는 재고 ${expiredOrMarked.length}개를 찾았다멍. 여러 개라 바로 처리하지 않고 확인이 필요하다멍.`
+          : `폐기 기준에 맞는 재고 ${expiredOrMarked.length}개를 찾았다멍.`
       };
     }
 
@@ -612,6 +698,8 @@
     const action = plan.action || (
       plan.intent === 'low_stock_report' ? 'low_stock_report' :
       plan.intent === 'excess_stock_report' ? 'excess_stock_report' :
+      plan.intent === 'search_inventory' ? 'search_inventory' :
+      plan.intent === 'stock_status_report' ? 'stock_status_report' :
       plan.operation === 'dispose' ? 'dispose' :
       plan.operation === 'brief' ? 'inspect_candidates' :
       plan.operation === 'clarify_work_scope' || plan.operation === 'clarify_disposal_criteria' ? 'ask_clarification' :

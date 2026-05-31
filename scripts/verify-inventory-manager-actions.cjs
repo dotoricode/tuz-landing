@@ -38,12 +38,12 @@ const disposeGeneric = plan('폐기해야할 거 폐기해줘');
 assert.equal(disposeGeneric.intent, 'dispose_candidates');
 assert.equal(disposeGeneric.operationType, 'write');
 assert.equal(disposeGeneric.action, 'dispose');
-assert.equal(disposeGeneric.execution, 'auto');
+assert.equal(disposeGeneric.execution, 'confirm');
 assert.deepEqual(disposeGeneric.candidates.map(item => item.id).sort(), ['strawberry', 'tiramisu']);
-assert.equal(simulate(disposeGeneric).some(item => item.id === 'strawberry'), false);
+assert.equal(simulate(disposeGeneric).some(item => item.id === 'strawberry'), true);
 
 const disposeExpired = plan('유통기한 지난 거 다 빼줘');
-assert.equal(disposeExpired.execution, 'auto');
+assert.equal(disposeExpired.execution, 'confirm');
 assert.deepEqual(disposeExpired.candidates.map(item => item.id).sort(), ['strawberry', 'tiramisu']);
 
 [
@@ -105,6 +105,34 @@ assert.equal(low.intent, 'low_stock_report');
 assert.equal(low.operationType, 'read');
 assert.equal(low.execution, 'reply');
 assert(low.candidates.some(item => item.id === 'strawberry'));
+assert.equal(manager.validateActionPlanForExecution(low, inventoryFixture(), { todayIso: TODAY }).ok, false);
+
+const lowNow = plan('지금 부족한 거 있어?');
+assert.equal(lowNow.intent, 'low_stock_report');
+assert.equal(lowNow.operationType, 'read');
+assert(lowNow.candidates.some(item => item.id === 'strawberry'));
+
+const milkAmount = plan('우유 얼마나 남았어?');
+assert.equal(milkAmount.intent, 'search_inventory');
+assert.equal(milkAmount.operationType, 'read');
+assert.deepEqual(milkAmount.candidates.map(item => item.id), ['milk']);
+
+const latteStatus = plan('오늘 라떼 재료 괜찮아?');
+assert.equal(latteStatus.intent, 'search_inventory');
+assert.equal(latteStatus.operationType, 'read');
+assert(latteStatus.candidates.some(item => item.id === 'milk'));
+assert(latteStatus.candidates.some(item => item.id === 'syrup'));
+
+const orderToday = plan('오늘 주문 넣어야 할 거 있어?');
+assert.equal(orderToday.intent, 'low_stock_report');
+assert.equal(orderToday.operationType, 'read');
+assert(orderToday.candidates.some(item => item.id === 'strawberry'));
+
+const stockStatus = plan('재료 상태 한번 봐줘');
+assert.equal(stockStatus.intent, 'stock_status_report');
+assert.equal(stockStatus.operationType, 'read');
+assert(stockStatus.candidates.some(item => item.id === 'strawberry'));
+assert(stockStatus.candidates.some(item => item.id === 'milk'));
 
 const lemonLots = [
   { id: 'lemon-old', name: '레몬즙', quantity: 1, unit: '팩', category: '과일/토핑', min_quantity: 2, expiry_date: '2026-06-03', expiry_type: 'SELL-BY', storage_method: '냉장' },

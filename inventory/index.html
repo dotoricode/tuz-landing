@@ -1572,6 +1572,7 @@
     .inv-badge.week     { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
     .inv-badge.safe     { background: #f6f7f4; border-color: #dfe5d8; color: #596354; }
     .inv-badge.reserve  { background: #ecfdf3; border-color: #abefc6; color: #027a48; }
+    .inv-badge.recent   { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
 
     .inv-badge.expiry {
       font-weight: 950;
@@ -4682,28 +4683,28 @@
       </div>
       <div class="rh-date" id="rh-date"></div>
       <div class="rh-stats">
-        <button type="button" class="rh-stat today" data-stat-filter="today" aria-label="오늘 바로 볼 재고 보기">
-          <span class="rh-stat-icon">⏰</span>
+        <button type="button" class="rh-stat today" data-stat-filter="low" aria-label="부족 가능 재료 보기">
+          <span class="rh-stat-icon">📦</span>
           <span>
             <span class="rh-stat-count today" id="tile-today">0</span>
-            <span class="rh-stat-label today">오늘 바로</span>
-            <span class="rh-stat-caption" id="tile-basis-today">지금 처리</span>
+            <span class="rh-stat-label today">부족 가능</span>
+            <span class="rh-stat-caption" id="tile-basis-today">주문 판단</span>
           </span>
         </button>
-        <button type="button" class="rh-stat tomorrow" data-stat-filter="tomorrow" aria-label="내일 당장 볼 재고 보기">
-          <span class="rh-stat-icon">🌙</span>
+        <button type="button" class="rh-stat tomorrow" data-stat-filter="attention" aria-label="지금 확인할 재료 보기">
+          <span class="rh-stat-icon">👀</span>
           <span>
             <span class="rh-stat-count tomorrow" id="tile-tomorrow">0</span>
-            <span class="rh-stat-label">내일 당장</span>
-            <span class="rh-stat-caption" id="tile-basis-tomorrow">하루 남음</span>
+            <span class="rh-stat-label">지금 확인</span>
+            <span class="rh-stat-caption" id="tile-basis-tomorrow">영업 중 우선</span>
           </span>
         </button>
-        <button type="button" class="rh-stat week" data-stat-filter="week" aria-label="얼마 안남은 재고 보기">
+        <button type="button" class="rh-stat week" data-stat-filter="week" aria-label="임박 재료 보기">
           <span class="rh-stat-icon">📅</span>
           <span>
             <span class="rh-stat-count week" id="tile-week">0</span>
-            <span class="rh-stat-label">얼마 안남음</span>
-            <span class="rh-stat-caption">2-6일 남음</span>
+            <span class="rh-stat-label">임박 재료</span>
+            <span class="rh-stat-caption">기한 주의</span>
           </span>
         </button>
       </div>
@@ -4727,6 +4728,8 @@
           <input id="search-input" type="search" placeholder="품목 검색…">
           <select id="expiry-filter">
             <option value="">전체</option>
+            <option value="attention">지금 확인</option>
+            <option value="low">부족 가능</option>
             <option value="expired">초과</option>
             <option value="today">오늘</option>
             <option value="tomorrow">내일</option>
@@ -5090,14 +5093,14 @@
           <img src="assets/mascot-poodle.png" alt="하동이 매니저">
           <span>
             <span class="manager-choice-name">하동이 매니저</span>
-            <span class="manager-choice-tone">귀엽고 친절하게 마감 일을 같이 챙겨준다멍.</span>
+            <span class="manager-choice-tone">귀엽고 친절하게 영업 중 재료 상태를 같이 챙겨준다멍.</span>
           </span>
         </button>
         <button type="button" class="manager-choice-card" data-manager-choice="cookie">
           <img src="assets/mascot-collie.png" alt="쿠키 매니저">
           <span>
             <span class="manager-choice-name">쿠키 매니저</span>
-            <span class="manager-choice-tone">장난은 쳐도 마감 순서는 똑부러지게 잡아준다멍.</span>
+            <span class="manager-choice-tone">장난은 쳐도 재료 잔량은 똑부러지게 잡아준다멍.</span>
           </span>
         </button>
       </div>
@@ -5166,7 +5169,7 @@
         <img id="hadong-header-img" src="assets/mascot-poodle.png" alt="">
         <div>
           <div class="hadong-title" id="hadong-header-title">하동이 매니저</div>
-          <div class="hadong-subtitle" id="hadong-header-subtitle">마감 전에 같이 정리하는 재고 파트너</div>
+          <div class="hadong-subtitle" id="hadong-header-subtitle">영업 중 재료 상태를 같이 보는 재고 파트너</div>
         </div>
         <button type="button" class="hadong-close" id="hadong-close" aria-label="닫기">×</button>
       </div>
@@ -5199,7 +5202,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        SCRIPT
   ═══════════════════════════════════════════════════════════ -->
-  <script src="manager-actions.js?v=2026052906"></script>
+  <script src="manager-actions.js?v=2026060101"></script>
   <script>
     'use strict';
 
@@ -5235,11 +5238,11 @@
         avatar: 'assets/mascot-poodle.png',
         alt: '하동이 매니저',
         themeColor: '#8C4F36',
-        headerSubtitle: '마감 전에 같이 정리하는 재고 파트너',
-        bridgeTitle: '마감 브리핑을 같이 정리한다멍',
-        bridgeSubtitle: '대화하면서 오늘 처리할 일을 같이 정리한다멍.',
+        headerSubtitle: '영업 중 재료 상태를 같이 보는 재고 파트너',
+        bridgeTitle: '지금 재료 상태를 같이 본다멍',
+        bridgeSubtitle: '대화하면서 부족한 재료와 주문 필요 여부를 같이 본다멍.',
         opening: '하동이 매니저다멍🐶',
-        empty: '오늘 마감 전에 크게 걸리는 일은 없어 보인다멍.',
+        empty: '지금 크게 부족하거나 급한 재료는 없어 보인다멍.',
         workPrefix: '같이 볼게멍🐶'
       },
       cookie: {
@@ -5249,11 +5252,11 @@
         avatar: 'assets/mascot-collie.png',
         alt: '쿠키 매니저',
         themeColor: '#202020',
-        headerSubtitle: '장난은 쳐도 마감 순서는 똑부러지게 보는 매니저',
-        bridgeTitle: '마감 순서, 쿠키가 깔끔하게 잡아준다멍',
-        bridgeSubtitle: '대화하면서 마감 순서를 같이 정리한다멍.',
+        headerSubtitle: '장난은 쳐도 재료 잔량은 똑부러지게 보는 매니저',
+        bridgeTitle: '재료 상태, 쿠키가 깔끔하게 잡아준다멍',
+        bridgeSubtitle: '대화하면서 남은 양과 부족 가능성을 같이 본다멍.',
         opening: '쿠키 매니저다멍🐾',
-        empty: '마감 전에 크게 찔리는 재고는 없어 보인다멍.',
+        empty: '지금 크게 찔리는 부족 재료는 없어 보인다멍.',
         workPrefix: '좋아, 이건 쿠키가 같이 볼게멍.'
       }
     };
@@ -6052,7 +6055,7 @@
     function ddayLabel(d) {
       if (d === null) return '';
       if (d < 0)     return `D+${Math.abs(d)} 초과`;
-      if (d === 0)   return '오늘 마감';
+      if (d === 0)   return '오늘까지';
       return `${d}일 남음`;
     }
 
@@ -6740,18 +6743,20 @@
       const withDday = sourceItems
         .map(i => ({ ...i, dday: calcDDay(i.expiry_date) }))
         .filter(i => i.dday !== null);
+      const lowStock = lowInventorySummaries(sourceItems);
+      const attentionRows = getHadongAlertRows(sourceItems);
+      const weekRows = withDday.filter(i => i.dday >= 0 && i.dday <= 6);
 
       document.getElementById('tile-today').textContent =
-        withDday.filter(i => i.dday === 0).length;
+        lowStock.length;
       document.getElementById('tile-tomorrow').textContent =
-        withDday.filter(i => i.dday === 1).length;
+        attentionRows.length;
       document.getElementById('tile-week').textContent =
-        withDday.filter(i => i.dday >= 2 && i.dday <= 6).length;
-      document.getElementById('tile-basis-today').textContent = '지금 처리';
-      document.getElementById('tile-basis-tomorrow').textContent = '하루 남음';
+        weekRows.length;
+      document.getElementById('tile-basis-today').textContent = lowStock.length ? '주문 판단' : '여유 있음';
+      document.getElementById('tile-basis-tomorrow').textContent = attentionRows.length ? '먼저 보기' : '안정';
 
       const urgent = withDday.filter(i => i.dday <= 0);
-      const lowStock = lowInventorySummaries(sourceItems);
       const alertEl = document.getElementById('crisis-alert');
       const badgeEl = document.getElementById('notification-badge');
       const notifyBtn = document.getElementById('notification-btn');
@@ -6778,11 +6783,11 @@
         ...urgent.map(i => {
           const label = i.dday < 0
             ? `${escHtml(i.name)} · ${Math.abs(i.dday)}일 초과`
-            : `${escHtml(i.name)} · 오늘 마감`;
+            : `${escHtml(i.name)} · 오늘까지`;
           return `<li>${label}</li>`;
         }),
         ...lowStock.map(row =>
-          `<li class="low">${escHtml(row.item.name)} · 재고 부족 (전체 ${escHtml(row.totalQuantity)}${escHtml(row.unit)})</li>`
+          `<li class="low">${escHtml(row.item.name)} · 부족 가능 (전체 ${escHtml(row.totalQuantity)}${escHtml(row.unit)})</li>`
         )
       ].join('');
 
@@ -6835,9 +6840,20 @@
       });
     }
 
+    function isRecentlyUpdatedInventoryItem(item, now = new Date()) {
+      const updatedAt = item?.updated_at ? new Date(item.updated_at) : null;
+      if (!updatedAt || Number.isNaN(updatedAt.getTime())) return false;
+      const createdAt = item?.created_at ? new Date(item.created_at) : null;
+      const changedAfterCreate = !createdAt || Number.isNaN(createdAt.getTime()) ||
+        updatedAt.getTime() - createdAt.getTime() > 10000;
+      const ageMs = now.getTime() - updatedAt.getTime();
+      return changedAfterCreate && ageMs >= 0 && ageMs <= 36 * 60 * 60 * 1000;
+    }
+
     function stockRiskProfile(stock) {
       const unit = stock.unit || '개';
       const activeLots = sortedLots((stock.lots || []).filter(lot => Number(lot.quantity) > 0));
+      const recentlyUpdated = activeLots.some(lot => isRecentlyUpdatedInventoryItem(lot));
       const quantityFor = predicate => activeLots
         .filter(predicate)
         .reduce((sum, lot) => sum + (Number(lot.quantity) || 0), 0);
@@ -6895,6 +6911,7 @@
         label,
         nearestDday,
         nearestLot,
+        recentlyUpdated,
         shortAfterAttention,
         status,
         todayQuantity: Number(todayQuantity.toFixed(3)),
@@ -6916,7 +6933,7 @@
       if (profile.todayQuantity > 0) {
         return {
           tone: 'warn',
-          text: `오늘까지 써야 하는 재고가 ${quantityLabel(profile.todayQuantity, unit)} 있어요. 마감 전에 먼저 쓸 수 있는지 확인해 주세요.`
+          text: `오늘까지 써야 하는 재고가 ${quantityLabel(profile.todayQuantity, unit)} 있어요. 영업 중 먼저 쓸 수 있는지 확인해 주세요.`
         };
       }
       if (stock.low) {
@@ -6959,7 +6976,9 @@
         .filter(Boolean)
         .sort((a, b) => {
           const rank = { expired: 0, today: 1, tomorrow: 2, low: 3, watch: 4, week: 5, safe: 6 };
-          return (rank[a.profile.status] ?? 6) - (rank[b.profile.status] ?? 6) ||
+          const ar = (rank[a.profile.status] ?? 6) - (a.profile.recentlyUpdated && a.profile.status === 'safe' ? 0.5 : 0);
+          const br = (rank[b.profile.status] ?? 6) - (b.profile.recentlyUpdated && b.profile.status === 'safe' ? 0.5 : 0);
+          return ar - br ||
             inventorySortOrder(a.item) - inventorySortOrder(b.item) ||
             String(a.item.name || '').localeCompare(String(b.item.name || ''), 'ko');
         });
@@ -6987,8 +7006,8 @@
       const push = (className, label) => badges.push({ className, label });
 
       if (profile.expiredQuantity > 0) push('expired', `기한 초과 ${quantityLabel(profile.expiredQuantity, unit)}`);
-      else if (profile.todayQuantity > 0) push('today', `오늘 마감 ${quantityLabel(profile.todayQuantity, unit)}`);
-      else if (profile.tomorrowQuantity > 0) push('tomorrow', `내일 마감 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
+      else if (profile.todayQuantity > 0) push('today', `오늘까지 ${quantityLabel(profile.todayQuantity, unit)}`);
+      else if (profile.tomorrowQuantity > 0) push('tomorrow', `내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
       else if (stock.low) push('low', '기준 미달');
       else if (profile.shortAfterAttention) push('watch', '임박분 제외 시 부족');
       else if (profile.weekQuantity > 0) push('week', `이번 주 ${quantityLabel(profile.weekQuantity, unit)}`);
@@ -6997,11 +7016,12 @@
       if (profile.shortAfterAttention) {
         push(profile.freshQuantity > 0 ? 'reserve' : 'low', `여유 ${quantityLabel(profile.freshQuantity, unit)}`);
       }
+      if (profile.recentlyUpdated) push('recent', '최근 수정');
 
       if (stock.lotCount > 1) push('lot', `기한 ${stock.lotCount}개`);
       if (!badges.length) push('safe', '안정');
 
-      return badges.slice(0, currentExpiryType === 'ALL' ? 3 : 4);
+      return badges.slice(0, 4);
     }
 
     function detailStatusClass(status) {
@@ -7012,8 +7032,8 @@
       const unit = stock.unit || profile.unit || '개';
       const parts = [];
       if (profile.expiredQuantity > 0) parts.push(`기한 초과 ${quantityLabel(profile.expiredQuantity, unit)}`);
-      else if (profile.todayQuantity > 0) parts.push(`오늘 마감 ${quantityLabel(profile.todayQuantity, unit)}`);
-      else if (profile.tomorrowQuantity > 0) parts.push(`내일 마감 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
+      else if (profile.todayQuantity > 0) parts.push(`오늘까지 ${quantityLabel(profile.todayQuantity, unit)}`);
+      else if (profile.tomorrowQuantity > 0) parts.push(`내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
       else if (profile.weekQuantity > 0) parts.push(`이번 주 ${quantityLabel(profile.weekQuantity, unit)}`);
       if (stock.low) parts.push('기준 미달');
       else if (profile.shortAfterAttention) parts.push('임박분 제외 시 부족');
@@ -7025,8 +7045,8 @@
     function lotStatusInfo(lot) {
       const dday = lotDday(lot);
       if (dday !== null && dday < 0) return { status: 'expired', label: '기한 초과' };
-      if (dday === 0) return { status: 'today', label: '오늘 마감' };
-      if (dday === 1) return { status: 'tomorrow', label: '내일 마감' };
+      if (dday === 0) return { status: 'today', label: '오늘까지' };
+      if (dday === 1) return { status: 'tomorrow', label: '내일까지' };
       if (dday !== null && dday <= 6) return { status: 'week', label: '임박' };
       return { status: 'safe', label: dday === null ? '기한 없음' : '여유' };
     }
@@ -7732,6 +7752,17 @@
             case 'today':    if (d !== 0)                           return false; break;
             case 'tomorrow': if (d !== 1)                           return false; break;
             case 'week':     if (!(d !== null && d >= 2 && d <= 6)) return false; break;
+            case 'attention': {
+              const stock = inventoryStockSummary(item, getVisibleItems());
+              const profile = stockRiskProfile(stock);
+              if (!['expired', 'today', 'tomorrow', 'low', 'watch', 'week'].includes(profile.status)) return false;
+              break;
+            }
+            case 'low': {
+              const stock = inventoryStockSummary(item, getVisibleItems());
+              if (!stock.low && !stockRiskProfile(stock).shortAfterAttention) return false;
+              break;
+            }
             case 'safe':     if (!(d !== null && d > 6))            return false; break;
             case 'none':     if (item.expiry_date)                  return false; break;
           }
@@ -9852,7 +9883,8 @@
         [/봐야 해요/g, '봐야 한다멍'],
         [/미루면 안 돼요/g, '미루면 안 된다멍'],
         [/기한이 비어 있어요/g, '기한이 비어 있다멍'],
-        [/오늘 마감이에요/g, '오늘 마감이다멍'],
+        [/오늘까지예요/g, '오늘까지다멍'],
+        [/오늘 마감이에요/g, '오늘까지다멍'],
         [/안 해도 괜찮아 보여요/g, '안 해도 괜찮아 보인다멍'],
         [/괜찮아 보여요/g, '괜찮아 보인다멍'],
         [/부족해 보여요/g, '부족해 보인다멍'],
@@ -10085,7 +10117,7 @@
       if (dday < 0) {
         lines.push('기한을 늘리기보다 폐기 후보로 먼저 봐주세요.');
         lines.push('냄새, 색, 분리, 포장 상태가 이상하면 쓰지 말아주세요.');
-        lines.push('애매하면 오늘 안에 쓰거나 폐기 처리해 주세요.');
+        lines.push('애매하면 오늘 안에 쓸 수 있는지 먼저 확인해 주세요.');
         if (low) lines.push('재고도 부족해 보여요. 재주문도 같이 확인해 주세요.');
         return cookieSuggestionPayload({
           status: '폐기/상태 확인 우선',
@@ -10106,13 +10138,13 @@
         lines.push('오늘 다 쓰기 어렵다면 폐기할지 따로 확인해 주세요.');
         if (low) lines.push('재고도 부족해 보여요. 다음 발주에 같이 넣어주세요.');
         return cookieSuggestionPayload({
-          status: '오늘 처리 권장',
+          status: '오늘 먼저 사용 권장',
           risk: 'warning',
           riskValue: 84,
           icon: '⏰',
           title: '킁킁, 오늘 챙겨야 해요',
-          subtitle: '오늘 마감',
-          summary: `${topicName(item.name)} 오늘 마감이에요. 이건 미루면 안 돼요.\n쓸 재료와 따로 확인할 재료를 오늘 안에 나눠주세요.`,
+          subtitle: '오늘까지',
+          summary: `${topicName(item.name)} 오늘까지예요. 이건 미루면 안 돼요.\n쓸 재료와 따로 확인할 재료를 영업 중 먼저 나눠주세요.`,
           actions: lines,
           criteriaTitle: profile.label,
           criteriaText: profile.reason
@@ -10169,14 +10201,14 @@
     function cookieHighlightClass(text) {
       if (/냉장|냉동|실온|보관/.test(text)) return 'storage';
       if (/폐기|초과|이상|쓰지|사용에서 빼|연장/.test(text)) return 'risk';
-      if (/오늘 마감|오늘|권장|D[+-]?\d+|기한/.test(text)) return 'date';
+      if (/오늘까지|오늘 마감|오늘|권장|D[+-]?\d+|기한/.test(text)) return 'date';
       if (/재고|발주|재주문|부족/.test(text)) return 'stock';
       return 'category';
     }
 
     function renderCookieHighlightedText(el, text) {
       const value = String(text || '');
-      const pattern = /(냉장\s*보관|냉동\s*보관|실온\s*보관|냉장|냉동|실온|폐기 후보|기한 연장|오늘 마감|권장 기한|D[+-]?\d+\s*초과|D[+-]?\d+|재고 부족|부족|재고|발주|재주문|보관 상태|냄새|색|분리|포장 상태|수제\/브런치류|유제품|과일\/토핑류|시럽\/소스류|베이커리류|일반 재료)/g;
+      const pattern = /(냉장\s*보관|냉동\s*보관|실온\s*보관|냉장|냉동|실온|폐기 후보|기한 연장|오늘까지|오늘 마감|권장 기한|D[+-]?\d+\s*초과|D[+-]?\d+|재고 부족|부족|재고|발주|재주문|보관 상태|냄새|색|분리|포장 상태|수제\/브런치류|유제품|과일\/토핑류|시럽\/소스류|베이커리류|일반 재료)/g;
       el.textContent = '';
       let lastIndex = 0;
       let match;
@@ -10323,28 +10355,28 @@
       const stats = hadongBriefingStats();
       const parts = [];
       if (stats.expired) parts.push(`기한 지난 재료 ${stats.expired}개`);
-      if (stats.today) parts.push(`오늘 마감 ${stats.today}개`);
-      if (stats.week) parts.push(`이번 주 마감 ${stats.week}개`);
-      if (stats.low) parts.push(`부족 재고 ${stats.low}개`);
+      if (stats.today) parts.push(`오늘까지 ${stats.today}개`);
+      if (stats.week) parts.push(`임박 재료 ${stats.week}개`);
+      if (stats.low) parts.push(`부족 가능 ${stats.low}개`);
       const summary = parts.length ? parts.join(', ') : '급한 재고 알림은 없다멍';
       const hasWork = parts.length > 0;
       return {
-        text: `${profile.opening}\n지금 ${summary}.\n마감 전에 한 번에 보기에서 오늘 정리할 일부터 같이 볼 수 있다멍.`,
+        text: `${profile.opening}\n지금 ${summary}.\n한 번에 보기에서 영업 중 먼저 볼 재료부터 같이 볼 수 있다멍.`,
         briefing: {
-          title: `${profile.name} 마감 브리핑`,
+          title: `${profile.name} 재료 상태`,
           icon: profile.id === 'cookie' ? '🐾' : '🐶',
           subtitle: hasWork
-            ? '지금 먼저 볼 재고만 숫자로 정리했다멍.'
-            : '지금 크게 걸리는 재고는 없어 보인다멍.',
+            ? '지금 먼저 볼 재료만 숫자로 정리했다멍.'
+            : '지금 크게 걸리는 재료는 없어 보인다멍.',
           metrics: [
             { kind: 'expired', icon: '🚨', label: '기한 지남', count: stats.expired },
-            { kind: 'today', icon: '⏰', label: '오늘 마감', count: stats.today },
-            { kind: 'week', icon: '📅', label: '이번 주', count: stats.week },
-            { kind: 'low', icon: '📦', label: '부족 재고', count: stats.low }
+            { kind: 'today', icon: '⏰', label: '오늘까지', count: stats.today },
+            { kind: 'week', icon: '📅', label: '임박 재료', count: stats.week },
+            { kind: 'low', icon: '📦', label: '부족 가능', count: stats.low }
           ],
           note: hasWork
-            ? '아래 예상 질문이나 한 번에 보기에서 오늘 정리할 일부터 보면 된다멍.'
-            : '그래도 마감 전에는 오늘 수량이 바뀐 재고만 한 번 훑어보면 좋다멍.'
+            ? '아래 예상 질문이나 한 번에 보기에서 지금 확인할 재료부터 보면 된다멍.'
+            : '그래도 영업 중에는 수량이 바뀐 재료만 한 번 훑어보면 좋다멍.'
         },
         actions: buildManagerOpeningActions()
       };
@@ -10420,16 +10452,16 @@
       });
     }
 
-    function getHadongAlertRows() {
+    function getHadongAlertRows(sourceItems = items) {
       const seenLowStockKeys = new Set();
-      return items.map(item => {
+      return sourceItems.map(item => {
         const dday = calcDDay(item.expiry_date);
-        const stock = inventoryStockSummary(item);
+        const stock = inventoryStockSummary(item, sourceItems);
         const low = stock.low;
         const tags = [];
         if (dday !== null && dday < 0) tags.push({ type: 'expired', label: ddayLabel(dday) });
-        if (dday === 0) tags.push({ type: 'today', label: '오늘 마감' });
-        if (dday === 1) tags.push({ type: 'tomorrow', label: '내일 마감' });
+        if (dday === 0) tags.push({ type: 'today', label: '오늘까지' });
+        if (dday === 1) tags.push({ type: 'tomorrow', label: '내일까지' });
         if (dday !== null && dday > 1 && dday <= 6 && !hasFresherStockLot(item, stock)) {
           tags.push({ type: 'week', label: ddayLabel(dday) });
         }
@@ -10485,12 +10517,12 @@
       const item = row.item;
       const unit = item.unit || '개';
       const stock = inventoryStockSummary(item);
-      if (row.status === 'expired') return `${ddayLabel(row.dday)}라 마감 전에 사용 여부를 정리해야 한다멍.`;
-      if (row.status === 'today') return '오늘 마감이라 남은 양과 상태를 마감 전에 확인하면 좋다멍.';
-      if (row.status === 'tomorrow') return '내일 마감이라 오픈 전에 바로 쓸지 따로 둘지 정해두면 좋다멍.';
-      if (row.status === 'low') return `전체 ${stock.totalQuantity}${unit}, 기준 ${stock.minQuantity}${unit} 이하라 내일 오픈 전에 수량을 확인하면 좋다멍.`;
-      if (row.status === 'week') return '이번 주 안에 마감돼서 내일 준비 목록에 올려두면 좋다멍.';
-      return '마감 전에 한 번 확인하면 좋다멍.';
+      if (row.status === 'expired') return `${ddayLabel(row.dday)}라 사용 여부를 먼저 확인해야 한다멍.`;
+      if (row.status === 'today') return '오늘까지라 남은 양과 쓸 순서를 영업 중 먼저 확인하면 좋다멍.';
+      if (row.status === 'tomorrow') return '내일까지라 오늘 버틸 양이 충분한지 확인하면 좋다멍.';
+      if (row.status === 'low') return `전체 ${stock.totalQuantity}${unit}, 기준 ${stock.minQuantity}${unit} 이하라 주문 필요 여부를 확인하면 좋다멍.`;
+      if (row.status === 'week') return '이번 주 안에 기한이 와서 먼저 쓸 재료로 봐두면 좋다멍.';
+      return '영업 중 수량과 보관 상태만 한 번 확인하면 좋다멍.';
     }
 
     function buildManagerBriefingTasks() {
@@ -10498,10 +10530,10 @@
         const item = row.item;
         const group = row.status === 'expired' || row.status === 'today' ? 'today' : 'tomorrow';
         const title = row.status === 'expired' ? `${item.name} 사용 여부 확인`
-          : row.status === 'today' ? `${item.name} 오늘 안에 처리`
-          : row.status === 'tomorrow' ? `${item.name} 내일 오픈 전 확인`
-          : row.status === 'low' ? `${item.name} 수량 확인`
-          : `${item.name} 이번 주 준비`;
+          : row.status === 'today' ? `${item.name} 오늘 먼저 사용`
+          : row.status === 'tomorrow' ? `${item.name} 오늘 버틸지 확인`
+          : row.status === 'low' ? `${item.name} 주문 판단`
+          : `${item.name} 먼저 쓸 재료`;
         return {
           id: item.id,
           item,
@@ -10544,7 +10576,7 @@
         return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 수정은 됐지만 아직 ${labels || '확인할 조건'}이 남아있다멍. 남은 부분만 한 번 더 보면 된다멍.`;
       }
       if (!beforeTask && !afterTask) {
-        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 지금 마감 브리핑에 걸리는 조건은 없다멍.`;
+        return `${profile.name}가 수정 반영 확인했다멍${icon}\n${topicName(item.name)} 지금 재료 상태에 걸리는 조건은 없다멍.`;
       }
       return '';
     }
@@ -10596,25 +10628,32 @@
       const root = document.getElementById('hadong-overview');
       if (!root) return;
       const profile = getManagerProfile();
-      const tasks = buildManagerBriefingTasks();
+      const allTasks = buildManagerBriefingTasks();
+      const tasks = allTasks.filter(task => {
+        if (_hadongOverviewFilter === 'low') return task.status === 'low';
+        if (_hadongOverviewFilter === 'expired') return task.status === 'expired';
+        if (_hadongOverviewFilter === 'week') return task.status === 'week' || task.status === 'tomorrow';
+        if (_hadongOverviewFilter === 'attention') return ['expired', 'today', 'tomorrow', 'low', 'week'].includes(task.status);
+        return true;
+      });
       const todayTasks = tasks.filter(task => task.group === 'today');
       const tomorrowTasks = tasks.filter(task => task.group === 'tomorrow');
       root.innerHTML = `
         <div class="hadong-overview-summary">
-          <div class="hadong-overview-title">${escHtml(profile.opening)} 마감 전에 볼 일 ${tasks.length}개 있다멍</div>
-          <div class="hadong-overview-subtitle">오늘 정리할 일부터 내일 오픈 준비까지 순서대로 정리했다멍.</div>
+          <div class="hadong-overview-title">${escHtml(profile.opening)} 지금 볼 재료 ${tasks.length}개 있다멍</div>
+          <div class="hadong-overview-subtitle">부족 가능성과 가까운 기한부터 영업 중 확인 순서로 정리했다멍.</div>
         </div>
         ${tasks.length
-          ? `${renderManagerTaskSection('오늘 정리', todayTasks)}${renderManagerTaskSection('내일 오픈 준비', tomorrowTasks)}`
-          : `<div class="hadong-empty">${escHtml(profile.empty)}<br>그래도 마감 전에 수량이 바뀐 재고는 한 번 훑어보면 좋다멍.</div>`}`;
+          ? `${renderManagerTaskSection('지금 확인', todayTasks)}${renderManagerTaskSection('다음 확인', tomorrowTasks)}`
+          : `<div class="hadong-empty">${escHtml(profile.empty)}<br>그래도 영업 중 수량이 바뀐 재료는 한 번 훑어보면 좋다멍.</div>`}`;
     }
 
     function makeManagerSuggestionLabel(task) {
       if (task.status === 'expired') return `${task.item.name} 사용 여부 같이 정리`;
-      if (task.status === 'today') return `${task.item.name} 오늘 마감 처리`;
-      if (task.status === 'tomorrow') return `${task.item.name} 내일 오픈 전 확인`;
-      if (task.status === 'low') return `${task.item.name} 수량 같이 확인`;
-      return `${task.item.name} 이번 주 준비`;
+      if (task.status === 'today') return `${task.item.name} 오늘 먼저 쓸지 확인`;
+      if (task.status === 'tomorrow') return `${task.item.name} 오늘 버틸지 확인`;
+      if (task.status === 'low') return `${task.item.name} 주문 필요 같이 확인`;
+      return `${task.item.name} 먼저 쓸지 확인`;
     }
 
     function buildManagerOpeningActions(limit = 4) {
@@ -10622,7 +10661,7 @@
       if (!tasks.length) {
         return [
           { type: 'overview', overviewFilter: 'all', label: '한 번에 보기' },
-          { type: 'ask', question: '마감 브리핑 다시 정리해줘', label: '마감 브리핑 정리' }
+          { type: 'ask', question: '재료 상태 한번 봐줘', label: '상태 먼저 확인' }
         ];
       }
       return tasks.map(task => ({
@@ -10637,12 +10676,12 @@
       const unit = item.unit || '개';
       const stock = inventoryStockSummary(item);
       const low = stock.low;
-      if (dday !== null && dday < 0) return `${ddayLabel(dday)}라 마감 전에 사용 여부를 먼저 봐야 한다멍.`;
-      if (dday === 0) return '오늘 마감이라 남은 양과 상태를 마감 전에 나눠두면 좋다멍.';
-      if (dday === 1) return '내일 마감이라 오픈 전에 바로 쓸지 확인해두면 좋다멍.';
-      if (low) return `전체 ${stock.totalQuantity}${unit}, 기준 ${stock.minQuantity}${unit} 이하라 내일 오픈 전에 수량을 봐야 한다멍.`;
-      if (dday !== null && dday <= 6) return `${ddayLabel(dday)}라 이번 주 준비 목록에 올려두면 좋다멍.`;
-      return '마감 전에 수량과 보관 상태만 한 번 확인하면 좋다멍.';
+      if (dday !== null && dday < 0) return `${ddayLabel(dday)}라 사용 여부를 먼저 봐야 한다멍.`;
+      if (dday === 0) return '오늘까지라 남은 양과 쓸 순서를 지금 나눠두면 좋다멍.';
+      if (dday === 1) return '내일까지라 오늘 버틸 수 있는지 확인해두면 좋다멍.';
+      if (low) return `전체 ${stock.totalQuantity}${unit}, 기준 ${stock.minQuantity}${unit} 이하라 주문 필요 여부를 봐야 한다멍.`;
+      if (dday !== null && dday <= 6) return `${ddayLabel(dday)}라 먼저 쓸 재료로 봐두면 좋다멍.`;
+      return '영업 중 수량과 보관 상태만 한 번 확인하면 좋다멍.';
     }
 
     function makeManagerWorkReply(item) {
@@ -10724,11 +10763,11 @@
       const low = lowInventorySummaries(items).length;
       const parts = [];
       if (expired) parts.push(`기한 초과 ${expired}개`);
-      if (today) parts.push(`오늘 마감 ${today}개`);
+      if (today) parts.push(`오늘까지 ${today}개`);
       if (week) parts.push(`이번 주 ${week}개`);
       if (low) parts.push(`부족 ${low}개`);
       if (isManagerCasualMessage(text)) return managerCasualFallback(text);
-      return `AI 연결이 아직 안정적이지 않아서 현재 재고 목록 기준으로 먼저 정리했다멍.\n${parts.length ? parts.join(' | ') : '급한 재고는 없다멍.'}`;
+      return `AI 연결이 아직 안정적이지 않아서 현재 재고 목록 기준으로 먼저 확인했다멍.\n${parts.length ? parts.join(' | ') : '급한 재료는 없다멍.'}`;
     }
 
     function inventorySnapshotForCloud() {
@@ -10785,10 +10824,10 @@
         const icon = iconMatch ? iconMatch[1] : '';
         const name = (iconMatch ? iconMatch[2] : nameLine).trim();
         const details = detailLine.split('|').map(part => part.trim()).filter(Boolean);
-        const dday = details.find(part => /초과|마감|남음|D[+-]?\d+/i.test(part)) || '';
+        const dday = details.find(part => /초과|오늘까지|마감|남음|D[+-]?\d+/i.test(part)) || '';
         const status = /초과|D\+/i.test(dday) ? 'expired'
           : /오늘/.test(dday) ? 'today'
-          : /남음|마감/.test(dday) ? 'week'
+          : /남음|마감|오늘까지/.test(dday) ? 'week'
           : /부족|기준/.test(detailLine) ? 'low'
           : 'normal';
         cards.push({ icon, name, details, dday, status });
@@ -10805,13 +10844,13 @@
     function hadongDetailLabel(value) {
       if (/^재고\s*/.test(value)) return '재고';
       if (/^기준\s*/.test(value)) return '기준';
-      if (/초과|마감|남음|D[+-]?\d+/i.test(value)) return '기한';
+      if (/초과|오늘까지|마감|남음|D[+-]?\d+/i.test(value)) return '기한';
       return '분류';
     }
 
     function hadongStatusText(card) {
       if (card.status === 'expired') return card.dday || '기한 초과';
-      if (card.status === 'today') return '오늘 마감';
+      if (card.status === 'today') return '오늘까지';
       if (card.status === 'week') return card.dday || '이번 주';
       if (card.status === 'low') return '부족 확인';
       return card.dday || '확인';
@@ -10932,7 +10971,7 @@
       const icon = document.createElement('span');
       icon.textContent = briefing.icon || '🐶';
       const titleText = document.createElement('span');
-      titleText.textContent = briefing.title || '마감 브리핑';
+      titleText.textContent = briefing.title || '재료 상태';
       title.append(icon, titleText);
 
       const subtitle = document.createElement('div');
@@ -11182,7 +11221,7 @@
       const profile = getManagerProfile();
       const icon = profile.id === 'cookie' ? '🐾' : '🐶';
       const low = lowInventorySummaries(items);
-      if (!low.length) return `${icon} 멍! 지금은 발주가 급한 부족 재고가 없다멍.`;
+      if (!low.length) return `${icon} 멍! 지금은 발주가 급한 부족 가능 재료가 없다멍.`;
       const lines = low.map(stock => {
         const unit = stock.unit || '개';
         const need = Math.max(0, Number(stock.minQuantity) - Number(stock.totalQuantity));
@@ -11193,6 +11232,92 @@
         actions: [
           { type: 'overview-low', label: '한 번에 보기', variant: 'primary' }
         ]
+      };
+    }
+
+    function operatingStatusText(item) {
+      const dday = calcDDay(item.expiry_date);
+      const stock = inventoryStockSummary(item);
+      if (stock.low) return '부족 가능';
+      if (dday !== null && dday < 0) return '기한 확인';
+      if (dday === 0) return '오늘까지';
+      if (dday === 1) return '내일까지';
+      if (dday !== null && dday <= 6) return '임박';
+      return '안정';
+    }
+
+    function formatOperatingStockLine(item) {
+      const stock = inventoryStockSummary(item);
+      const unit = item.unit || stock.unit || '개';
+      const details = [`전체 ${stock.totalQuantity}${unit}`];
+      if (stock.minQuantity !== null) details.push(`기준 ${stock.minQuantity}${unit}`);
+      if (item.category) details.push(item.category);
+      const dday = calcDDay(item.expiry_date);
+      if (dday !== null) details.push(ddayLabel(dday));
+      return `- ${item.name}: ${details.join(' · ')} · ${operatingStatusText(item)}`;
+    }
+
+    function uniqueStockItems(rows) {
+      const seen = new Set();
+      return rows.filter(item => {
+        const key = inventoryStockKey(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function findOperatingItems(query) {
+      const direct = findHadongItems(query);
+      const compactQuery = normalizeHadongSearchText(query).replace(/\s+/g, '');
+      const exactDirect = direct.filter(item => normalizeHadongSearchText(item.name).replace(/\s+/g, '') === compactQuery);
+      if (exactDirect.length) return exactDirect;
+      const text = normalizeHadongSearchText(query);
+      const aliasTerms = /라떼|라테|카페라떼|바닐라라떼/.test(text)
+        ? ['우유', '원두', '커피', '시럽']
+        : /아메리카노|커피/.test(text)
+          ? ['원두', '커피', '콜드브루']
+          : [];
+      if (!aliasTerms.length) return direct;
+      return uniqueStockItems(aliasTerms.flatMap(term => findHadongItems(term)));
+    }
+
+    function makeOperatingStockReply(message) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const text = String(message || '').replace(/\s+/g, ' ').trim();
+      const wantsStatus = /(얼마|몇|남았|수량|재료\s*상태|상태\s*(한\s*)?번|괜찮|버틸|재고\s*봐|재료\s*봐)/i.test(text);
+      const wantsLow = /부족|떨어질|떨어져|모자라|최소|발주|주문|사야/i.test(text);
+      if (!wantsStatus && !wantsLow) return '';
+
+      if (wantsLow) {
+        const low = lowInventorySummaries(items);
+        if (!low.length) return `${icon} 멍! 지금 주문이 급한 부족 가능 재료는 없다멍.`;
+        const lines = low.slice(0, 8).map(stock => formatOperatingStockLine(stock.item));
+        return {
+          text: `${icon} 부족 가능 재료 ${low.length}개를 확인했다멍.\n수량은 바꾸지 않고 주문 판단용으로만 보여준다멍.\n\n${lines.join('\n')}`,
+          overviewFilter: 'low'
+        };
+      }
+
+      const query = cleanHadongItemQuery(text)
+        .replace(/오늘|얼마나|얼마|몇|남았어|남아|있어|재료|상태|한\s*번|한번|괜찮아|괜찮|버틸|봐줘|봐|확인|주문|발주|넣어야|할|거|것/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const matches = query ? findOperatingItems(query).slice(0, 8) : [];
+      if (matches.length) {
+        const lines = matches.map(formatOperatingStockLine);
+        return {
+          text: `${icon} ${query} 관련 재료 ${matches.length}개를 확인했다멍.\n수량은 바꾸지 않았다멍.\n\n${lines.join('\n')}`,
+          overviewFilter: matches.some(item => inventoryStockSummary(item).low) ? 'low' : 'attention'
+        };
+      }
+
+      const priority = uniqueStockItems(getHadongAlertRows().map(row => row.item)).slice(0, 8);
+      if (!priority.length) return `${icon} 지금 부족하거나 급한 재료는 뚜렷하지 않다멍.`;
+      return {
+        text: `${icon} 지금 먼저 볼 재료 ${priority.length}개를 확인했다멍.\n부족 가능성과 가까운 기한부터 보면 된다멍.\n\n${priority.map(formatOperatingStockLine).join('\n')}`,
+        overviewFilter: 'attention'
       };
     }
 
@@ -11230,11 +11355,22 @@
       return candidates.slice(0, limit).map(candidate => {
         const qty = Number(candidate.actionQuantity || candidate.quantity || 0);
         const unit = candidate.unit || '개';
-        const actionText = options.readOnly
-          ? `현재 ${candidate.quantity}${unit}`
-          : candidate.actionKind === 'decrement'
+        let actionText = options.readOnly ? `현재 ${candidate.quantity}${unit}` : '';
+        if (options.readOnly) {
+          const item = items.find(row => row.id === candidate.id);
+          if (item) {
+            const stock = inventoryStockSummary(item);
+            const dday = calcDDay(item.expiry_date);
+            const details = [`전체 ${stock.totalQuantity}${unit}`];
+            if (stock.minQuantity !== null) details.push(`기준 ${stock.minQuantity}${unit}`);
+            if (dday !== null) details.push(ddayLabel(dday));
+            actionText = details.join(' · ');
+          }
+        } else {
+          actionText = candidate.actionKind === 'decrement'
           ? `${qty}${unit} 차감`
           : `전량 ${candidate.quantity}${unit}`;
+        }
         return `- ${candidate.name}: ${candidate.reason || '확인 필요'} · ${actionText}`;
       }).join('\n');
     }
@@ -11258,10 +11394,10 @@
         const lines = formatHadongPlanCandidates(candidates, 6, { readOnly: true });
         return {
           text:
-            `${icon} ${plan.reply || '오늘 정리할 재고를 확인했다멍.'}` +
+            `${icon} ${plan.reply || '지금 재료 상태를 확인했다멍.'}` +
             `${lines ? `\n\n${lines}` : ''}`,
           actions: [
-            { type: 'overview', overviewFilter: 'all', label: '한 번에 보기', variant: 'primary' }
+            { type: 'overview', overviewFilter: plan.action === 'low_stock_report' ? 'low' : 'attention', label: '지금 확인 보기', variant: 'primary' }
           ]
         };
       }
@@ -11271,7 +11407,7 @@
           text: `${icon} ${plan.reply || '자동 처리 전에 기준 확인이 필요하다멍.'}`,
           actions: [
             { type: 'overview', overviewFilter: 'expired', label: '기한 초과 보기', variant: 'primary' },
-            { type: 'overview', overviewFilter: 'all', label: '오늘 정리 보기' }
+            { type: 'overview', overviewFilter: 'attention', label: '지금 확인 보기' }
           ]
         };
       }
@@ -11286,7 +11422,7 @@
             '이대로 처리할지 확인해달라멍.',
           actions: [
             { type: 'confirm-plan', planId, label: '후보 폐기 처리', variant: 'danger' },
-            { type: 'overview', overviewFilter: 'all', label: '한 번에 보기' }
+            { type: 'overview', overviewFilter: 'attention', label: '지금 확인 보기' }
           ]
         };
       }
@@ -11469,16 +11605,19 @@
       const wantsThanks = /^(고마워|감사|땡큐|thanks?|thank you)[!.?。,\s]*$/i.test(text);
       const wantsHelp = /^(도움|도와줘|뭐\s*할\s*수|사용법|help)[!.?。,\s]*$/i.test(text);
 
+      const operatingReply = makeOperatingStockReply(text);
+      if (operatingReply) return operatingReply;
+
       if (wantsGreeting) {
-        return `${profile.opening}\n마감 전에 오늘 정리할 일과 내일 오픈 준비를 같이 볼 수 있다멍.`;
+        return `${profile.opening}\n영업 중 부족한 재료와 주문 필요 여부를 같이 볼 수 있다멍.`;
       }
 
       if (wantsThanks) {
-        return `${icon} 필요할 때 또 불러달라멍.\n재고 마감은 ${profile.name}가 같이 살펴본다멍.`;
+        return `${icon} 필요할 때 또 불러달라멍.\n재료 상태는 ${profile.name}가 같이 살펴본다멍.`;
       }
 
       if (wantsHelp) {
-        return `${icon} ${profile.fullName}는 마감 브리핑과 재고 수정을 같이 한다멍.\n"우유 2개 썼어", "바닐라 시럽 3병 추가", "휘핑크림 5개로 수정", "딸기 퓨레 폐기 처리", "발주 리스트"처럼 말해달라멍.`;
+        return `${icon} ${profile.fullName}는 재료 상태 확인과 재고 수정을 같이 한다멍.\n"우유 얼마나 남았어?", "오늘 라떼 재료 괜찮아?", "바닐라 시럽 3병 추가", "딸기 퓨레 폐기 처리"처럼 말해달라멍.`;
       }
 
       if (wantsBriefing) {
@@ -11486,8 +11625,8 @@
       }
 
       if (wantsLow) {
-        if (!low.length) return `${icon} 멍! 부족 재고는 없다멍.`;
-        return { text: `📦 부족 재고 ${low.length}개를 한 번에 보기 탭에 올려뒀다멍.\n내일 오픈 전에 수량을 먼저 보면 좋다멍.`, overviewFilter: 'low' };
+        if (!low.length) return `${icon} 멍! 부족 가능 재료는 없다멍.`;
+        return { text: `📦 부족 가능 재료 ${low.length}개를 한 번에 보기 탭에 올려뒀다멍.\n주문 필요 여부를 먼저 보면 좋다멍.`, overviewFilter: 'low' };
       }
 
       if (wantsDispose) {
@@ -11508,12 +11647,12 @@
       if (wantsToday) {
         const priority = [...expired, ...today, ...low.filter(i => !expired.some(e => e.id === i.id) && !today.some(t => t.id === i.id))];
         if (!priority.length) return `${icon} 멍! 오늘 먼저 볼 급한 재고는 없다멍.`;
-        return { text: `${icon} 오늘 정리할 재고 ${priority.length}개를 한 번에 보기 탭에 정리했다멍.\n마감 전에 위에서부터 보면 된다멍.`, overviewFilter: 'all' };
+        return { text: `${icon} 지금 먼저 볼 재료 ${priority.length}개를 한 번에 보기 탭에 정리했다멍.\n부족 가능성과 오늘까지인 재료부터 보면 된다멍.`, overviewFilter: 'attention' };
       }
 
       if (wantsWeek) {
-        if (!week.length) return `${icon} 멍! 이번 주 안에 마감되는 재고는 없다멍.`;
-        return { text: `📅 이번 주 기한 재고 ${week.length}개를 한 번에 보기 탭에 올려뒀다멍.\n내일 준비 목록처럼 보면 된다멍.`, overviewFilter: 'week' };
+        if (!week.length) return `${icon} 멍! 이번 주 안에 기한이 오는 재료는 없다멍.`;
+        return { text: `📅 임박 재료 ${week.length}개를 한 번에 보기 탭에 올려뒀다멍.\n가까운 기한부터 먼저 쓰면 된다멍.`, overviewFilter: 'week' };
       }
 
       if (fallback) {
@@ -11543,19 +11682,19 @@
       };
 
       if (/부족|최소|적정|발주|주문|구매|사야|low/i.test(text)) {
-        push({ type: 'overview', overviewFilter: 'low', label: '부족 재고 보기', variant: 'primary' });
+        push({ type: 'overview', overviewFilter: 'low', label: '부족 가능 보기', variant: 'primary' });
         push({ type: 'ask', question: '발주 리스트 정리해줘', label: '발주 후보 정리' });
       }
       if (/폐기|버릴|지난|초과|만료/i.test(text)) {
         push({ type: 'overview', overviewFilter: 'expired', label: '기한 초과 보기', variant: actions.length ? '' : 'primary' });
       }
-      if (/오늘|먼저|우선|급한|마감/i.test(text)) {
-        push({ type: 'overview', overviewFilter: 'all', label: '오늘 정리 보기', variant: actions.length ? '' : 'primary' });
+      if (/오늘|먼저|우선|급한|마감|상태|재료|버틸/i.test(text)) {
+        push({ type: 'overview', overviewFilter: 'attention', label: '지금 확인 보기', variant: actions.length ? '' : 'primary' });
       }
       if (/이번\s*주|주간|7일|일주일|기한/i.test(text)) {
         push({ type: 'overview', overviewFilter: 'week', label: '이번 주 기한 보기' });
       }
-      if (/한\s*번에|브리핑|업무|할\s*일|같이\s*일/i.test(text)) {
+      if (/한\s*번에|브리핑|업무|할\s*일|같이\s*일|재료\s*상태/i.test(text)) {
         push({ type: 'overview', overviewFilter: 'all', label: '한 번에 보기', variant: actions.length ? '' : 'primary' });
       }
 

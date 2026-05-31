@@ -46,7 +46,7 @@ function loadInventoryDebug(fixture) {
     function ddayLabel(dday) {
       if (dday === null || dday === undefined) return '기한 미입력';
       if (dday < 0) return 'D+' + Math.abs(dday) + ' 초과';
-      if (dday === 0) return '오늘 마감';
+      if (dday === 0) return '오늘까지';
       return dday + '일 남음';
     }
 
@@ -78,6 +78,14 @@ assert.equal(exact.inventoryStockSummary(lemonLots[0]).low, false);
 assert.equal(exact.lowInventorySummaries().length, 0);
 assert.equal(exact.getHadongAlertRows().length, 0);
 
+const recentLots = [{
+  ...lemonLots[0],
+  created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+  updated_at: new Date().toISOString()
+}];
+const recent = loadInventoryDebug(recentLots);
+assert.equal(recent.stockRiskProfile(recent.inventoryStockSummary(recentLots[0])).recentlyUpdated, true);
+
 const mixedExpiryLots = [
   { ...lemonLots[0], expiry_date: '2026-06-03' },
   { ...lemonLots[1], expiry_date: '2026-06-18' }
@@ -102,7 +110,7 @@ const butterLots = [
 const butter = loadInventoryDebug(butterLots);
 const butterStock = butter.inventoryStockSummary(butterLots[0]);
 const butterProfile = butter.stockRiskProfile(butterStock);
-assert.equal(butter.detailStatusLabel(butterStock, butterProfile), '내일 마감 7개');
+assert.equal(butter.detailStatusLabel(butterStock, butterProfile), '내일까지 7개');
 assert.equal(
   butter.groupAdvice(butterStock, butterProfile).text,
   '곧 써야 하는 재고가 7개 있어요. 기한이 넉넉한 것보다 먼저 사용해 주세요.'
