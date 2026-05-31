@@ -1,5 +1,6 @@
 const DEFAULT_MODEL = 'gemini-2.5-flash';
 const MAX_IMAGE_BASE64_CHARS = 7_000_000;
+const MAX_IMAGES = 4;
 
 const ALLOWED_ORIGINS = [
   /^https:\/\/(www\.)?tuz\.kr$/,
@@ -40,7 +41,7 @@ async function readJsonBody(req) {
   let raw = '';
   for await (const chunk of req) {
     raw += chunk;
-    if (raw.length > MAX_IMAGE_BASE64_CHARS + 2000) {
+    if (raw.length > (MAX_IMAGE_BASE64_CHARS * MAX_IMAGES) + 5000) {
       throw Object.assign(new Error('이미지 요청이 너무 큽니다.'), { statusCode: 413 });
     }
   }
@@ -56,6 +57,19 @@ function parseDataUrl(dataUrl) {
     throw Object.assign(new Error('이미지 용량이 너무 큽니다.'), { statusCode: 413, code: 'IMAGE_TOO_LARGE' });
   }
   return { mimeType: match[1], data: match[2] };
+}
+
+function parseImagesFromBody(body = {}) {
+  const rawImages = Array.isArray(body.images)
+    ? body.images
+    : (body.image ? [body.image] : []);
+  if (!rawImages.length) {
+    throw Object.assign(new Error('분석할 이미지가 없습니다.'), { statusCode: 400, code: 'MISSING_IMAGE' });
+  }
+  if (rawImages.length > MAX_IMAGES) {
+    throw Object.assign(new Error(`이미지는 최대 ${MAX_IMAGES}장까지 분석할 수 있습니다.`), { statusCode: 413, code: 'TOO_MANY_IMAGES' });
+  }
+  return rawImages.filter(Boolean).map(parseDataUrl);
 }
 
 function textFromGemini(data) {
@@ -95,7 +109,7 @@ function normalizeFields(fields = {}) {
   };
 }
 
-async function callGeminiVision({ image, currentDate }) {
+async function callGeminiVision({ images, currentDate }) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   const model = process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || DEFAULT_MODEL;
   if (!apiKey) {
@@ -107,6 +121,8 @@ async function callGeminiVision({ image, currentDate }) {
   }
 
   const prompt = [
+    '이미지가 여러 장이면 같은 재고를 다른 각도에서 찍은 것으로 보고, 모든 사진의 정보를 종합한다.',
+    '품목명과 유통기한이 서로 다른 사진에 나뉘어 보일 수 있다. 한 장만 보지 말고 전체 이미지에서 가장 그럴듯한 단일 재고 정보를 완성한다.',
     'Tuz 카페 재고 등록용 사진을 분석한다.',
     '사진에서 읽을 수 있는 제품명, 수량, 단위, 분류, 보관 방식, 원산지, 날짜를 추출한다.',
     `오늘 날짜는 ${currentDate || new Date().toISOString().slice(0, 10)}이다.`,
@@ -121,12 +137,12 @@ async function callGeminiVision({ image, currentDate }) {
       role: 'user',
       parts: [
         { text: prompt },
-        {
+        ...images.map(image => ({
           inline_data: {
             mime_type: image.mimeType,
             data: image.data
           }
-        }
+        }))
       ]
     }],
     generationConfig: {
@@ -195,15 +211,16 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = await readJsonBody(req);
-    const image = parseDataUrl(body.image);
+    const images = parseImagesFromBody(body);
     const startedAt = Date.now();
-    const result = await callGeminiVision({ image, currentDate: body.currentDate });
+    const result = await callGeminiVision({ images, currentDate: body.currentDate });
     const parsed = extractJsonObject(result.text);
     const fields = normalizeFields(parsed.fields || parsed);
 
     console.log('[inventory-photo]', JSON.stringify({
       requestId: id,
       model: result.model,
+      imageCount: images.length,
       latencyMs: Date.now() - startedAt,
       usageMetadata: result.usageMetadata
     }));
