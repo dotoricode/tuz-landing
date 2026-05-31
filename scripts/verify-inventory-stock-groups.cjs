@@ -92,7 +92,7 @@ assert.equal(
   mixed.groupAdvice(mixedStock, mixedProfile).text,
   '전체 수량은 괜찮지만, 곧 써야 하는 걸 빼면 여유가 1팩뿐이에요. 가까운 기한부터 먼저 쓰고, 부족하면 새로 채워 주세요.'
 );
-assert.equal(mixed.detailStatusLabel(mixedStock, mixedProfile), '임박분 빼면 기준 부족 · 이번 주 임박 1팩 · 여유 1팩');
+assert.equal(mixed.detailStatusLabel(mixedStock, mixedProfile), '이번 주 1팩 · 임박분 제외 시 부족');
 assert.equal(mixed.getHadongAlertRows().length, 0);
 
 const butterLots = [
@@ -102,7 +102,7 @@ const butterLots = [
 const butter = loadInventoryDebug(butterLots);
 const butterStock = butter.inventoryStockSummary(butterLots[0]);
 const butterProfile = butter.stockRiskProfile(butterStock);
-assert.equal(butter.detailStatusLabel(butterStock, butterProfile), '내일 마감 7개 · 여유 3개');
+assert.equal(butter.detailStatusLabel(butterStock, butterProfile), '내일 마감 7개');
 assert.equal(
   butter.groupAdvice(butterStock, butterProfile).text,
   '곧 써야 하는 재고가 7개 있어요. 기한이 넉넉한 것보다 먼저 사용해 주세요.'
