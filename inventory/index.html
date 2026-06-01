@@ -6086,10 +6086,14 @@
       setTimeout(openInventoryTutorial, 420);
     }
 
-    document.getElementById('inventory-tutorial-next')?.addEventListener('click', () => {
+    function advanceInventoryTutorial() {
       if (_inventoryTutorialIndex >= INVENTORY_TUTORIAL_STEPS.length - 1) return;
       _inventoryTutorialIndex += 1;
       renderInventoryTutorialStep();
+    }
+
+    document.getElementById('inventory-tutorial-next')?.addEventListener('click', () => {
+      advanceInventoryTutorial();
     });
 
     document.getElementById('inventory-tutorial-prev')?.addEventListener('click', () => {
@@ -6106,8 +6110,10 @@
       closeInventoryTutorial();
     });
 
-    document.getElementById('inventory-tutorial-overlay')?.addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeInventoryTutorial();
+    document.getElementById('inventory-tutorial-overlay')?.addEventListener('pointerup', e => {
+      if (e.target.closest?.('#inventory-tutorial-prev, #inventory-tutorial-next, #inventory-tutorial-hide-today, #inventory-tutorial-close')) return;
+      e.preventDefault();
+      advanceInventoryTutorial();
     });
 
     function updateInventoryEnvironmentBadge() {
