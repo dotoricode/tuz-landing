@@ -242,3 +242,50 @@ UPDATE menu SET category = 'NON-COFFEE · 논커피'
 
 -- ─── 2026-05 inventory: explicit stock grouping for low-stock checks ─────────
 ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS stock_group TEXT;
+
+-- ─── 2026-06 inventory: event-log based stock operations ────────────────
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS opened_at TIMESTAMPTZ;
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS public.inventory_events (
+  id uuid primary key default gen_random_uuid(),
+  type text not null check (type in ('use', 'discard', 'open', 'restock', 'adjust')),
+  item_id uuid,
+  stock_key text,
+  lot_id uuid,
+  quantity_delta numeric not null default 0,
+  reason text,
+  undo_until timestamptz,
+  reversed_at timestamptz,
+  reverses_event_id uuid references public.inventory_events(id) on delete set null,
+  actor text,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_events_created_at
+  ON public.inventory_events (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_inventory_events_stock_key_created_at
+  ON public.inventory_events (stock_key, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_inventory_events_lot_id_created_at
+  ON public.inventory_events (lot_id, created_at DESC);
+
+ALTER TABLE public.inventory_events enable row level security;
+
+DROP POLICY IF EXISTS "public_read_inventory_events" on public.inventory_events;
+DROP POLICY IF EXISTS "public_write_inventory_events" on public.inventory_events;
+
+CREATE POLICY "public_read_inventory_events" on public.inventory_events for select using (true);
+CREATE POLICY "public_write_inventory_events" on public.inventory_events for all using (true) with check (true);
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'inventory_events'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.inventory_events;
+  END IF;
+END $$;

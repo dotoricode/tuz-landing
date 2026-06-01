@@ -1,6 +1,7 @@
 # Inventory Backups
 
 TUZ inventory rows live in Supabase table `public.inventory_items`.
+Inventory event history lives in `public.inventory_events`.
 Use these scripts before risky edits, after big inventory updates, and whenever recovery point is needed.
 
 ## Create Backup
@@ -39,8 +40,8 @@ This prints row counts and what would be restored.
 npm run restore:inventory -- backups/inventory/inventory-YYYYMMDDTHHMMSSZ.json --apply
 ```
 
-This upserts backup rows by `id`. It restores deleted rows and overwrites changed rows with the backup values.
-It does not delete current rows that are absent from the backup.
+This upserts backup rows and event rows by `id`. It restores deleted rows/events and overwrites changed rows/events with the backup values.
+It does not delete current rows/events that are absent from the backup.
 
 ## Full Replace Restore
 
@@ -50,10 +51,11 @@ Use this only when the current table should match the backup exactly:
 npm run restore:inventory -- backups/inventory/inventory-YYYYMMDDTHHMMSSZ.json --apply --replace --yes
 ```
 
-`--replace` deletes current rows that are not in the backup. The extra `--yes` flag is required intentionally.
+`--replace` deletes current rows that are not in the backup. For backups that include events, it also deletes current events that are not in the backup. The extra `--yes` flag is required intentionally.
 
 ## Notes
 
 - Backups use the same Supabase anon key as the inventory web app.
-- The backup contains inventory rows only, not photos or unrelated site content.
+- New backups contain inventory rows and event history, not photos or unrelated site content.
+- Old backups without `events[]` can still be restored. They restore item rows only and leave existing event history untouched.
 - Keep important backup JSON files somewhere durable outside this working directory too, such as iCloud Drive or another private storage location.

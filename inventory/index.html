@@ -56,6 +56,14 @@
       --manager-border: var(--bone);
       --manager-ink: var(--ink);
       --manager-muted: var(--g1);
+      --today-intro-bg: linear-gradient(180deg, #fff 0%, #fff7f4 100%);
+      --today-intro-card: #fff;
+      --today-intro-soft: var(--red-tint);
+      --today-intro-accent: var(--red);
+      --today-intro-accent-deep: var(--red-deep);
+      --today-intro-border: #efd0c9;
+      --today-intro-ink: var(--ink);
+      --today-intro-muted: var(--g1);
     }
 
     body[data-manager="hadong"],
@@ -72,6 +80,14 @@
       --manager-border: #E9D9C6;
       --manager-ink: #2B2119;
       --manager-muted: #6F6258;
+      --today-intro-bg: linear-gradient(180deg, #FFF9F1 0%, #F3E2CE 100%);
+      --today-intro-card: #FFFDF8;
+      --today-intro-soft: #F4E3D0;
+      --today-intro-accent: #8A5A3D;
+      --today-intro-accent-deep: #5C3926;
+      --today-intro-border: #DFC4A9;
+      --today-intro-ink: #2B2119;
+      --today-intro-muted: #6F6258;
     }
 
     body[data-manager="cookie"],
@@ -88,6 +104,14 @@
       --manager-border: #D8D8D2;
       --manager-ink: #171717;
       --manager-muted: #5D5D58;
+      --today-intro-bg: linear-gradient(180deg, #F8F8F5 0%, #E8E8E2 100%);
+      --today-intro-card: #FFFFFF;
+      --today-intro-soft: #E7E7E2;
+      --today-intro-accent: #2B2B2B;
+      --today-intro-accent-deep: #111111;
+      --today-intro-border: #CDCDC6;
+      --today-intro-ink: #171717;
+      --today-intro-muted: #5D5D58;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1521,25 +1545,6 @@
       display: block;
     }
 
-    .inv-card-delete {
-      flex: 0 0 auto;
-      min-width: 42px;
-      height: 32px;
-      padding: 0 10px;
-      border: 1px solid #fecaca;
-      border-radius: 999px;
-      background: #fff;
-      color: var(--red);
-      font-family: inherit;
-      font-size: .72rem;
-      font-weight: 850;
-      cursor: pointer;
-    }
-
-    .inv-card-delete:active {
-      transform: scale(.96);
-    }
-
     .inv-body {
       flex: 1;
       min-width: 0;
@@ -1579,18 +1584,42 @@
       overflow-wrap: anywhere;
     }
 
-    .inv-card-chevron {
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
+    .inv-quick-actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 4px;
+    }
+
+    .inv-quick-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 50%;
+      background: rgba(255,255,255,.88);
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,.035);
-      color: var(--manager-muted, var(--g1));
-      font-size: 1rem;
-      font-weight: 900;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      box-shadow: 0 4px 10px rgba(0,0,0,.06);
+    }
+
+    .inv-quick-btn.is-minus {
+      color: var(--red);
+      border-color: #fecaca;
+      background: #fff7f7;
+    }
+
+    .inv-quick-btn:active {
+      transform: scale(.94);
     }
 
     .inv-badge-grid {
@@ -1903,6 +1932,24 @@
       gap: 8px;
     }
 
+    .group-detail-delete-btn {
+      width: 100%;
+      min-height: 42px;
+      margin-top: 10px;
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      background: #fff7f7;
+      color: var(--red);
+      font-family: inherit;
+      font-size: .84rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .group-detail-delete-btn:active {
+      transform: scale(.98);
+    }
+
     .group-lot-card {
       padding: 10px 10px 9px;
       border: 1px solid var(--manager-border, var(--bone));
@@ -2165,6 +2212,12 @@
       display: block;
     }
 
+    .rh-bottom-today-icon {
+      color: var(--manager-accent, var(--red));
+      font-size: 1.05rem;
+      font-weight: 950;
+    }
+
     @media (max-width: 390px) {
       .rh-bottom-bar {
         padding-inline: 12px;
@@ -2398,6 +2451,22 @@
       margin-top: 4px;
     }
 
+    .edit-delete-btn {
+      min-height: 42px;
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      background: #fff7f7;
+      color: var(--red);
+      font-family: inherit;
+      font-size: .86rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .edit-delete-btn:active {
+      transform: scale(.98);
+    }
+
     .delete-confirm-sheet {
       position: fixed;
       inset: 0;
@@ -2464,6 +2533,136 @@
       color: var(--manager-ink, var(--ink));
       font-size: .92rem;
       font-weight: 950;
+    }
+
+    .today-use-intro-panel {
+      padding-bottom: max(18px, env(safe-area-inset-bottom));
+      border: 1px solid var(--today-intro-border, var(--manager-border, var(--bone)));
+      background: var(--today-intro-bg, var(--manager-sheet, #fff));
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+    }
+
+    .today-use-intro-panel .add-sheet-handle {
+      background: color-mix(in srgb, var(--today-intro-accent, var(--manager-accent, var(--red))) 24%, transparent);
+    }
+
+    .today-use-intro-panel .delete-confirm-icon {
+      background: var(--today-intro-soft, var(--manager-soft, var(--red-tint)));
+      color: var(--today-intro-accent, var(--manager-accent, var(--red)));
+    }
+
+    .today-use-intro-panel .delete-confirm-title {
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+    }
+
+    .today-use-intro-panel .delete-confirm-text {
+      color: var(--today-intro-muted, var(--manager-muted, var(--g1)));
+    }
+
+    .today-use-intro-panel .delete-confirm-cancel {
+      background: color-mix(in srgb, var(--today-intro-soft, var(--manager-soft, var(--bone))) 72%, #fff);
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+    }
+
+    .today-use-intro-panel .delete-confirm-accept {
+      background: var(--today-intro-accent, var(--manager-accent, var(--red)));
+      color: #fff;
+    }
+
+    .today-use-intro-list {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0 14px;
+    }
+
+    .today-use-intro-item {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      padding: 10px 11px;
+      border: 1px solid var(--today-intro-border, var(--manager-border, var(--bone)));
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--today-intro-card, var(--manager-card, #fff)) 88%, var(--today-intro-soft, var(--manager-soft, var(--cream))));
+      text-align: left;
+    }
+
+    .today-use-intro-item span {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--today-intro-soft, var(--manager-soft, var(--red-tint)));
+      color: var(--today-intro-accent, var(--manager-accent, var(--red)));
+      font-size: .9rem;
+      font-weight: 950;
+    }
+
+    .today-use-intro-item strong {
+      display: block;
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+      font-size: .84rem;
+      font-weight: 950;
+      line-height: 1.25;
+    }
+
+    .today-use-intro-item small {
+      display: block;
+      margin-top: 2px;
+      color: var(--today-intro-muted, var(--manager-muted, var(--g1)));
+      font-size: .72rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .today-use-intro-manager {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 10px 0 12px;
+      padding: 13px 12px;
+      border: 1px solid var(--today-intro-border, var(--manager-border, var(--bone)));
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--today-intro-card, #fff) 82%, var(--today-intro-soft, var(--manager-soft, #fff7ed)));
+    }
+
+    .today-use-intro-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      flex: 0 0 auto;
+      object-fit: contain;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    }
+
+    .today-use-intro-manager strong,
+    .today-use-intro-manager span,
+    .today-use-intro-manager small {
+      display: block;
+      line-height: 1.28;
+    }
+
+    .today-use-intro-manager strong {
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+      font-size: .94rem;
+      font-weight: 950;
+    }
+
+    .today-use-intro-manager span {
+      margin-top: 5px;
+      color: var(--today-intro-muted, var(--manager-muted, var(--g1)));
+      font-size: .78rem;
+      font-weight: 750;
+    }
+
+    .today-use-intro-manager small {
+      margin-top: 4px;
+      color: var(--today-intro-accent-deep, var(--today-intro-accent, var(--manager-accent, var(--red))));
+      font-size: .7rem;
+      font-weight: 900;
     }
 
     .group-delete-panel {
@@ -2927,7 +3126,7 @@
       transform: translateX(-50%);
       background: var(--ink);
       color: #fff;
-      padding: 10px 20px;
+      padding: 10px 14px;
       border-radius: 20px;
       font-size: .875rem;
       font-weight: 500;
@@ -2936,9 +3135,27 @@
       transition: opacity .25s;
       z-index: 9999;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    #toast.show { opacity: 1; }
+    #toast.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .toast-undo-btn {
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      color: #fff;
+      padding: 6px 9px;
+      font-family: inherit;
+      font-size: .78rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
 
     /* ── OCR MODAL ────────────────────────────────────────────── */
     dialog {
@@ -4975,6 +5192,541 @@
 
     .disposal-actions { display: flex; gap: 8px; }
 
+    .today-used-panel {
+      padding: 0 0 max(2px, env(safe-area-inset-bottom));
+      color: var(--manager-ink, var(--ink));
+    }
+
+    .today-used-sheet-panel {
+      max-height: min(88vh, 720px);
+      overflow-y: auto;
+      background: var(--manager-sheet, #fff);
+    }
+
+    .today-used-panel.is-focused {
+      outline: 3px solid color-mix(in srgb, var(--manager-accent, var(--red)) 34%, transparent);
+      outline-offset: 3px;
+    }
+
+    .today-used-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 2px 12px;
+      border-bottom: 1px solid var(--manager-border, var(--bone));
+      margin-bottom: 2px;
+    }
+
+    .today-used-title {
+      font-size: .92rem;
+      font-weight: 900;
+      color: var(--manager-ink, var(--ink));
+      line-height: 1.2;
+    }
+
+    .today-used-caption {
+      margin-top: 2px;
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--manager-muted, var(--g1));
+      line-height: 1.25;
+    }
+
+    .today-used-count {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      color: var(--manager-muted, var(--g1));
+      font-size: .66rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .today-used-header-tools {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .today-used-close {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 50%;
+      background: #fff;
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: .9rem;
+      font-weight: 950;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .today-oneclick-panel,
+    .today-ai-result-panel {
+      border: 1px solid var(--manager-border, var(--bone));
+      background: var(--manager-sheet, #fff);
+      color: var(--manager-ink, var(--ink));
+    }
+
+    .today-oneclick-head,
+    .today-ai-result-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .today-oneclick-title,
+    .today-ai-result-title {
+      color: var(--manager-ink, var(--ink));
+      font-size: 1.02rem;
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .today-oneclick-copy,
+    .today-ai-result-copy {
+      margin-top: 4px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .74rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .today-oneclick-close,
+    .today-ai-result-close {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 50%;
+      background: #fff;
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: .95rem;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .today-oneclick-options {
+      display: grid;
+      gap: 8px;
+    }
+
+    .today-oneclick-option {
+      width: 100%;
+      min-height: 82px;
+      padding: 13px 14px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--manager-card, #fff) 88%, var(--manager-soft, var(--cream)));
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .today-oneclick-option:active {
+      transform: scale(.985);
+    }
+
+    .today-oneclick-option strong,
+    .today-oneclick-option span {
+      display: block;
+    }
+
+    .today-oneclick-option strong {
+      font-size: .9rem;
+      font-weight: 950;
+      line-height: 1.22;
+    }
+
+    .today-oneclick-option span {
+      margin-top: 5px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .72rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .today-oneclick-option small {
+      margin-left: 5px;
+      color: var(--manager-accent, var(--red));
+      font-size: .58rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      vertical-align: 1px;
+    }
+
+    .today-oneclick-option.is-ai {
+      border-color: color-mix(in srgb, var(--manager-accent, var(--red)) 34%, var(--manager-border, var(--bone)));
+      background: color-mix(in srgb, var(--manager-soft, var(--red-tint)) 54%, #fff);
+    }
+
+    .today-oneclick-note {
+      margin-top: 10px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .66rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .today-used-section {
+      padding-top: 12px;
+      border-bottom: 1px solid var(--manager-border, var(--bone));
+    }
+
+    .today-used-section:last-of-type {
+      border-bottom: 0;
+    }
+
+    .today-used-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .today-used-section-title {
+      color: var(--manager-ink, var(--ink));
+      font-size: .8rem;
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .today-used-section-caption {
+      margin-bottom: 3px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .64rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .today-ai-result-list {
+      display: grid;
+      gap: 6px;
+      margin: 10px 0 12px;
+    }
+
+    .today-ai-result-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--manager-border, var(--bone));
+    }
+
+    .today-ai-result-name,
+    .today-ai-result-meta {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.25;
+    }
+
+    .today-ai-result-name {
+      color: var(--manager-ink, var(--ink));
+      font-size: .78rem;
+      font-weight: 950;
+    }
+
+    .today-ai-result-meta {
+      margin-top: 2px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .64rem;
+      font-weight: 750;
+    }
+
+    .today-ai-result-undo {
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 999px;
+      background: #fff;
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: .66rem;
+      font-weight: 950;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .today-ai-result-undo:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
+    .today-ai-result-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .today-ai-result-actions button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: .8rem;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .today-ai-result-secondary {
+      background: color-mix(in srgb, var(--manager-soft, var(--bone)) 64%, #fff);
+      color: var(--manager-ink, var(--ink));
+    }
+
+    .today-ai-result-primary {
+      background: var(--manager-accent, var(--red));
+      color: #fff;
+    }
+
+    .today-used-beta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      margin: 10px 0 2px;
+      padding: 10px 2px;
+      border-bottom: 1px solid var(--manager-border, var(--bone));
+    }
+
+    .today-used-beta strong,
+    .today-used-beta span {
+      display: block;
+      min-width: 0;
+      line-height: 1.25;
+    }
+
+    .today-used-beta strong {
+      color: var(--manager-ink, var(--ink));
+      font-size: .82rem;
+      font-weight: 950;
+    }
+
+    .today-used-beta span {
+      margin-top: 2px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .66rem;
+      font-weight: 750;
+    }
+
+    .today-used-beta-btn {
+      min-height: 34px;
+      padding: 0 11px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--manager-accent, var(--red));
+      color: #fff;
+      font-family: inherit;
+      font-size: .7rem;
+      font-weight: 950;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .today-used-beta small {
+      color: var(--manager-accent, var(--red));
+      font-size: .58rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .today-used-actions {
+      display: block;
+    }
+
+    .today-used-action {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      min-width: 0;
+      min-height: 58px;
+      border-bottom: 1px solid var(--manager-border, var(--bone));
+      background: transparent;
+    }
+
+    .today-used-btn,
+    .today-used-favorite,
+    .today-used-direct {
+      border: 0;
+      background: transparent;
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .today-used-btn {
+      min-width: 0;
+      padding: 10px 10px 10px 0;
+      text-align: left;
+    }
+
+    .today-used-name {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: .78rem;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .today-used-meta {
+      display: block;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: .62rem;
+      font-weight: 700;
+      color: var(--manager-muted, var(--g1));
+      line-height: 1.2;
+    }
+
+    .today-used-reasons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 5px;
+      overflow: hidden;
+    }
+
+    .today-used-reason {
+      max-width: 100%;
+      padding: 2px 5px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--manager-accent, var(--red)) 11%, #fff);
+      color: var(--manager-ink, var(--ink));
+      font-size: .55rem;
+      font-weight: 900;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .today-used-reason.ai {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .today-used-favorite {
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 999px;
+      background: #fff;
+      font-size: .66rem;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .today-used-favorite::before {
+      content: "핀 ";
+      color: var(--manager-muted, var(--g1));
+      font-size: .58rem;
+      font-weight: 900;
+    }
+
+    .today-used-favorite.is-active {
+      color: #fff;
+      border-color: var(--manager-accent, var(--red));
+      background: var(--manager-accent, var(--red));
+    }
+
+    .today-used-favorite.is-active::before {
+      color: rgba(255,255,255,.78);
+    }
+
+    .today-used-direct {
+      min-height: 48px;
+      width: 100%;
+      margin-top: 10px;
+      border: 1px dashed rgba(0,0,0,.16);
+      border-radius: 14px;
+      background: rgba(255,255,255,.52);
+      font-size: .76rem;
+      font-weight: 900;
+    }
+
+    .today-used-log {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(0,0,0,.08);
+    }
+
+    .today-used-log-title {
+      margin-bottom: 6px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .66rem;
+      font-weight: 900;
+    }
+
+    .today-used-log-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 7px 0;
+    }
+
+    .today-used-log-copy {
+      min-width: 0;
+    }
+
+    .today-used-log-main,
+    .today-used-log-meta {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.25;
+    }
+
+    .today-used-log-main {
+      color: var(--manager-ink, var(--ink));
+      font-size: .72rem;
+      font-weight: 900;
+    }
+
+    .today-used-log-meta {
+      margin-top: 2px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .61rem;
+      font-weight: 700;
+    }
+
+    .today-used-log-action {
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid rgba(0,0,0,.1);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: .66rem;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 360px) {
+      .today-used-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -5134,6 +5886,8 @@
         <!-- Hidden dday tiles (IDs referenced by refreshDashboard) -->
         <div id="dday-tiles" style="display:none"></div>
 
+        <div id="today-used-anchor" hidden></div>
+
         <!-- Crisis alert -->
         <div id="crisis-alert" hidden>
           <div id="crisis-message"></div>
@@ -5158,11 +5912,9 @@
         <span class="rh-bottom-action-icon" aria-hidden="true">+</span>
         <span class="rh-bottom-action-label">직접 추가</span>
       </button>
-      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="재고 AI 매니저 호출">
-        <span class="rh-bottom-manager-avatar" aria-hidden="true">
-          <img id="manager-bottom-img" src="assets/mascot-poodle.png" alt="">
-        </span>
-        <span class="rh-bottom-action-label" id="manager-call-label">하동 AI</span>
+      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="원클릭 정리 열기">
+        <span class="rh-bottom-manager-avatar rh-bottom-today-icon" id="today-used-bottom-icon" aria-hidden="true">☝️</span>
+        <span class="rh-bottom-action-label" id="manager-call-label">원클릭 정리</span>
       </button>
     </div>
 
@@ -5254,6 +6006,16 @@
           <span class="field-label">최소 재고량</span>
           <input type="number" id="edit-min-qty-input" min="0" step="1" class="form-input" placeholder="비워두면 기준 없음">
         </label>
+        <input type="hidden" id="edit-unit" name="unit">
+        <input type="hidden" id="edit-category" name="category">
+        <input type="hidden" id="edit-storage" name="storage_method">
+        <input type="hidden" id="edit-origin" name="origin">
+        <div class="ocr-picker-grid">
+          <button type="button" class="ocr-picker-trigger" data-add-picker-target="edit-unit" data-add-picker-title="단위 선택">단위</button>
+          <button type="button" class="ocr-picker-trigger" data-add-picker-target="edit-category" data-add-picker-title="카테고리 선택">카테고리</button>
+          <button type="button" class="ocr-picker-trigger" data-add-picker-target="edit-storage" data-add-picker-title="보관 방식 선택">보관 방식</button>
+          <button type="button" class="ocr-picker-trigger is-wide" data-add-picker-target="edit-origin" data-add-picker-title="원산지 선택">원산지</button>
+        </div>
         <label>
           <span class="field-label">기한 유형</span>
           <div class="edit-type-segment">
@@ -5265,6 +6027,7 @@
           <span class="field-label">기한 날짜</span>
           <input type="text" id="edit-expiry-date" class="form-input" placeholder="연도-월-일" readonly inputmode="none" aria-haspopup="dialog">
         </label>
+        <button type="button" class="edit-delete-btn" id="item-edit-delete">이 재고 삭제</button>
         <div class="edit-sheet-actions">
           <button type="button" class="dlg-secondary" id="item-edit-cancel">취소</button>
           <button type="submit" class="dlg-primary">저장</button>
@@ -5315,6 +6078,91 @@
       <div class="delete-confirm-actions">
         <button type="button" class="delete-confirm-cancel" id="stock-group-cancel">따로 관리</button>
         <button type="button" class="delete-confirm-accept" id="stock-group-accept">같은 재고로 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="today-use-intro-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-use-intro-backdrop"></div>
+    <div class="delete-confirm-panel today-use-intro-panel" role="dialog" aria-modal="true" aria-labelledby="today-use-intro-title">
+      <div class="add-sheet-handle"></div>
+      <div class="today-use-intro-manager">
+        <img class="today-use-intro-avatar" id="today-use-intro-avatar" src="assets/mascot-poodle.png" alt="">
+        <div>
+          <strong id="today-use-intro-title">하동이가 원클릭 정리를 도와줘요</strong>
+          <span id="today-use-intro-text">직접 선택하거나 AI 차감으로 오늘 쓴 재료를 빠르게 정리할 수 있어요.</span>
+          <small id="today-use-intro-manager-copy">사용 기록이 쌓이면 하동이가 더 정확한 차감 후보를 골라볼게요.</small>
+        </div>
+      </div>
+      <div class="today-use-intro-list">
+        <div class="today-use-intro-item">
+          <span>1</span>
+          <div><strong>유통기한 가까운 재고부터 차감해요</strong><small>우유처럼 같은 재료가 여러 개면 먼저 써야 하는 재고가 자동 선택돼요.</small></div>
+        </div>
+        <div class="today-use-intro-item">
+          <span>2</span>
+          <div><strong>실수해도 되돌릴 수 있어요</strong><small>잘못 눌렀거나 수량을 잘못 바꿔도 최근 기록에서 바로 되돌릴 수 있어요.</small></div>
+        </div>
+        <div class="today-use-intro-item">
+          <span>3</span>
+          <div><strong>자주 쓰는 재료를 먼저 보여줘요</strong><small>누를 때마다 사용 기록이 쌓여요. 그래서 다음에는 자주 쓰는 재료, 오늘 이미 쓴 재료, 기한 가까운 재료를 위쪽에 먼저 보여줘요.</small></div>
+        </div>
+      </div>
+      <div class="delete-confirm-actions">
+        <button type="button" class="delete-confirm-cancel" id="today-use-intro-cancel">나중에</button>
+        <button type="button" class="delete-confirm-accept" id="today-use-intro-accept">원클릭 정리 열기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="today-oneclick-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-oneclick-backdrop"></div>
+    <div class="delete-confirm-panel today-oneclick-panel" role="dialog" aria-modal="true" aria-labelledby="today-oneclick-title">
+      <div class="add-sheet-handle"></div>
+      <div class="today-oneclick-head">
+        <div>
+          <div class="today-oneclick-title" id="today-oneclick-title">원클릭 정리</div>
+          <div class="today-oneclick-copy" id="today-oneclick-copy">오늘 쓴 재료를 어떻게 차감할지 골라주세요.</div>
+        </div>
+        <button type="button" class="today-oneclick-close" id="today-oneclick-close" aria-label="원클릭 정리 닫기">×</button>
+      </div>
+      <div class="today-oneclick-options">
+        <button type="button" class="today-oneclick-option" id="today-oneclick-direct">
+          <strong>직접 선택</strong>
+          <span>재료를 직접 눌러 먼저 써야 하는 재고에서 1개씩 차감해요.</span>
+        </button>
+        <button type="button" class="today-oneclick-option is-ai" id="today-oneclick-ai">
+          <strong>AI 차감 <small>Beta</small></strong>
+          <span>사용 패턴이 쌓일수록 더 정확해져요. 지금은 추천 후보를 확인하고 최대 4개만 차감해요.</span>
+        </button>
+      </div>
+      <div class="today-oneclick-note" id="today-oneclick-note"></div>
+    </div>
+  </div>
+
+  <div id="today-used-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-used-backdrop"></div>
+    <div class="delete-confirm-panel today-used-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="today-used-sheet-title">
+      <div class="add-sheet-handle"></div>
+      <section id="today-used-panel" class="today-used-panel" aria-label="직접 선택 차감"></section>
+    </div>
+  </div>
+
+  <div id="today-ai-result-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-ai-result-backdrop"></div>
+    <div class="delete-confirm-panel today-ai-result-panel" role="dialog" aria-modal="true" aria-labelledby="today-ai-result-title">
+      <div class="add-sheet-handle"></div>
+      <div class="today-ai-result-head">
+        <div>
+          <div class="today-ai-result-title" id="today-ai-result-title">AI 차감 결과</div>
+          <div class="today-ai-result-copy" id="today-ai-result-copy"></div>
+        </div>
+        <button type="button" class="today-ai-result-close" id="today-ai-result-close" aria-label="AI 차감 결과 닫기">×</button>
+      </div>
+      <div class="today-ai-result-list" id="today-ai-result-list"></div>
+      <div class="today-ai-result-actions">
+        <button type="button" class="today-ai-result-secondary" id="today-ai-result-direct">직접 더 보기</button>
+        <button type="button" class="today-ai-result-primary" id="today-ai-result-done">완료</button>
       </div>
     </div>
   </div>
@@ -5621,7 +6469,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        SCRIPT
   ═══════════════════════════════════════════════════════════ -->
-  <script src="manager-actions.js?v=2026060102"></script>
+  <script src="manager-actions.js?v=2026060201"></script>
   <script>
     'use strict';
 
@@ -5639,20 +6487,27 @@
     const MIN_QTY_PROFILE_KEY = 'tuz_inv_min_qty_profile_v1';
     const MANAGER_PROFILE_KEY = 'tuz_inv_manager_profile_v1';
     const HADONG_AUDIT_KEY = 'tuz_inv_hadong_audit_v1';
+    const INVENTORY_EVENT_KEY = 'tuz_inv_events_v1';
     const INVENTORY_CLIENT_KEY = 'tuz_inv_client_id_v1';
     const INVENTORY_REMOTE_READY_KEY = 'tuz_inv_remote_ready_v1';
     const INVENTORY_TUTORIAL_HIDDEN_UNTIL_KEY = 'tuz_inv_tutorial_hidden_until_v1';
     const INVENTORY_TUTORIAL_SESSION_KEY = 'tuz_inv_tutorial_closed_session_v1';
+    const INVENTORY_TUTORIAL_SEEN_KEY = 'tuz_inv_tutorial_seen_v1';
+    const TODAY_USE_INTRO_SEEN_KEY = 'tuz_inv_today_use_intro_seen_v1';
     const INVENTORY_TUTORIAL_FORCE = new URLSearchParams(location.search).get('tutorial') === '1';
     const INVENTORY_TABLE = 'inventory_items';
+    const INVENTORY_EVENT_TABLE = 'inventory_events';
     const SUPABASE_MODULE_URL = '/shared/supabase.js?v=54';
     const INVENTORY_PRODUCTION_HOSTS = new Set(['tuz.kr', 'www.tuz.kr']);
     const INVENTORY_REMOTE_SYNC_ENABLED = INVENTORY_PRODUCTION_HOSTS.has(window.location.hostname);
+    const INVENTORY_MOCK_DATA_FORCE = !INVENTORY_REMOTE_SYNC_ENABLED && new URLSearchParams(location.search).get('mockData') === '1';
     const LOCAL_DEV_PIN = '040914';
     const INVENTORY_STORAGE_SUFFIX = INVENTORY_REMOTE_SYNC_ENABLED ? '' : ':dev';
     const INVENTORY_STORAGE_KEY = `${INV_KEY}${INVENTORY_STORAGE_SUFFIX}`;
+    const INVENTORY_EVENT_STORAGE_KEY = `${INVENTORY_EVENT_KEY}${INVENTORY_STORAGE_SUFFIX}`;
     const INVENTORY_DEMO_KEY = `${DEMO_KEY}${INVENTORY_STORAGE_SUFFIX}`;
     const INVENTORY_REMOTE_READY_STORAGE_KEY = `${INVENTORY_REMOTE_READY_KEY}${INVENTORY_STORAGE_SUFFIX}`;
+    const TODAY_USE_INTRO_SEEN_STORAGE_KEY = `${TODAY_USE_INTRO_SEEN_KEY}${INVENTORY_STORAGE_SUFFIX}`;
     const MANAGER_PROFILES = {
       hadong: {
         id: 'hadong',
@@ -5815,7 +6670,6 @@
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', profile.themeColor || '#A82A1F');
       setElImage('manager-avatar-img', profile.avatar, profile.alt);
       setElImage('manager-bridge-img', profile.avatar, profile.alt);
-      setElImage('manager-bottom-img', profile.avatar, '');
       setElImage('hadong-header-img', profile.avatar, profile.alt);
       setElImage('ai-manager-img', profile.avatar, profile.alt);
       setElText('manager-header-name', profile.name);
@@ -5825,9 +6679,9 @@
       setElText('hadong-header-title', '재고 AI');
       setElText('hadong-header-subtitle', profile.headerSubtitle);
       setElText('ai-sheet-title', `${profile.name} 상세 점검`);
-      setElText('manager-call-label', profile.aiButtonLabel || `${profile.name} AI`);
+      setElText('manager-call-label', '원클릭 정리');
       const managerCallBtn = document.getElementById('manager-call-btn');
-      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', `${profile.aiButtonLabel || `${profile.name} AI`} 호출`);
+      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', '원클릭 정리 열기');
       setManagerDetailTabLabels(profile);
       const input = document.getElementById('hadong-input');
       if (input) input.placeholder = '예: 라떼 재료, 부족한 시럽, 우유 상태';
@@ -5835,6 +6689,7 @@
         btn.classList.toggle('is-selected', btn.dataset.managerChoice === profile.id);
       });
       refreshAiModelPanel();
+      applyTodayUseIntroTheme();
       return profile;
     }
 
@@ -5930,16 +6785,16 @@
         image: '',
         liveFocus: true,
         focus: {
-          targetSelectors: ['#manager-call-btn'],
+          targetSelectors: ['#today-oneclick-sheet .today-oneclick-panel', '#manager-call-btn'],
           padding: 8,
           radius: 18,
           labelPlacement: 'before',
-          label: '하단 매니저 AI 버튼을 눌러 재고 AI를 열어요'
+          label: '원클릭 정리에서 방식을 골라요'
         },
         cardPlacement: 'top',
-        setup: 'aiSearch',
-        title: '매니저 AI로 재고 AI 열기',
-        copy: '하단 쿠키 AI 또는 하동 AI 버튼에서 재고 AI를 엽니다. 라떼 재료처럼 두루뭉술하게 말해도 비슷한 품목을 찾아줍니다.'
+        setup: 'todayUse',
+        title: '원클릭 정리로 빠르게 차감',
+        copy: '직접 선택은 재료를 눌러 1개씩 차감하고, AI 차감은 사용 패턴이 쌓인 재료를 한 번에 정리합니다.'
       },
       {
         image: '',
@@ -5951,6 +6806,7 @@
           maxHeight: 220,
           label: 'AI 설명에서 수량, 기한, 오늘 할 일을 바로 판단해요'
         },
+        cardPlacement: 'top',
         setup: 'aiDetail',
         title: 'AI 설명 보고 바로 판단하기',
         copy: '선택한 품목의 수량, 기한, 부족 여부를 사장님이 바로 결정할 수 있게 요약합니다.'
@@ -5968,6 +6824,7 @@
       if (!getAuth()) return false;
       if (!getSelectedManagerId()) return false;
       if (INVENTORY_TUTORIAL_FORCE) return true;
+      if (localStorage.getItem(INVENTORY_TUTORIAL_SEEN_KEY) === '1') return false;
       if (sessionStorage.getItem(INVENTORY_TUTORIAL_SESSION_KEY) === '1') return false;
       const hiddenUntil = Number(localStorage.getItem(INVENTORY_TUTORIAL_HIDDEN_UNTIL_KEY) || 0);
       return !Number.isFinite(hiddenUntil) || hiddenUntil <= Date.now();
@@ -6060,6 +6917,10 @@
       document.getElementById('hadong-sheet')?.classList.remove('open');
       document.getElementById('ai-overlay')?.classList.remove('open');
       document.getElementById('ai-sheet')?.classList.remove('open');
+      closeTodayUseIntro?.();
+      closeTodayOneClickChoice?.();
+      closeTodayUsedPanel?.();
+      closeTodayAiResult?.();
       closeManagerSelectSheet?.({ force: true });
       clearInventoryTutorialDemoMessages();
     }
@@ -6074,8 +6935,9 @@
         window.scrollTo(0, 0);
       } else if (step.setup === 'add') {
         window.scrollTo(0, 0);
-      } else if (step.setup === 'aiSearch') {
+      } else if (step.setup === 'todayUse') {
         window.scrollTo(0, 0);
+        openTodayOneClickChoice?.();
       } else if (step.setup === 'aiDetail') {
         openHadongChat();
         const box = document.getElementById('hadong-messages');
@@ -6134,6 +6996,7 @@
       } else {
         sessionStorage.setItem(INVENTORY_TUTORIAL_SESSION_KEY, '1');
       }
+      localStorage.setItem(INVENTORY_TUTORIAL_SEEN_KEY, '1');
       document.getElementById('inventory-tutorial-live-focus')?.setAttribute('hidden', '');
       document.getElementById('inventory-tutorial-overlay')?.setAttribute('hidden', '');
       closeTutorialTransientSheets();
@@ -6171,6 +7034,10 @@
     document.getElementById('inventory-tutorial-overlay')?.addEventListener('pointerup', e => {
       if (e.target.closest?.('#inventory-tutorial-prev, #inventory-tutorial-next, #inventory-tutorial-hide-today, #inventory-tutorial-close')) return;
       e.preventDefault();
+      if (_inventoryTutorialIndex >= INVENTORY_TUTORIAL_STEPS.length - 1) {
+        closeInventoryTutorial();
+        return;
+      }
       advanceInventoryTutorial();
     });
 
@@ -6379,9 +7246,27 @@
 
     document.getElementById('manager-call-btn')?.addEventListener('click', e => {
       bumpFeedback(e.currentTarget);
-      openHadongChat();
-      setHadongView('chat');
-      requestAnimationFrame(() => document.getElementById('hadong-input')?.focus());
+      toggleTodayUsedPanel();
+    });
+    document.getElementById('today-use-intro-accept')?.addEventListener('click', acceptTodayUseIntro);
+    document.getElementById('today-use-intro-cancel')?.addEventListener('click', closeTodayUseIntro);
+    document.getElementById('today-use-intro-backdrop')?.addEventListener('click', closeTodayUseIntro);
+    document.getElementById('today-oneclick-backdrop')?.addEventListener('click', closeTodayOneClickChoice);
+    document.getElementById('today-oneclick-close')?.addEventListener('click', closeTodayOneClickChoice);
+    document.getElementById('today-oneclick-direct')?.addEventListener('click', () => {
+      closeTodayOneClickChoice();
+      focusTodayUsedPanel();
+    });
+    document.getElementById('today-oneclick-ai')?.addEventListener('click', () => {
+      useTodayRecommendedBatchBeta();
+    });
+    document.getElementById('today-used-backdrop')?.addEventListener('click', closeTodayUsedPanel);
+    document.getElementById('today-ai-result-backdrop')?.addEventListener('click', closeTodayAiResult);
+    document.getElementById('today-ai-result-close')?.addEventListener('click', closeTodayAiResult);
+    document.getElementById('today-ai-result-done')?.addEventListener('click', closeTodayAiResult);
+    document.getElementById('today-ai-result-direct')?.addEventListener('click', () => {
+      closeTodayAiResult();
+      focusTodayUsedPanel();
     });
 
     // ──────────────────────────────────────────────────────────────
@@ -6963,15 +7848,21 @@
       'expiry_type',
       'storage_method',
       'origin',
-      'stock_group'
+      'stock_group',
+      'opened_at',
+      'is_favorite'
     ];
     let inventorySupabase = null;
     let inventoryRealtimeChannel = null;
     let inventorySyncReady = false;
     let inventoryRemoteBaseline = new Map();
     let inventorySyncQueue = Promise.resolve();
+    let inventoryEventSyncQueue = Promise.resolve();
     let inventoryRemoteRefreshTimer = null;
     let inventoryRemoteRefreshPromise = null;
+    let inventoryOptionalItemFieldsSupported = true;
+    let inventoryEventTableSupported = true;
+    let inventoryEvents = [];
 
     function inventorySortOrder(item, index = 0) {
       const value = Number(item?.sort_order);
@@ -6995,6 +7886,8 @@
         storage_method: item.storage_method || '',
         origin:         String(item.origin ?? '').trim(),
         stock_group:    String(item.stock_group ?? '').trim(),
+        opened_at:      item.opened_at || null,
+        is_favorite:    Boolean(item.is_favorite),
         created_at:     item.created_at || now,
         updated_at:     item.updated_at || item.created_at || now
       };
@@ -7024,7 +7917,7 @@
     function inventoryRowFromItem(item, index = 0) {
       const normalized = normalizeStoredItem(item, index);
       if (!normalized || !normalized.name) return null;
-      return {
+      const row = {
         id:             normalized.id,
         sort_order:     inventorySortOrder(normalized, index),
         name:           normalized.name,
@@ -7039,6 +7932,11 @@
         stock_group:    normalized.stock_group || null,
         updated_by:     INVENTORY_CLIENT_ID
       };
+      if (inventoryOptionalItemFieldsSupported) {
+        row.opened_at = normalized.opened_at || null;
+        row.is_favorite = Boolean(normalized.is_favorite);
+      }
+      return row;
     }
 
     function inventoryItemFromRow(row, index = 0) {
@@ -7055,6 +7953,8 @@
         storage_method: row.storage_method,
         origin:         row.origin,
         stock_group:    row.stock_group,
+        opened_at:      row.opened_at,
+        is_favorite:    row.is_favorite,
         created_at:     row.created_at,
         updated_at:     row.updated_at
       }, index);
@@ -7085,6 +7985,159 @@
       queueInventoryRemoteSync(list);
     }
 
+    function normalizeInventoryEvent(event) {
+      if (!event || typeof event !== 'object') return null;
+      const type = ['use', 'discard', 'open', 'restock', 'adjust'].includes(event.type)
+        ? event.type
+        : 'adjust';
+      const quantityDelta = Number(event.quantity_delta);
+      const createdAt = event.created_at || new Date().toISOString();
+      return {
+        id: event.id || makeId(),
+        type,
+        item_id: event.item_id || null,
+        stock_key: event.stock_key || '',
+        lot_id: event.lot_id || event.item_id || null,
+        quantity_delta: Number.isFinite(quantityDelta) ? quantityDelta : 0,
+        reason: String(event.reason || '').trim(),
+        created_at: createdAt,
+        undo_until: event.undo_until || null,
+        undone_at: event.undone_at || event.reversed_at || null,
+        reverses_event_id: event.reverses_event_id || null,
+        actor: event.actor || INVENTORY_CLIENT_ID,
+        metadata: event.metadata && typeof event.metadata === 'object' ? event.metadata : {}
+      };
+    }
+
+    function inventoryEventItemSnapshot(item) {
+      const normalized = normalizeStoredItem(item || {});
+      return normalized && normalized.name ? normalized : null;
+    }
+
+    function loadInventoryEvents() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(INVENTORY_EVENT_STORAGE_KEY) || '[]');
+        return (Array.isArray(parsed) ? parsed : []).map(normalizeInventoryEvent).filter(Boolean);
+      } catch {
+        return [];
+      }
+    }
+
+    function writeInventoryEventsLocal(events) {
+      inventoryEvents = (events || []).map(normalizeInventoryEvent).filter(Boolean).slice(0, 500);
+      try {
+        localStorage.setItem(INVENTORY_EVENT_STORAGE_KEY, JSON.stringify(inventoryEvents));
+      } catch (err) {
+        console.warn('[Inventory events local]', err);
+      }
+    }
+
+    function inventoryEventRow(event) {
+      return {
+        id: event.id,
+        type: event.type,
+        item_id: event.item_id,
+        stock_key: event.stock_key || null,
+        lot_id: event.lot_id,
+        quantity_delta: event.quantity_delta,
+        reason: event.reason || null,
+        created_at: event.created_at,
+        undo_until: event.undo_until,
+        reversed_at: event.undone_at,
+        reverses_event_id: event.reverses_event_id,
+        actor: event.actor || INVENTORY_CLIENT_ID,
+        metadata: event.metadata || {}
+      };
+    }
+
+    function isInventoryEventSchemaError(error) {
+      const code = String(error?.code || '');
+      const message = String(error?.message || error || '').toLowerCase();
+      return ['42P01', '42703', 'PGRST204', 'PGRST205'].includes(code) ||
+        message.includes('inventory_events') ||
+        message.includes('schema cache') ||
+        message.includes('relation') ||
+        message.includes('column');
+    }
+
+    async function insertInventoryEventRemote(event) {
+      if (!INVENTORY_REMOTE_SYNC_ENABLED || !inventorySupabase || !inventoryEventTableSupported) return;
+      try {
+        const { error } = await inventorySupabase
+          .from(INVENTORY_EVENT_TABLE)
+          .insert(inventoryEventRow(event));
+        if (error) {
+          if (isInventoryEventSchemaError(error)) inventoryEventTableSupported = false;
+          throw error;
+        }
+      } catch (err) {
+        console.warn('[Inventory event sync]', err);
+      }
+    }
+
+    async function updateInventoryEventRemote(eventId, patch) {
+      if (!eventId || !INVENTORY_REMOTE_SYNC_ENABLED || !inventorySupabase || !inventoryEventTableSupported) return;
+      try {
+        const { error } = await inventorySupabase
+          .from(INVENTORY_EVENT_TABLE)
+          .update(patch)
+          .eq('id', eventId);
+        if (error) {
+          if (isInventoryEventSchemaError(error)) inventoryEventTableSupported = false;
+          throw error;
+        }
+      } catch (err) {
+        console.warn('[Inventory event update]', err);
+      }
+    }
+
+    function recordInventoryEvent(type, payload = {}) {
+      const item = payload.item || payload.lot || {};
+      const lot = payload.lot || item;
+      const createdAt = new Date().toISOString();
+      const metadata = {
+        item_name: item.name || lot.name || '',
+        unit: item.unit || lot.unit || '개',
+        ...(payload.metadata || {})
+      };
+      const event = normalizeInventoryEvent({
+        id: payload.id || makeId(),
+        type,
+        item_id: item.id || lot.id || payload.item_id || null,
+        stock_key: payload.stock_key || (item.id ? inventoryStockKey(item) : ''),
+        lot_id: lot.id || payload.lot_id || item.id || null,
+        quantity_delta: payload.quantity_delta || 0,
+        reason: payload.reason || '',
+        created_at: createdAt,
+        undo_until: payload.undo_until || null,
+        reverses_event_id: payload.reverses_event_id || null,
+        actor: INVENTORY_CLIENT_ID,
+        metadata
+      });
+      writeInventoryEventsLocal([event, ...inventoryEvents]);
+      inventoryEventSyncQueue = inventoryEventSyncQueue
+        .catch(() => {})
+        .then(() => insertInventoryEventRemote(event));
+      return event;
+    }
+
+    function markInventoryEventUndone(eventId, reversalId) {
+      if (!eventId) return;
+      const now = new Date().toISOString();
+      const next = inventoryEvents.map(event =>
+        event.id === eventId
+          ? { ...event, undone_at: now, metadata: { ...event.metadata, reversal_event_id: reversalId || null } }
+          : event
+      );
+      writeInventoryEventsLocal(next);
+      inventoryEventSyncQueue = inventoryEventSyncQueue
+        .catch(() => {})
+        .then(() => updateInventoryEventRemote(eventId, {
+          reversed_at: now,
+          metadata: next.find(event => event.id === eventId)?.metadata || {}
+        }));
+    }
+
     async function ensureInventorySupabase() {
       if (!INVENTORY_REMOTE_SYNC_ENABLED) {
         throw new Error('Inventory remote sync is disabled outside production.');
@@ -7097,13 +8150,45 @@
 
     async function fetchInventoryRows() {
       const supabase = await ensureInventorySupabase();
-      const { data, error } = await supabase
+      const baseColumns = 'id,sort_order,name,quantity,unit,category,min_quantity,expiry_date,expiry_type,storage_method,origin,stock_group,updated_by,created_at,updated_at';
+      const optionalColumns = 'opened_at,is_favorite';
+      let query = supabase
         .from(INVENTORY_TABLE)
-        .select('id,sort_order,name,quantity,unit,category,min_quantity,expiry_date,expiry_type,storage_method,origin,stock_group,updated_by,created_at,updated_at')
+        .select(inventoryOptionalItemFieldsSupported ? `${baseColumns},${optionalColumns}` : baseColumns)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
+      let { data, error } = await query;
+      if (error && inventoryOptionalItemFieldsSupported) {
+        inventoryOptionalItemFieldsSupported = false;
+        const retry = await supabase
+          .from(INVENTORY_TABLE)
+          .select(baseColumns)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true });
+        data = retry.data;
+        error = retry.error;
+      }
       if (error) throw error;
       return (data || []).map(inventoryItemFromRow).filter(Boolean);
+    }
+
+    async function fetchInventoryEvents() {
+      if (!INVENTORY_REMOTE_SYNC_ENABLED || !inventoryEventTableSupported) return inventoryEvents;
+      const supabase = await ensureInventorySupabase();
+      const columns = 'id,type,item_id,stock_key,lot_id,quantity_delta,reason,created_at,undo_until,reversed_at,reverses_event_id,actor,metadata';
+      const { data, error } = await supabase
+        .from(INVENTORY_EVENT_TABLE)
+        .select(columns)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) {
+        if (isInventoryEventSchemaError(error)) inventoryEventTableSupported = false;
+        console.warn('[Inventory events fetch]', error);
+        return inventoryEvents;
+      }
+      const remoteEvents = (data || []).map(normalizeInventoryEvent).filter(Boolean);
+      writeInventoryEventsLocal(remoteEvents);
+      return inventoryEvents;
     }
 
     async function syncInventoryDiff(snapshot) {
@@ -7121,9 +8206,17 @@
 
       const supabase = await ensureInventorySupabase();
       if (upserts.length) {
-        const { error } = await supabase
+        let { error } = await supabase
           .from(INVENTORY_TABLE)
           .upsert(upserts, { onConflict: 'id' });
+        if (error && inventoryOptionalItemFieldsSupported) {
+          inventoryOptionalItemFieldsSupported = false;
+          const stripped = upserts.map(({ opened_at, is_favorite, ...row }) => row);
+          const retry = await supabase
+            .from(INVENTORY_TABLE)
+            .upsert(stripped, { onConflict: 'id' });
+          error = retry.error;
+        }
         if (error) throw error;
       }
       if (deletes.length) {
@@ -7168,7 +8261,9 @@
       if (inventoryRemoteRefreshPromise) return inventoryRemoteRefreshPromise;
       inventoryRemoteRefreshPromise = (async () => {
         await inventorySyncQueue.catch(() => {});
+        await inventoryEventSyncQueue.catch(() => {});
         const remoteItems = await fetchInventoryRows();
+        await fetchInventoryEvents();
         applyRemoteInventory(remoteItems, options);
       })()
         .catch(err => {
@@ -7195,7 +8290,7 @@
       if (inventoryRealtimeChannel) {
         inventorySupabase.removeChannel(inventoryRealtimeChannel);
       }
-      inventoryRealtimeChannel = inventorySupabase
+      let channel = inventorySupabase
         .channel('tuz-inventory-items')
         .on('postgres_changes', {
           event: '*',
@@ -7205,12 +8300,21 @@
           const changedBy = payload?.new?.updated_by || payload?.old?.updated_by || '';
           if (changedBy === INVENTORY_CLIENT_ID) return;
           scheduleInventoryRemoteRefresh();
-        })
-        .subscribe(status => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[Inventory realtime]', status);
-          }
         });
+      if (inventoryEventTableSupported) {
+        channel = channel.on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: INVENTORY_EVENT_TABLE
+        }, () => {
+          scheduleInventoryRemoteRefresh();
+        });
+      }
+      inventoryRealtimeChannel = channel.subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[Inventory realtime]', status);
+        }
+      });
     }
 
     function shouldSeedMockData() {
@@ -7241,7 +8345,7 @@
 
     function buildItem(f) {
       return {
-        id:             crypto.randomUUID(),
+        id:             makeId(),
         name:           (f.name          ?? '').trim(),
         quantity:       Number(f.quantity) || 0,
         unit:           (f.unit           ?? '').trim() || '개',
@@ -7253,6 +8357,8 @@
         storage_method: f.storage_method  || '',
         origin:         (f.origin         ?? '').trim(),
         stock_group:    (f.stock_group    ?? '').trim(),
+        opened_at:      f.opened_at || null,
+        is_favorite:    Boolean(f.is_favorite),
         created_at:     new Date().toISOString(),
         updated_at:     new Date().toISOString()
       };
@@ -7371,7 +8477,7 @@
 
     function isShortageAttentionSummary(summary) {
       if (!summary) return false;
-      return summary.low;
+      return summary.low || stockRiskProfile(summary).shortAfterAttention;
     }
 
     function shortageAttentionSummaries(sourceItems = items) {
@@ -7498,7 +8604,23 @@
 
     async function loadInventory() {
       items = loadData();
+      inventoryEvents = loadInventoryEvents();
       learnMinQuantitiesFromItems(items);
+      if (INVENTORY_MOCK_DATA_FORCE) {
+        inventorySyncReady = false;
+        items = makeMockInventoryData();
+        try {
+          writeInventoryCache(items);
+          localStorage.setItem(INVENTORY_DEMO_KEY, '1');
+        } catch (err) {
+          console.warn('[Inventory] Local mock cache skipped.', err);
+        }
+        updateInventoryBaseline(items);
+        refreshAll();
+        console.info('[Inventory] Local mock data loaded. Remote sync skipped.');
+        return;
+      }
+
       if (!INVENTORY_REMOTE_SYNC_ENABLED) {
         inventorySyncReady = false;
         if (!items.length && shouldSeedMockData()) {
@@ -7517,6 +8639,7 @@
       try {
         await ensureInventorySupabase();
         const remoteItems = await fetchInventoryRows();
+        await fetchInventoryEvents();
         inventorySyncReady = true;
 
         if (remoteItems.length) {
@@ -7552,6 +8675,7 @@
     function refreshAll() {
       refreshDashboard(getVisibleItems());
       refreshCategories();
+      renderTodayUsedPanel();
       renderList(getFiltered());
       if (document.getElementById('hadong-sheet')?.classList.contains('open')) {
         renderHadongOverview();
@@ -7622,6 +8746,7 @@
     const listEl = document.getElementById('inventory-list');
     let _inventoryGroupCards = new Map();
     let _openGroupDetailKey = '';
+    let _todayUsedPanelOpen = false;
     let _inventoryViewMode = (() => {
       try {
         return localStorage.getItem('tuz_inventory_view_mode') === 'expanded' ? 'expanded' : 'grouped';
@@ -7717,6 +8842,9 @@
       } else if (stock.low) {
         status = 'low';
         label = '부족';
+      } else if (shortAfterAttention) {
+        status = 'watch';
+        label = `곧 쓸 것 제외 ${quantityLabel(freshQuantity, unit)}`;
       } else if (weekQuantity > 0) {
         status = 'week';
         label = `2~6일 남음 ${quantityLabel(weekQuantity, unit)}`;
@@ -7764,13 +8892,13 @@
       if (profile.shortAfterAttention) {
         return {
           tone: 'warn',
-          text: `전체 수량은 최소재고보다 많아요. 다만 2~6일 안에 기한이 오는 재고가 있어서, 판매가 많으면 추가 발주 여부만 확인해 주세요.`
+          text: `전체 수량은 괜찮지만, 곧 써야 하는 걸 빼면 여유가 ${quantityLabel(profile.freshQuantity, unit)}뿐이에요. 가까운 기한부터 먼저 쓰고, 부족하면 새로 채워 주세요.`
         };
       }
       if (profile.tomorrowQuantity > 0 || profile.weekQuantity > 0) {
         return {
           tone: 'warn',
-          text: `2~6일 안에 기한이 오는 재고가 ${quantityLabel(profile.tomorrowQuantity + profile.weekQuantity, unit)} 있어요. 기한이 더 긴 재고보다 먼저 확인해 주세요.`
+          text: `곧 써야 하는 재고가 ${quantityLabel(profile.tomorrowQuantity + profile.weekQuantity, unit)} 있어요. 기한이 넉넉한 것보다 먼저 사용해 주세요.`
         };
       }
       return {
@@ -7845,8 +8973,10 @@
       if (profile.expiredQuantity > 0) parts.push(`기한 초과 ${quantityLabel(profile.expiredQuantity, unit)}`);
       else if (profile.todayQuantity > 0) parts.push(`오늘까지 ${quantityLabel(profile.todayQuantity, unit)}`);
       else if (profile.tomorrowQuantity > 0) parts.push(`내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
+      else if (profile.shortAfterAttention) parts.push(`이번 주 ${quantityLabel(profile.weekQuantity, unit)}`);
       else if (profile.weekQuantity > 0) parts.push(`2~6일 남음 ${quantityLabel(profile.weekQuantity, unit)}`);
       if (stock.low) parts.push('최소재고 미달');
+      else if (profile.shortAfterAttention) parts.push('곧 쓸 것 빼면 부족');
       if (!parts.length) parts.push('안정');
       return parts.slice(0, 2).join(' · ');
     }
@@ -7873,6 +9003,532 @@
       const dateText = lot.expiry_date || '날짜 미입력';
       const ddayText = dday === null ? '기한 미입력' : ddayLabel(dday);
       return `<span class="group-lot-date">${escHtml(dateText)}</span><span class="group-lot-dday ${detailStatusClass(lotStatus.status)}">${escHtml(ddayText)}</span>`;
+    }
+
+    function recentUseStatsByStockKey() {
+      const now = Date.now();
+      const dayMs = 24 * 60 * 60 * 1000;
+      const stats = new Map();
+      inventoryEvents.forEach(event => {
+        if (!event || event.type !== 'use' || !event.stock_key || event.undone_at) return;
+        const time = new Date(event.created_at).getTime();
+        if (!Number.isFinite(time)) return;
+        const age = now - time;
+        if (age < 0 || age > 30 * dayMs) return;
+        const row = stats.get(event.stock_key) || { seven: 0, thirty: 0, today: 0 };
+        row.thirty += 1;
+        if (age <= 7 * dayMs) row.seven += 1;
+        if (new Date(time).toDateString() === new Date(now).toDateString()) row.today += 1;
+        stats.set(event.stock_key, row);
+      });
+      return stats;
+    }
+
+    function todayUsedRecommendationSignals({ stock, lot, eventStats, favorite, preferredRank }) {
+      const dday = lotDday(lot);
+      const total = Number(stock?.totalQuantity) || 0;
+      const min = stock?.minQuantity;
+      const hasMin = min !== null && min !== undefined && Number.isFinite(Number(min));
+      const nearMinimum = hasMin && total > 0 && total <= Math.max(Number(min) + 1, Number(min) * 1.25);
+      const expiryUrgency =
+        dday !== null && dday < 0 ? 260 :
+        dday === 0 ? 220 :
+        dday === 1 ? 180 :
+        dday !== null && dday <= 3 ? 130 :
+        dday !== null && dday <= 6 ? 70 :
+        0;
+      const alreadyUsedToday = Number(eventStats?.today) > 0;
+      const aiRecommended = Boolean(
+        (expiryUrgency >= 130 && total > 0) ||
+        nearMinimum ||
+        (Number(eventStats?.seven) >= 2 && !alreadyUsedToday) ||
+        (favorite && preferredRank >= 0)
+      );
+      const reasons = [];
+      if (alreadyUsedToday) reasons.push({ key: 'today', label: '오늘 사용' });
+      if (expiryUrgency >= 130) reasons.push({ key: 'expiry', label: '기한 임박' });
+      if (nearMinimum) reasons.push({ key: 'minimum', label: '최소재고 근처' });
+      if (aiRecommended) reasons.push({ key: 'ai', label: 'AI 추천' });
+      return {
+        alreadyUsedToday,
+        expiryUrgency,
+        nearMinimum,
+        aiRecommended,
+        reasons
+      };
+    }
+
+    function todayUsedCandidates() {
+      const visible = getVisibleItems().filter(item => Number(item.quantity) > 0);
+      const stats = recentUseStatsByStockKey();
+      const preferredNames = [/우유|milk/i, /바닐라|시럽|syrup/i, /딸기|퓨레/i, /휘핑|크림|cream/i];
+      const seen = new Set();
+      const rows = visible
+        .map(item => {
+          const key = inventoryStockKey(item);
+          if (seen.has(key)) return null;
+          seen.add(key);
+          const stock = inventoryStockSummary(item, items);
+          const activeLots = sortedLots((stock.lots || []).filter(lot => Number(lot.quantity) > 0));
+          const lot = activeLots[0];
+          if (!lot) return null;
+          const eventStats = stats.get(key) || { seven: 0, thirty: 0, today: 0 };
+          const favorite = stock.lots.some(row => row.is_favorite);
+          const preferredRank = preferredNames.findIndex(re => re.test(item.name || ''));
+          const signals = todayUsedRecommendationSignals({ stock, lot, eventStats, favorite, preferredRank });
+          const score =
+            (favorite ? 1000 : 0) +
+            (signals.alreadyUsedToday ? 170 : 0) +
+            signals.expiryUrgency +
+            (signals.nearMinimum ? 120 : 0) +
+            (signals.aiRecommended ? 90 : 0) +
+            eventStats.seven * 20 +
+            eventStats.thirty * 4 +
+            (preferredRank >= 0 ? 80 - preferredRank : 0);
+          return { key, item, stock, lot, eventStats, favorite, signals, score };
+        })
+        .filter(Boolean)
+        .sort((a, b) =>
+          b.score - a.score ||
+          b.signals.expiryUrgency - a.signals.expiryUrgency ||
+          Number(!a.favorite) - Number(!b.favorite) ||
+          inventorySortOrder(a.lot) - inventorySortOrder(b.lot) ||
+          String(a.item.name || '').localeCompare(String(b.item.name || ''), 'ko')
+        );
+      return rows.slice(0, 6);
+    }
+
+    function todayUsedBatchCandidates() {
+      return todayUsedCandidates()
+        .filter(row => row.signals.aiRecommended || row.signals.expiryUrgency >= 130 || row.signals.nearMinimum || row.signals.alreadyUsedToday)
+        .slice(0, 4);
+    }
+
+    function focusTodayUsedPanel() {
+      const panel = document.getElementById('today-used-panel');
+      if (!panel) return;
+      _todayUsedPanelOpen = true;
+      renderTodayUsedPanel();
+      if (panel.hidden) {
+        showToast('빠른 차감할 재료가 없어요. 재고를 먼저 추가해주세요.');
+        return;
+      }
+      const sheet = document.getElementById('today-used-sheet');
+      sheet?.classList.add('open');
+      sheet?.setAttribute('aria-hidden', 'false');
+      panel.classList.add('is-focused');
+      setTimeout(() => panel.classList.remove('is-focused'), 1300);
+      const firstButton = panel.querySelector('[data-today-use-key]');
+      requestAnimationFrame(() => firstButton?.focus({ preventScroll: true }));
+    }
+
+    function hasSeenTodayUseIntro() {
+      try {
+        return localStorage.getItem(TODAY_USE_INTRO_SEEN_STORAGE_KEY) === '1';
+      } catch (_) {
+        return true;
+      }
+    }
+
+    function rememberTodayUseIntroSeen() {
+      try {
+        localStorage.setItem(TODAY_USE_INTRO_SEEN_STORAGE_KEY, '1');
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    function todayUseIntroCopy(profile = getManagerProfile()) {
+      if (profile.id === 'cookie') {
+        return {
+          title: '쿠키가 원클릭 정리를 도와줘요',
+          text: '직접 선택하거나 AI 차감으로 오늘 쓴 재료를 빠르게 정리할 수 있어요.',
+          managerCopy: '사용 기록이 쌓이면 쿠키가 더 정확한 차감 후보를 골라볼게요.'
+        };
+      }
+      return {
+        title: '하동이가 원클릭 정리를 도와줘요',
+        text: '직접 선택하거나 AI 차감으로 오늘 쓴 재료를 빠르게 정리할 수 있어요.',
+        managerCopy: '사용 기록이 쌓이면 하동이가 더 정확한 차감 후보를 골라볼게요.'
+      };
+    }
+
+    function applyTodayUseIntroTheme() {
+      const profile = getManagerProfile();
+      const copy = todayUseIntroCopy(profile);
+      setElText('today-use-intro-title', copy.title);
+      setElText('today-use-intro-text', copy.text);
+      setElText('today-use-intro-manager-copy', copy.managerCopy);
+      setElImage('today-use-intro-avatar', profile.avatar, profile.alt);
+    }
+
+    function openTodayUseIntro() {
+      const sheet = document.getElementById('today-use-intro-sheet');
+      if (!sheet) {
+        focusTodayUsedPanel();
+        return;
+      }
+      applyTodayUseIntroTheme();
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => document.getElementById('today-use-intro-accept')?.focus());
+    }
+
+    function closeTodayUseIntro() {
+      const sheet = document.getElementById('today-use-intro-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+    }
+
+    function acceptTodayUseIntro() {
+      rememberTodayUseIntroSeen();
+      closeTodayUseIntro();
+      openTodayOneClickChoice();
+    }
+
+    function oneClickChoiceCopy(profile = getManagerProfile()) {
+      const name = profile.name || '매니저';
+      return `${name}가 오늘 쓴 재료를 정리할 방법을 골라드릴게요.`;
+    }
+
+    function openTodayOneClickChoice() {
+      closeTodayUsedPanel();
+      closeTodayAiResult();
+      const sheet = document.getElementById('today-oneclick-sheet');
+      if (!sheet) {
+        focusTodayUsedPanel();
+        return;
+      }
+      setElText('today-oneclick-copy', oneClickChoiceCopy());
+      const batchCount = todayUsedBatchCandidates().length;
+      setElText(
+        'today-oneclick-note',
+        batchCount
+          ? `AI 차감 후보 ${batchCount}개가 있어요. 차감 뒤 바로 되돌릴 수 있어요.`
+          : 'AI 차감은 사용 기록이 쌓일수록 좋아져요. 지금은 직접 선택을 먼저 사용해보세요.'
+      );
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => document.getElementById('today-oneclick-direct')?.focus());
+    }
+
+    function closeTodayOneClickChoice() {
+      const sheet = document.getElementById('today-oneclick-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+    }
+
+    function closeTodayUsedPanel() {
+      _todayUsedPanelOpen = false;
+      const sheet = document.getElementById('today-used-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+      const panel = document.getElementById('today-used-panel');
+      if (panel) {
+        panel.classList.remove('is-focused');
+        panel.innerHTML = '';
+        panel.hidden = true;
+      }
+    }
+
+    function toggleTodayUsedPanel() {
+      if (_todayUsedPanelOpen) {
+        closeTodayUsedPanel();
+        return;
+      }
+      const choiceSheet = document.getElementById('today-oneclick-sheet');
+      if (choiceSheet?.classList.contains('open')) {
+        closeTodayOneClickChoice();
+        return;
+      }
+      const resultSheet = document.getElementById('today-ai-result-sheet');
+      if (resultSheet?.classList.contains('open')) {
+        closeTodayAiResult();
+        return;
+      }
+      if (!hasSeenTodayUseIntro()) {
+        openTodayUseIntro();
+        return;
+      }
+      openTodayOneClickChoice();
+    }
+
+    function closeTodayAiResult() {
+      const sheet = document.getElementById('today-ai-result-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+    }
+
+    function openTodayAiResult(results) {
+      const sheet = document.getElementById('today-ai-result-sheet');
+      const list = document.getElementById('today-ai-result-list');
+      if (!sheet || !list) {
+        showToast(`AI가 ${results.length}개 재료를 차감했어요.`);
+        return;
+      }
+      const profile = getManagerProfile();
+      setElText('today-ai-result-copy', `${profile.name}가 아래 재료를 먼저 써야 하는 재고에서 차감했어요.`);
+      list.innerHTML = results.map(result => `
+        <div class="today-ai-result-row">
+          <span>
+            <span class="today-ai-result-name">${escHtml(result.name)}</span>
+            <span class="today-ai-result-meta">-${escHtml(quantityLabel(result.amount, result.unit))}${result.nextQty <= 0 ? ' · 소진' : ` · 남은 ${escHtml(quantityLabel(result.nextQty, result.unit))}`}</span>
+          </span>
+          <button type="button" class="today-ai-result-undo" data-ai-result-undo="${escAttr(result.eventId)}">되돌리기</button>
+        </div>
+      `).join('');
+      list.querySelectorAll('[data-ai-result-undo]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ok = undoInventoryEvent(btn.dataset.aiResultUndo, { successMessage: 'AI 차감을 되돌렸어요.' });
+          if (ok) {
+            btn.disabled = true;
+            btn.textContent = '완료';
+          }
+        });
+      });
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => document.getElementById('today-ai-result-done')?.focus());
+    }
+
+    function useTodayRecommendedBatchBeta() {
+      const rows = todayUsedBatchCandidates();
+      if (!rows.length) {
+        showToast('AI 차감할 추천 재료가 아직 없어요.');
+        return;
+      }
+      const results = [];
+      rows.forEach(row => {
+        const lot = sortedLots(items.filter(item => inventoryStockKey(item) === row.key && Number(item.quantity) > 0))[0];
+        if (!lot) return;
+        const qty = Number(lot.quantity) || 0;
+        if (qty <= 0) return;
+        const amount = Math.max(0, Math.min(1, qty));
+        if (!amount) return;
+        const nextQty = Number((qty - amount).toFixed(3));
+        const event = recordInventoryEvent('use', {
+          item: lot,
+          lot,
+          quantity_delta: -amount,
+          reason: 'quick-use-beta-batch',
+          undo_until: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          metadata: {
+            before_quantity: qty,
+            after_quantity: nextQty,
+            source: 'quick-use-beta-batch',
+            snapshot: inventoryEventItemSnapshot(lot)
+          }
+        });
+        lot.quantity = nextQty;
+        lot.updated_at = new Date().toISOString();
+        results.push({
+          eventId: event.id,
+          name: lot.name,
+          amount,
+          unit: lot.unit || '개',
+          nextQty
+        });
+      });
+      if (!results.length) {
+        showToast('차감할 수 있는 재료가 없어요.');
+        return;
+      }
+      closeTodayOneClickChoice();
+      saveData(items);
+      refreshAll();
+      openTodayAiResult(results);
+    }
+
+    function inventoryEventTypeLabel(type) {
+      return ({
+        use: '사용',
+        discard: '폐기',
+        open: '개봉',
+        restock: '입고',
+        adjust: '조정'
+      })[type] || '기록';
+    }
+
+    function inventoryEventItemName(event) {
+      const metadata = event?.metadata || {};
+      const live = items.find(item => item.id === event?.lot_id || item.id === event?.item_id);
+      return live?.name || metadata.item_name || metadata.snapshot?.name || '재료';
+    }
+
+    function inventoryEventUnit(event) {
+      const metadata = event?.metadata || {};
+      const live = items.find(item => item.id === event?.lot_id || item.id === event?.item_id);
+      return live?.unit || metadata.unit || metadata.snapshot?.unit || '개';
+    }
+
+    function inventoryEventTimeLabel(event) {
+      const time = new Date(event?.created_at || 0).getTime();
+      if (!Number.isFinite(time)) return '';
+      const diffMs = Date.now() - time;
+      const minuteMs = 60 * 1000;
+      const hourMs = 60 * minuteMs;
+      if (diffMs < minuteMs) return '방금';
+      if (diffMs < hourMs) return `${Math.floor(diffMs / minuteMs)}분 전`;
+      if (diffMs < 24 * hourMs) return `${Math.floor(diffMs / hourMs)}시간 전`;
+      return new Date(time).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+    }
+
+    function canUndoInventoryEvent(event) {
+      if (!event || event.undone_at || event.reverses_event_id) return false;
+      if (event.undo_until && new Date(event.undo_until).getTime() < Date.now()) return false;
+      if (event.type === 'open') return true;
+      if (event.type === 'use' || event.type === 'discard') return Number(event.quantity_delta) < 0;
+      if (event.type === 'restock') return Number(event.quantity_delta) > 0;
+      if (event.type === 'adjust') return Number.isFinite(Number(event.quantity_delta));
+      return false;
+    }
+
+    function recentInventoryEvents(limit = 5) {
+      return [...inventoryEvents]
+        .filter(event => event && !event.reverses_event_id)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, limit);
+    }
+
+    function inventoryEventLogRows() {
+      const events = recentInventoryEvents(4);
+      if (!events.length) return '';
+      return `
+        <div class="today-used-log" aria-label="최근 재고 이벤트">
+          <div class="today-used-log-title">최근 기록</div>
+          ${events.map(event => {
+            const unit = inventoryEventUnit(event);
+            const delta = Number(event.quantity_delta) || 0;
+            const amountText = delta
+              ? `${delta > 0 ? '+' : ''}${quantityLabel(delta, unit)}`
+              : '';
+            const meta = [
+              inventoryEventTimeLabel(event),
+              amountText,
+              event.undone_at ? '되돌림 완료' : ''
+            ].filter(Boolean).join(' · ');
+            return `
+              <div class="today-used-log-row">
+                <span class="today-used-log-copy">
+                  <span class="today-used-log-main">${escHtml(inventoryEventTypeLabel(event.type))} · ${escHtml(inventoryEventItemName(event))}</span>
+                  <span class="today-used-log-meta">${escHtml(meta)}</span>
+                </span>
+                ${canUndoInventoryEvent(event)
+                  ? `<button type="button" class="today-used-log-action" data-inventory-event-undo="${escAttr(event.id)}">되돌리기</button>`
+                  : ''}
+              </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    function renderTodayUsedPanel() {
+      const panel = document.getElementById('today-used-panel');
+      if (!panel) return;
+      if (!_todayUsedPanelOpen) {
+        panel.innerHTML = '';
+        panel.hidden = true;
+        return;
+      }
+      const candidates = todayUsedCandidates();
+      const eventRows = inventoryEventLogRows();
+      if (!candidates.length && !eventRows) {
+        panel.innerHTML = '';
+        panel.hidden = true;
+        return;
+      }
+      panel.hidden = false;
+      const usedToday = inventoryEvents.filter(event =>
+        event.type === 'use' &&
+        !event.undone_at &&
+        new Date(event.created_at).toDateString() === new Date().toDateString()
+      ).length;
+      const aiRows = candidates.filter(row => row.signals.aiRecommended);
+      const directRows = candidates.filter(row => !row.signals.aiRecommended);
+      const renderRows = rows => rows.map(row => {
+        const unit = row.stock.unit || row.item.unit || '개';
+        const meta = [
+          `남은 ${quantityLabel(row.stock.totalQuantity, unit)}`,
+          row.eventStats.today ? `오늘 ${row.eventStats.today}회` : '',
+          row.eventStats.seven ? `7일 ${row.eventStats.seven}회` : '',
+          row.lot.expiry_date ? row.lot.expiry_date : ''
+        ].filter(Boolean).join(' · ');
+        const reasons = row.signals.reasons
+          .filter(reason => reason.key !== 'ai')
+          .slice(0, 3)
+          .map(reason => `<span class="today-used-reason ${escAttr(reason.key)}">${escHtml(reason.label)}</span>`)
+          .join('');
+        return `
+          <div class="today-used-action">
+            <button type="button" class="today-used-btn" data-today-use-key="${escHtml(encodeURIComponent(row.key))}">
+              <span class="today-used-name">${escHtml(row.item.name)} -1</span>
+              <span class="today-used-meta">${escHtml(meta)}</span>
+              ${reasons ? `<span class="today-used-reasons">${reasons}</span>` : ''}
+            </button>
+            <button type="button" class="today-used-favorite${row.favorite ? ' is-active' : ''}" data-today-favorite-key="${escHtml(encodeURIComponent(row.key))}" aria-label="${escHtml(row.item.name)} 빠른 차감 고정">${row.favorite ? '고정됨' : '고정'}</button>
+          </div>`;
+      }).join('');
+      panel.innerHTML = `
+        <div class="today-used-header">
+          <div>
+            <div class="today-used-title" id="today-used-sheet-title">직접 선택 차감</div>
+            <div class="today-used-caption">재료를 직접 눌러 먼저 써야 하는 재고에서 1개씩 차감해요.</div>
+          </div>
+          <div class="today-used-header-tools">
+            <div class="today-used-count">오늘 ${escHtml(usedToday)}건</div>
+            <button type="button" class="today-used-close" id="today-used-close" aria-label="직접 선택 닫기">×</button>
+          </div>
+        </div>
+        <div class="today-used-actions">
+          ${aiRows.length ? `
+            <div class="today-used-section">
+              <div class="today-used-section-head">
+                <div class="today-used-section-title">AI 추천</div>
+                <div class="today-used-count">${escHtml(aiRows.length)}개</div>
+              </div>
+              <div class="today-used-section-caption">사용 패턴, 기한, 재고 상태를 보고 먼저 보여드려요.</div>
+              ${renderRows(aiRows)}
+            </div>` : ''}
+          ${directRows.length ? `
+            <div class="today-used-section">
+              <div class="today-used-section-head">
+                <div class="today-used-section-title">직접 선택</div>
+                <div class="today-used-count">${escHtml(directRows.length)}개</div>
+              </div>
+              <div class="today-used-section-caption">고정한 재료와 최근 자주 쓴 재료를 골라 차감해요.</div>
+              ${renderRows(directRows)}
+            </div>` : ''}
+          <button type="button" class="today-used-direct" id="today-used-direct">직접 찾기</button>
+        </div>
+        ${eventRows}`;
+
+      panel.querySelectorAll('[data-today-use-key]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          bumpFeedback(btn);
+          useTodayIngredient(decodeURIComponent(btn.dataset.todayUseKey || ''));
+        });
+      });
+      panel.querySelectorAll('[data-today-favorite-key]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          bumpFeedback(btn);
+          toggleInventoryFavorite(decodeURIComponent(btn.dataset.todayFavoriteKey || ''));
+        });
+      });
+      panel.querySelector('#today-used-direct')?.addEventListener('click', () => {
+        closeTodayUsedPanel();
+        const input = document.getElementById('search-input');
+        input?.focus();
+        input?.select?.();
+      });
+      panel.querySelector('#today-used-close')?.addEventListener('click', () => {
+        closeTodayUsedPanel();
+      });
+      panel.querySelectorAll('[data-inventory-event-undo]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          bumpFeedback(btn);
+          undoInventoryEvent(btn.dataset.inventoryEventUndo);
+        });
+      });
     }
 
     function renderExpandedList(data) {
@@ -7903,12 +9559,20 @@
               </div>
               <div class="inv-badge-grid">${detailBadges}</div>
               <div class="inv-actions">
+                <button type="button" class="inv-btn del" data-quick-adjust="decrease-item" data-item-id="${safeId}">-1</button>
                 <button type="button" class="inv-btn" data-expanded-action="edit" data-item-id="${safeId}">수정</button>
-                <button type="button" class="inv-btn del" data-expanded-action="delete" data-item-id="${safeId}">삭제</button>
               </div>
             </div>
           </article>`;
       }).join('');
+
+      listEl.querySelectorAll('[data-quick-adjust]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          bumpFeedback(btn);
+          handleInventoryQuickAdjust(btn.dataset.quickAdjust, btn.dataset.itemId);
+        });
+      });
 
       listEl.querySelectorAll('[data-expanded-action]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -7916,10 +9580,6 @@
           bumpFeedback(btn);
           if (btn.dataset.expandedAction === 'edit') {
             openItemEditSheet(id, 'qty');
-            return;
-          }
-          if (btn.dataset.expandedAction === 'delete') {
-            openDeleteConfirm(id);
           }
         });
       });
@@ -7946,10 +9606,6 @@
         const badges = makeInventoryCardBadges(stock, profile, unit)
           .map(badge => `<span class="inv-badge ${escAttr(badge.className)}">${escHtml(badge.label)}</span>`)
           .join('');
-        const deleteIds = (stock.lots || [])
-          .map(lot => lot?.id)
-          .filter(Boolean)
-          .join(',');
         return `
           <article class="${cardClassForProfile(profile)} group-card" data-group-card-id="${escAttr(groupId)}">
             <button type="button" class="inv-card-main" data-group-id="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 재고 상세 보기">
@@ -7959,29 +9615,249 @@
                     <div class="inv-name">${escHtml(item.name)}</div>
                     <div class="inv-summary-line">전체 수량 ${escHtml(quantityLabel(stock.totalQuantity, unit))}${escHtml(minText)}</div>
                   </div>
-                  <span class="inv-card-chevron" aria-hidden="true">›</span>
                 </div>
                   <div class="inv-badge-grid">
                     ${badges}
                   </div>
               </div>
             </button>
-            <button type="button" class="inv-card-delete" data-group-delete-ids="${escHtml(deleteIds)}" data-group-delete-name="${escHtml(item.name)}" aria-label="${escHtml(item.name)} 삭제">삭제</button>
+            <div class="inv-quick-actions" aria-label="${escHtml(item.name)} 수량 빠른 차감">
+              <button type="button" class="inv-quick-btn is-minus" data-quick-adjust="decrease-group" data-quick-group-id="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 수량 1 줄이기">−</button>
+            </div>
           </article>`;
       }).join('');
+      listEl.querySelectorAll('[data-quick-adjust]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          bumpFeedback(btn);
+          handleInventoryQuickAdjust(btn.dataset.quickAdjust, btn.dataset.quickGroupId);
+        });
+      });
       listEl.querySelectorAll('[data-group-id]').forEach(card => {
         card.addEventListener('click', () => {
           bumpFeedback(card);
           openInventoryGroupDetail(card.dataset.groupId);
         });
       });
-      listEl.querySelectorAll('[data-group-delete-ids]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          bumpFeedback(btn);
-          openGroupDeletePicker(btn.dataset.groupDeleteIds.split(',').filter(Boolean), btn.dataset.groupDeleteName || '재고');
-        });
+    }
+
+    let _lastQuickDecreaseUndo = null;
+
+    function rememberQuickDecreaseUndo(payload) {
+      _lastQuickDecreaseUndo = {
+        ...payload,
+        at: Date.now()
+      };
+    }
+
+    function restoreInventoryItemSnapshot(snapshot) {
+      const restored = inventoryEventItemSnapshot(snapshot);
+      if (!restored) return null;
+      const existing = items.find(item => item.id === restored.id);
+      if (existing) {
+        Object.assign(existing, restored, { updated_at: new Date().toISOString() });
+        return existing;
+      }
+      items.push({ ...restored, updated_at: new Date().toISOString() });
+      return items.find(item => item.id === restored.id) || restored;
+    }
+
+    function undoInventoryEvent(eventId, options = {}) {
+      const event = inventoryEvents.find(row => row.id === eventId);
+      if (!event) {
+        showToast('되돌릴 기록을 찾지 못했어요.');
+        return false;
+      }
+      if (event.undone_at) {
+        showToast('이미 되돌린 기록이에요.');
+        return false;
+      }
+      if (event.undo_until && new Date(event.undo_until).getTime() < Date.now()) {
+        showToast('되돌릴 수 있는 시간이 지났어요.');
+        return false;
+      }
+
+      const metadata = event.metadata || {};
+      let item = items.find(row => row.id === event.lot_id || row.id === event.item_id);
+      let reversalDelta = 0;
+      let beforeQuantity = item ? Number(item.quantity) || 0 : null;
+      let afterQuantity = beforeQuantity;
+      let restoredMissingItem = false;
+
+      if (event.type === 'use' || event.type === 'discard') {
+        const amount = Math.abs(Number(event.quantity_delta) || 0);
+        if (!amount) {
+          showToast('되돌릴 수량이 없어요.');
+          return false;
+        }
+        if (!item && metadata.snapshot) {
+          item = restoreInventoryItemSnapshot(metadata.snapshot);
+          beforeQuantity = item ? Number(item.quantity) || 0 : null;
+          restoredMissingItem = Boolean(item);
+        }
+        if (!item) {
+          showToast('되돌릴 재고 항목을 찾지 못했어요.');
+          return false;
+        }
+        if (metadata.removed && metadata.snapshot) {
+          item = restoreInventoryItemSnapshot(metadata.snapshot);
+          beforeQuantity = 0;
+          afterQuantity = Number(item?.quantity) || amount;
+        } else if (restoredMissingItem) {
+          afterQuantity = Number(item.quantity) || amount;
+        } else {
+          afterQuantity = Number(((Number(item.quantity) || 0) + amount).toFixed(3));
+          item.quantity = afterQuantity;
+          item.updated_at = new Date().toISOString();
+        }
+        reversalDelta = amount;
+      } else if (event.type === 'restock') {
+        const amount = Number(event.quantity_delta) || 0;
+        if (!item || amount <= 0) {
+          showToast('되돌릴 입고 항목을 찾지 못했어요.');
+          return false;
+        }
+        const current = Number(item.quantity) || 0;
+        if (current < amount) {
+          showToast('입고 뒤 사용된 수량이 있어 자동 되돌리기를 멈췄어요.');
+          return false;
+        }
+        afterQuantity = Number((current - amount).toFixed(3));
+        item.quantity = afterQuantity;
+        item.updated_at = new Date().toISOString();
+        reversalDelta = -amount;
+      } else if (event.type === 'adjust') {
+        if (!item) {
+          showToast('되돌릴 재고 항목을 찾지 못했어요.');
+          return false;
+        }
+        if (Number.isFinite(Number(metadata.before_quantity))) {
+          afterQuantity = Number(metadata.before_quantity);
+        } else {
+          afterQuantity = Number(((Number(item.quantity) || 0) - (Number(event.quantity_delta) || 0)).toFixed(3));
+        }
+        item.quantity = Math.max(0, afterQuantity);
+        item.updated_at = new Date().toISOString();
+        reversalDelta = -(Number(event.quantity_delta) || 0);
+      } else if (event.type === 'open') {
+        if (!item) {
+          showToast('되돌릴 재고 항목을 찾지 못했어요.');
+          return false;
+        }
+        item.opened_at = metadata.previous_opened_at || null;
+        item.updated_at = new Date().toISOString();
+        reversalDelta = 0;
+      } else {
+        showToast('되돌릴 수 없는 기록이에요.');
+        return false;
+      }
+
+      const reversal = recordInventoryEvent('adjust', {
+        item,
+        lot: item,
+        quantity_delta: reversalDelta,
+        reason: 'undo',
+        reverses_event_id: event.id,
+        metadata: {
+          source: 'event-undo',
+          original_event_id: event.id,
+          original_type: event.type,
+          before_quantity: beforeQuantity,
+          after_quantity: afterQuantity
+        }
       });
+      markInventoryEventUndone(event.id, reversal.id);
+      saveData(items);
+      refreshAll();
+      showToast(options.successMessage || `[${inventoryEventItemName(event)}] 기록을 되돌렸어요.`);
+      return true;
+    }
+
+    function restoreQuickDecrease() {
+      const undo = _lastQuickDecreaseUndo;
+      if (!undo) return;
+      _lastQuickDecreaseUndo = null;
+      hideToast();
+      undoInventoryEvent(undo.eventId, { successMessage: `[${undo.name}] 되돌렸어요.` });
+    }
+
+    function applyInventoryLotDelta(lot, amount, type, reason = '') {
+      if (!lot) return;
+      const qty = Number(lot.quantity) || 0;
+      if (qty <= 0) return;
+      const consumeAmount = Math.max(0, Math.min(Number(amount) || 0, qty));
+      if (!consumeAmount) return;
+      const unit = lot.unit || '개';
+      const nextQty = Number((qty - consumeAmount).toFixed(3));
+      const event = recordInventoryEvent(type, {
+        item: lot,
+        lot,
+        quantity_delta: -consumeAmount,
+        reason,
+        undo_until: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        metadata: {
+          before_quantity: qty,
+          after_quantity: nextQty,
+          source: reason || type,
+          snapshot: inventoryEventItemSnapshot(lot)
+        }
+      });
+      rememberQuickDecreaseUndo({
+        amount: consumeAmount,
+        eventId: event.id,
+        itemId: lot.id,
+        name: lot.name,
+        snapshot: { ...lot }
+      });
+      lot.quantity = nextQty;
+      lot.updated_at = new Date().toISOString();
+      saveData(items);
+      refreshAll();
+      const emptyText = nextQty <= 0 ? ' · 소진' : '';
+      const verb = type === 'discard' ? '폐기 기록했어요' : '차감했어요';
+      showUndoToast(`[${lot.name}] ${quantityLabel(consumeAmount, unit)} ${verb}${emptyText}`);
+    }
+
+    function decreaseInventoryLot(lot) {
+      applyInventoryLotDelta(lot, 1, 'use', 'quick-use');
+    }
+
+    function useTodayIngredient(stockKey) {
+      if (!stockKey) return;
+      const lots = sortedLots(items.filter(row => inventoryStockKey(row) === stockKey && Number(row.quantity) > 0));
+      decreaseInventoryLot(lots[0]);
+    }
+
+    function toggleInventoryFavorite(stockKey) {
+      if (!stockKey) return;
+      const matched = items.filter(row => inventoryStockKey(row) === stockKey);
+      if (!matched.length) return;
+      const next = !matched.some(row => row.is_favorite);
+      const now = new Date().toISOString();
+      matched.forEach(row => {
+        row.is_favorite = next;
+        row.updated_at = now;
+      });
+      saveData(items);
+      refreshAll();
+      showToast(next ? '빠른 차감에 고정했어요.' : '빠른 차감 고정을 풀었어요.');
+    }
+
+    function handleInventoryQuickAdjust(action, refId) {
+      if (!action || !refId) return;
+      if (action.endsWith('-group')) {
+        const card = _inventoryGroupCards.get(refId);
+        if (!card) return;
+        const lot = sortedLots((card.stock.lots || []).filter(row => Number(row.quantity) > 0))[0];
+        decreaseInventoryLot(lot);
+        return;
+      }
+
+      const item = items.find(row => row.id === refId);
+      if (!item) return;
+      if (action === 'decrease-item') {
+        decreaseInventoryLot(item);
+      }
     }
 
     function openInventoryGroupDetail(groupId) {
@@ -8001,13 +9877,21 @@
         ? quantityLabel(profile.attentionQuantity, unit)
         : '없음';
       const minText = stock.minQuantity !== null ? quantityLabel(stock.minQuantity, unit) : '최소재고 없음';
+      const deleteIds = (stock.lots || [])
+        .map(lot => lot?.id)
+        .filter(Boolean)
+        .join(',');
+      const groupDeleteButton = stock.lots.length > 1
+        ? `<button type="button" class="group-detail-delete-btn" data-group-delete-ids="${escHtml(deleteIds)}" data-group-delete-name="${escHtml(item.name)}">묶음 삭제 선택</button>`
+        : '';
       const lotRows = profile.activeLots.map(lot => {
         const safeId = escAttr(lot.id);
         const lotStatus = lotStatusInfo(lot);
         const expiryMarkup = lotExpiryTitleMarkup(lot, lotStatus);
         const detailBits = [
           lot.storage_method || null,
-          lot.origin || null
+          lot.origin || null,
+          lot.opened_at ? `개봉 ${lot.opened_at.slice(0, 10)}` : null
         ].filter(Boolean);
         return `
           <article class="group-lot-card ${detailStatusClass(lotStatus.status)}">
@@ -8020,6 +9904,7 @@
               <div class="group-lot-qty">${escHtml(quantityLabel(lot.quantity, lot.unit || unit))}</div>
             </div>
             <div class="inv-actions">
+              <button type="button" class="inv-btn" data-group-lot-action="open" data-item-id="${safeId}">개봉</button>
               <button type="button" class="inv-btn" data-group-lot-action="edit" data-item-id="${safeId}">수정</button>
               <button type="button" class="inv-btn del" data-group-lot-action="delete" data-item-id="${safeId}">삭제</button>
             </div>
@@ -8034,7 +9919,8 @@
         </div>
         <div class="group-detail-advice${advice.tone === 'safe' ? ' is-safe' : ''}">${escHtml(advice.text)}</div>
         <div class="group-detail-section-title">유통기한별 재고</div>
-        <div class="group-lot-list">${lotRows || '<div class="hadong-empty">남은 로트가 없습니다.</div>'}</div>`;
+        <div class="group-lot-list">${lotRows || '<div class="hadong-empty">남은 재고가 없습니다.</div>'}</div>
+        ${groupDeleteButton}`;
 
       const sheet = document.getElementById('group-detail-sheet');
       const panel = sheet.querySelector('.group-detail-panel');
@@ -8114,6 +10000,18 @@
         origin:         fd.get('origin')
       });
       const addResult = mergeOrAppendInventoryItem(item);
+      recordInventoryEvent('restock', {
+        item: addResult.item,
+        lot: addResult.item,
+        quantity_delta: addResult.addedQuantity,
+        reason: addResult.merged ? 'merge-restock' : 'new-lot',
+        metadata: {
+          source: 'manual-add',
+          expiry_date: addResult.item.expiry_date || null,
+          merged: Boolean(addResult.merged),
+          snapshot: inventoryEventItemSnapshot(addResult.item)
+        }
+      });
       rememberMinQuantityForItem(addResult.item);
       saveData(items);
       refreshAll();
@@ -8197,6 +10095,7 @@
       const ids = Array.isArray(target) ? target.filter(Boolean) : [target].filter(Boolean);
       const matched = items.filter(i => ids.includes(i.id));
       if (!matched.length) return;
+      hideToast();
       _deleteTargetIds = matched.map(item => item.id);
       const name = matched.length === 1
         ? matched[0].name
@@ -8219,6 +10118,20 @@
       const targetSet = new Set(_deleteTargetIds);
       const deleted = items.filter(i => targetSet.has(i.id));
       if (!deleted.length) { closeDeleteConfirm(); return; }
+      deleted.forEach(item => {
+        const quantity = Number(item.quantity) || 0;
+        recordInventoryEvent('discard', {
+          item,
+          lot: item,
+          quantity_delta: -quantity,
+          reason: 'delete-confirm',
+          metadata: {
+            before_quantity: quantity,
+            removed: true,
+            snapshot: inventoryEventItemSnapshot(item)
+          }
+        });
+      });
       items = items.filter(i => !targetSet.has(i.id));
       saveData(items);
       refreshAll();
@@ -8248,12 +10161,44 @@
     });
     document.getElementById('group-detail-close').addEventListener('click', closeInventoryGroupDetail);
     document.getElementById('group-detail-backdrop').addEventListener('click', closeInventoryGroupDetail);
+    function markInventoryLotOpened(id) {
+      const item = items.find(row => row.id === id);
+      if (!item) return;
+      const now = new Date().toISOString();
+      const previousOpenedAt = item.opened_at || null;
+      item.opened_at = now;
+      item.updated_at = now;
+      recordInventoryEvent('open', {
+        item,
+        lot: item,
+        quantity_delta: 0,
+        reason: 'opened',
+        metadata: { opened_at: now, previous_opened_at: previousOpenedAt }
+      });
+      saveData(items);
+      refreshAll();
+      showToast(`[${item.name}] 개봉 기록했어요.`);
+    }
+
     document.getElementById('group-detail-body').addEventListener('click', e => {
+      const groupDeleteBtn = e.target.closest('[data-group-delete-ids]');
+      if (groupDeleteBtn) {
+        bumpFeedback(groupDeleteBtn);
+        const ids = groupDeleteBtn.dataset.groupDeleteIds.split(',').filter(Boolean);
+        const name = groupDeleteBtn.dataset.groupDeleteName || '재고';
+        closeInventoryGroupDetail();
+        openGroupDeletePicker(ids, name);
+        return;
+      }
       const btn = e.target.closest('[data-group-lot-action]');
       if (!btn) return;
       const id = btn.dataset.itemId;
       bumpFeedback(btn);
       closeInventoryGroupDetail();
+      if (btn.dataset.groupLotAction === 'open') {
+        markInventoryLotOpened(id);
+        return;
+      }
       if (btn.dataset.groupLotAction === 'edit') {
         openItemEditSheet(id, 'qty');
         return;
@@ -8354,6 +10299,11 @@
       document.getElementById('edit-name-input').value = item.name || '';
       document.getElementById('edit-qty-input').value = item.quantity;
       document.getElementById('edit-min-qty-input').value = minQuantityFieldValue(item.min_quantity);
+      document.getElementById('edit-unit').value = item.unit || '';
+      document.getElementById('edit-category').value = item.category || '';
+      document.getElementById('edit-storage').value = item.storage_method || '';
+      document.getElementById('edit-origin').value = item.origin || '';
+      ['edit-unit', 'edit-category', 'edit-storage', 'edit-origin'].forEach(updateAddPickerButton);
       document.getElementById('edit-expiry-date').value = item.expiry_date || '';
       setEditExpiryType(item.expiry_type);
 
@@ -8414,13 +10364,29 @@
       }
       const managerEditBeforeTask = buildManagerBriefingTasks().find(task => task.item.id === item.id) || null;
       const previousName = item.name;
+      const previousQuantity = Number(item.quantity) || 0;
       item.name = nextName;
       item.quantity = qty;
       item.min_quantity = minQty;
+      item.unit = String(document.getElementById('edit-unit').value || '').trim() || '개';
+      item.category = String(document.getElementById('edit-category').value || '').trim();
+      item.storage_method = String(document.getElementById('edit-storage').value || '').trim();
+      item.origin = String(document.getElementById('edit-origin').value || '').trim();
       item.expiry_type = _editingExpiryType;
       item.expiry_date = _editingExpiryType === 'NONE' ? null : document.getElementById('edit-expiry-date').value || null;
       item.updated_at  = new Date().toISOString();
       rememberMinQuantityForItem(item, { clearWhenNull: true });
+      saveCustomPickerOption('edit-category', item.category);
+      saveCustomPickerOption('edit-origin', item.origin);
+      if (qty !== previousQuantity) {
+        recordInventoryEvent('adjust', {
+          item,
+          lot: item,
+          quantity_delta: Number((qty - previousQuantity).toFixed(3)),
+          reason: 'manual-edit',
+          metadata: { before_quantity: previousQuantity, after_quantity: qty }
+        });
+      }
       saveData(items);
       refreshAll();
       queueManagerEditFeedback(managerEditBeforeTask, buildManagerBriefingTasks().find(task => task.item.id === item.id) || null, item);
@@ -8430,6 +10396,12 @@
 
     document.getElementById('item-edit-backdrop').addEventListener('click', closeItemEditSheet);
     document.getElementById('item-edit-cancel').addEventListener('click', closeItemEditSheet);
+    document.getElementById('item-edit-delete').addEventListener('click', () => {
+      if (!_editingItemId) return;
+      const id = _editingItemId;
+      closeItemEditSheet();
+      openDeleteConfirm(id);
+    });
     document.getElementById('item-edit-form').addEventListener('submit', e => {
       e.preventDefault();
       saveItemEdit();
@@ -8713,6 +10685,16 @@
     // ──────────────────────────────────────────────────────────────
     let _toastTimer = null;
 
+    function hideToast() {
+      const el = document.getElementById('toast');
+      if (_toastTimer) {
+        clearTimeout(_toastTimer);
+        _toastTimer = null;
+      }
+      el?.classList.remove('show');
+      if (el) el.innerHTML = '';
+    }
+
     function showToast(msg, durationMs = 2200) {
       const el = document.getElementById('toast');
       el.textContent = msg;
@@ -8720,6 +10702,29 @@
       if (_toastTimer) clearTimeout(_toastTimer);
       _toastTimer = setTimeout(() => el.classList.remove('show'), durationMs);
     }
+
+    function showUndoToast(msg, durationMs = 4200) {
+      const el = document.getElementById('toast');
+      el.innerHTML = `<span>${escHtml(msg)}</span><button type="button" class="toast-undo-btn" id="toast-undo-btn">되돌리기</button>`;
+      el.querySelector('#toast-undo-btn')?.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        restoreQuickDecrease();
+      }, { once: true });
+      el.classList.add('show');
+      if (_toastTimer) clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => {
+        el.classList.remove('show');
+        _lastQuickDecreaseUndo = null;
+      }, durationMs);
+    }
+
+    document.getElementById('toast').addEventListener('click', e => {
+      const btn = e.target.closest('#toast-undo-btn');
+      if (!btn) return;
+      e.preventDefault();
+      restoreQuickDecrease();
+    });
 
     // ──────────────────────────────────────────────────────────────
     // OCR MODULE
@@ -9281,7 +11286,11 @@
       'add-category': ['과일/토핑', '시럽/소스', '유제품', '커피', '디저트', '브런치', '청/베이스', '티', '베이커리', '소모품', '일회용품', '컵/뚜껑', '빨대/스틱', '포장재', '직접 입력'],
       'add-min-qty': ['0', '1', '2', '3', '5', '10', '20', '50', '100', '직접 입력'],
       'add-storage': ['냉장', '냉동', '실온', '기타', '직접 입력'],
-      'add-origin': [...CAFE_ORIGIN_OPTIONS, '해당 없음', '직접 입력']
+      'add-origin': [...CAFE_ORIGIN_OPTIONS, '해당 없음', '직접 입력'],
+      'edit-unit': ['개', '봉', '팩', '박스', '롤', '묶음', '병', '캔', 'kg', 'g', 'L', 'ml', '직접 입력'],
+      'edit-category': ['과일/토핑', '시럽/소스', '유제품', '커피', '디저트', '브런치', '청/베이스', '티', '베이커리', '소모품', '일회용품', '컵/뚜껑', '빨대/스틱', '포장재', '직접 입력'],
+      'edit-storage': ['냉장', '냉동', '실온', '기타', '직접 입력'],
+      'edit-origin': [...CAFE_ORIGIN_OPTIONS, '해당 없음', '직접 입력']
     };
 
     const ADD_PICKER_LABELS = {
@@ -9289,7 +11298,11 @@
       'add-category': '카테고리',
       'add-min-qty': '최소 재고량',
       'add-storage': '보관 방식',
-      'add-origin': '원산지'
+      'add-origin': '원산지',
+      'edit-unit': '단위',
+      'edit-category': '카테고리',
+      'edit-storage': '보관 방식',
+      'edit-origin': '원산지'
     };
 
     const OCR_PICKER_LABELS = {
@@ -12004,6 +14017,13 @@
       const before = hadongSnapshotItem(item);
       const oldQty = Number(item.quantity) || 0;
       item.quantity = Math.max(0, Number(nextQty.toFixed ? nextQty.toFixed(3) : nextQty));
+      recordInventoryEvent('adjust', {
+        item,
+        lot: item,
+        quantity_delta: Number((item.quantity - oldQty).toFixed(3)),
+        reason: 'manager-adjust',
+        metadata: { before_quantity: oldQty, after_quantity: item.quantity, label }
+      });
       saveHadongItemChange(item, before, `[${item.name}] 수량이 변경됐습니다.`);
       const unit = item.unit || '개';
       return {
@@ -12061,6 +14081,17 @@
       const index = items.findIndex(row => row.id === item.id);
       if (index < 0) return `${icon} 멍, 이미 처리된 재고다멍.`;
       const before = hadongSnapshotItem(item);
+      recordInventoryEvent('discard', {
+        item,
+        lot: item,
+        quantity_delta: -(Number(item.quantity) || 0),
+        reason: 'manager-delete',
+        metadata: {
+          before_quantity: Number(item.quantity) || 0,
+          removed: true,
+          snapshot: inventoryEventItemSnapshot(item)
+        }
+      });
       items.splice(index, 1);
       _hadongUndoStack.push({ type: 'delete', before, index });
       if (_hadongUndoStack.length > 12) _hadongUndoStack.shift();
@@ -12504,6 +14535,18 @@
           const amount = Math.max(0, Math.min(Number(candidate.actionQuantity) || 0, current));
           if (!amount) return;
           const nextQty = Math.max(0, Number((current - amount).toFixed(3)));
+          recordInventoryEvent(plan.action === 'dispose' || plan.operation === 'dispose' ? 'discard' : 'use', {
+            item,
+            lot: item,
+            quantity_delta: -amount,
+            reason: candidate.reason || plan.intent || 'manager-plan',
+            metadata: {
+              before_quantity: current,
+              after_quantity: nextQty,
+              source: 'manager-plan',
+              snapshot: inventoryEventItemSnapshot(item)
+            }
+          });
           if (nextQty <= 0) {
             items.splice(index, 1);
             changes.push({ type: 'delete', before, index });
@@ -12516,6 +14559,18 @@
           return;
         }
 
+        recordInventoryEvent('discard', {
+          item,
+          lot: item,
+          quantity_delta: -(Number(before.quantity) || 0),
+          reason: candidate.reason || plan.intent || 'manager-remove',
+          metadata: {
+            before_quantity: Number(before.quantity) || 0,
+            removed: true,
+            source: 'manager-plan',
+            snapshot: inventoryEventItemSnapshot(before)
+          }
+        });
         items.splice(index, 1);
         changes.push({ type: 'delete', before, index });
         processed.push(`${before.name} ${before.quantity}${before.unit || unit}`);
@@ -13034,6 +15089,9 @@
     installSwipeDownClose('#photo-source-sheet .picker-panel', closePhotoSourceSheet, { threshold: 56 });
     installSwipeDownClose('#date-picker-sheet .date-picker-panel', closeDatePicker, { threshold: 56 });
     installSwipeDownClose('#delete-confirm-sheet .delete-confirm-panel', closeDeleteConfirm, { threshold: 56 });
+    installSwipeDownClose('#today-oneclick-sheet .today-oneclick-panel', closeTodayOneClickChoice, { threshold: 56 });
+    installSwipeDownClose('#today-used-sheet .today-used-sheet-panel', closeTodayUsedPanel, { threshold: 56 });
+    installSwipeDownClose('#today-ai-result-sheet .today-ai-result-panel', closeTodayAiResult, { threshold: 56 });
     installSwipeDownClose('#group-delete-sheet .group-delete-panel', closeGroupDeletePicker, { threshold: 56 });
     installSwipeDownClose('#stock-group-sheet .stock-group-panel', closeStockGroupSuggestion, { threshold: 56 });
     installGroupDetailSheetExpansion();

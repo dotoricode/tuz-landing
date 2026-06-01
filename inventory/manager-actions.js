@@ -348,7 +348,7 @@
       };
     }
 
-    if (STOCK_STATUS_RE.test(text)) {
+    if (STOCK_STATUS_RE.test(text) && !explicitAction && !disposalContext) {
       const genericStatusQuery = !query || query.length < 2 || /^(봐|상태|재료)$/.test(query);
       return {
         intent: genericStatusQuery ? 'stock_status_report' : 'search_inventory',
