@@ -5846,6 +5846,20 @@
         image: '',
         liveFocus: true,
         focus: {
+          targetSelectors: ['#notification-btn'],
+          padding: 7,
+          radius: 18,
+          labelPlacement: 'after',
+          label: '상단 매니저 버튼을 눌러 담당 매니저를 바꿔요'
+        },
+        setup: 'manager',
+        title: '매니저는 여기서 바꾸기',
+        copy: '상단의 매니저 버튼에서 쿠키와 하동이를 바꿀 수 있습니다. 선택한 매니저는 다음 접속에도 기본으로 적용됩니다.'
+      },
+      {
+        image: '',
+        liveFocus: true,
+        focus: {
           targetSelectors: ['.rh-search-row', '#category-chips', '.inventory-view-toggle'],
           padding: 6,
           radius: 18,
@@ -6005,6 +6019,7 @@
       document.getElementById('hadong-sheet')?.classList.remove('open');
       document.getElementById('ai-overlay')?.classList.remove('open');
       document.getElementById('ai-sheet')?.classList.remove('open');
+      closeManagerSelectSheet?.({ force: true });
       clearInventoryTutorialDemoMessages();
     }
 
@@ -6013,6 +6028,8 @@
       closeTutorialTransientSheets();
       clearInventoryTutorialDemoMessages();
       if (step.setup === 'search') {
+        window.scrollTo(0, 0);
+      } else if (step.setup === 'manager') {
         window.scrollTo(0, 0);
       } else if (step.setup === 'add') {
         window.scrollTo(0, 0);
