@@ -4253,15 +4253,13 @@
     }
 
     .inventory-tutorial-step {
-      position: fixed;
-      left: var(--tutorial-step-left, 28px);
-      top: var(--tutorial-step-top, 124px);
-      z-index: 3;
-      padding: 5px 9px;
+      display: inline-flex;
+      width: fit-content;
+      padding: 4px 8px;
       border-radius: 999px;
-      background: rgba(0,0,0,.68);
-      color: #fff;
-      font-size: .72rem;
+      background: var(--manager-soft, var(--cream));
+      color: var(--manager-muted, var(--g1));
+      font-size: .68rem;
       font-weight: 900;
     }
 
@@ -5539,13 +5537,13 @@
 
   <div id="inventory-tutorial-overlay" class="inventory-tutorial-overlay" hidden>
     <div id="inventory-tutorial-live-focus" class="inventory-tutorial-live-focus" hidden></div>
-    <span class="inventory-tutorial-step" id="inventory-tutorial-step">1 / 5</span>
     <button type="button" class="inventory-tutorial-close-top" id="inventory-tutorial-close" aria-label="닫기">×</button>
     <div class="inventory-tutorial-card" role="dialog" aria-modal="true" aria-labelledby="inventory-tutorial-title">
       <div class="inventory-tutorial-media">
         <img id="inventory-tutorial-img" src="assets/mascot-collie.png" alt="">
       </div>
       <div class="inventory-tutorial-body">
+        <span class="inventory-tutorial-step" id="inventory-tutorial-step">1 / 5</span>
         <div>
           <div class="inventory-tutorial-title" id="inventory-tutorial-title">재고 현황 먼저 보기</div>
           <div class="inventory-tutorial-copy" id="inventory-tutorial-copy"></div>
@@ -5937,7 +5935,7 @@
     }
 
     function clampTutorialRect(rect) {
-      const margin = 16;
+      const margin = 8;
       const left = Math.max(margin, Math.min(rect.left, window.innerWidth - margin));
       const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
       const right = Math.max(left + 1, Math.min(rect.right, window.innerWidth - margin));
@@ -5984,8 +5982,6 @@
       target.style.setProperty('--tutorial-label-left', `${focus.labelLeft ?? 28}px`);
       target.style.setProperty('--tutorial-label-top', `${getTutorialLabelTop(focus, rect)}px`);
       target.style.setProperty('--tutorial-label-width', `${focus.labelWidth ?? 334}px`);
-      target.style.setProperty('--tutorial-step-left', `${left + 12}px`);
-      target.style.setProperty('--tutorial-step-top', `${top + 12}px`);
       el.dataset.label = focus.label || '';
     }
 
