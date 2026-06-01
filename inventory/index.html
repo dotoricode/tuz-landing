@@ -5230,6 +5230,10 @@
       <p class="edit-sheet-subtitle" id="item-edit-subtitle"></p>
       <form id="item-edit-form">
         <label>
+          <span class="field-label">품목명</span>
+          <input type="text" id="edit-name-input" required class="form-input" placeholder="품목명">
+        </label>
+        <label>
           <span class="field-label">수량</span>
           <div class="qty-stepper">
             <button type="button" id="edit-qty-minus" aria-label="수량 줄이기">−</button>
@@ -8294,6 +8298,7 @@
       document.getElementById('item-edit-title').textContent = item.name;
       document.getElementById('item-edit-subtitle').textContent =
         `${item.category || '미분류'} · 현재 ${item.quantity}${item.unit || '개'}`;
+      document.getElementById('edit-name-input').value = item.name || '';
       document.getElementById('edit-qty-input').value = item.quantity;
       document.getElementById('edit-min-qty-input').value = minQuantityFieldValue(item.min_quantity);
       document.getElementById('edit-expiry-date').value = item.expiry_date || '';
@@ -8303,7 +8308,10 @@
       sheet.classList.add('open');
       sheet.setAttribute('aria-hidden', 'false');
       setTimeout(() => {
-        document.getElementById(focus === 'expiry' ? 'edit-expiry-date' : 'edit-qty-input').focus();
+        const focusId = focus === 'name' ? 'edit-name-input'
+          : focus === 'expiry' ? 'edit-expiry-date'
+          : 'edit-qty-input';
+        document.getElementById(focusId).focus();
       }, 120);
     }
 
@@ -8330,6 +8338,13 @@
     function saveItemEdit() {
       const item = items.find(i => i.id === _editingItemId);
       if (!item) return;
+      const nameInput = document.getElementById('edit-name-input');
+      const nextName = String(nameInput.value || '').trim();
+      if (!nextName) {
+        showToast('품목명을 입력하세요.');
+        nameInput.focus();
+        return;
+      }
       const qty = Number(document.getElementById('edit-qty-input').value);
       if (!Number.isFinite(qty) || qty < 0) {
         showToast('올바른 수량을 입력하세요.');
@@ -8345,6 +8360,8 @@
         return;
       }
       const managerEditBeforeTask = buildManagerBriefingTasks().find(task => task.item.id === item.id) || null;
+      const previousName = item.name;
+      item.name = nextName;
       item.quantity = qty;
       item.min_quantity = minQty;
       item.expiry_type = _editingExpiryType;
@@ -8355,7 +8372,7 @@
       refreshAll();
       queueManagerEditFeedback(managerEditBeforeTask, buildManagerBriefingTasks().find(task => task.item.id === item.id) || null, item);
       closeItemEditSheet();
-      showToast(`[${item.name}] 수정됐습니다.`);
+      showToast(previousName === item.name ? `[${item.name}] 수정됐습니다.` : `[${previousName}] → [${item.name}] 수정됐습니다.`);
     }
 
     document.getElementById('item-edit-backdrop').addEventListener('click', closeItemEditSheet);
