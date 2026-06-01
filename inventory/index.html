@@ -3722,7 +3722,7 @@
     }
 
     .hadong-tabs {
-      display: grid;
+      display: none;
       grid-template-columns: 1fr 1fr;
       gap: 6px;
       padding: 10px 14px 8px;
@@ -3747,6 +3747,64 @@
       background: var(--manager-accent, var(--red));
       color: #fff;
     }
+
+    .inventory-ai-search-panel {
+      flex-shrink: 0;
+      padding: 13px 14px 10px;
+      border-bottom: 1px solid var(--manager-border, var(--bone));
+      background: var(--manager-sheet, #fff);
+    }
+
+    .inventory-ai-kicker {
+      color: var(--manager-accent, var(--red));
+      font-size: .72rem;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .inventory-ai-search-title {
+      margin-top: 5px;
+      color: var(--manager-ink, var(--ink));
+      font-size: .98rem;
+      font-weight: 950;
+      line-height: 1.25;
+      word-break: keep-all;
+    }
+
+    .inventory-ai-search-copy {
+      margin: 4px 0 0;
+      color: var(--manager-muted, var(--g1));
+      font-size: .78rem;
+      line-height: 1.38;
+      word-break: keep-all;
+    }
+
+    .inventory-ai-quick-row {
+      display: flex;
+      gap: 7px;
+      margin-top: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .inventory-ai-quick-row::-webkit-scrollbar { display: none; }
+
+    .inventory-ai-quick {
+      flex-shrink: 0;
+      min-height: 32px;
+      border: 1px solid var(--manager-border, var(--g3));
+      border-radius: 999px;
+      padding: 0 11px;
+      background: var(--manager-field, var(--cream));
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: .76rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .hadong-sheet[data-view="overview"] .inventory-ai-search-panel { display: none; }
 
     .hadong-overview {
       flex: 1;
@@ -4147,6 +4205,207 @@
       background: transparent;
       border-radius: 0;
       white-space: normal;
+    }
+
+    .inventory-tutorial-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(0,0,0,.48);
+      padding: 18px;
+    }
+
+    .inventory-tutorial-overlay[hidden] { display: none; }
+
+    .inventory-tutorial-card {
+      position: relative;
+      z-index: 2;
+      width: min(100%, 420px);
+      max-height: min(88vh, 760px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--manager-sheet, #fff);
+      box-shadow: 0 18px 56px rgba(0,0,0,.28);
+    }
+
+    .inventory-tutorial-media {
+      position: relative;
+      aspect-ratio: 9 / 11;
+      background: var(--manager-soft, var(--cream));
+      overflow: hidden;
+    }
+
+    .inventory-tutorial-media:has(img[hidden]) {
+      display: none;
+    }
+
+    .inventory-tutorial-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: var(--manager-soft, var(--cream));
+    }
+
+    .inventory-tutorial-step {
+      position: fixed;
+      left: var(--tutorial-step-left, 28px);
+      top: var(--tutorial-step-top, 124px);
+      z-index: 3;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.68);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 900;
+    }
+
+    .inventory-tutorial-close-top {
+      position: fixed;
+      left: var(--tutorial-close-left, 326px);
+      top: var(--tutorial-close-top, 124px);
+      z-index: 3;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,.62);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-size: 1.08rem;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(0,0,0,.2);
+    }
+
+    .inventory-tutorial-body {
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .inventory-tutorial-title {
+      color: var(--manager-ink, var(--ink));
+      font-size: 1rem;
+      font-weight: 950;
+      line-height: 1.25;
+    }
+
+    .inventory-tutorial-copy {
+      color: var(--manager-muted, var(--g1));
+      font-size: .84rem;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .inventory-tutorial-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .inventory-tutorial-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--manager-border, var(--bone));
+    }
+
+    .inventory-tutorial-dot.active {
+      width: 18px;
+      border-radius: 999px;
+      background: var(--manager-accent, var(--red));
+    }
+
+    .inventory-tutorial-nav {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .inventory-tutorial-nav button {
+      min-height: 40px;
+      border-radius: 8px;
+      border: 1px solid var(--manager-border, var(--bone));
+      font-family: inherit;
+      font-size: .82rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .inventory-tutorial-nav button:disabled {
+      opacity: .38;
+      cursor: default;
+    }
+
+    .inventory-tutorial-secondary {
+      background: #fff;
+      color: var(--manager-accent, var(--red));
+    }
+
+    .inventory-tutorial-primary {
+      background: var(--manager-accent, var(--red));
+      color: #fff;
+    }
+
+    .inventory-tutorial-live-focus {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .inventory-tutorial-live-focus[hidden] { display: none; }
+
+    .inventory-tutorial-live-focus::before {
+      content: '';
+      position: fixed;
+      left: var(--tutorial-focus-left, 16px);
+      top: var(--tutorial-focus-top, 112px);
+      width: var(--tutorial-focus-width, calc(100vw - 32px));
+      height: var(--tutorial-focus-height, 104px);
+      border: 3px solid rgba(255,255,255,.95);
+      border-radius: var(--tutorial-focus-radius, 20px);
+      box-shadow:
+        0 0 0 999px rgba(0,0,0,.5),
+        0 10px 30px rgba(0,0,0,.22);
+    }
+
+    .inventory-tutorial-live-focus::after {
+      content: attr(data-label);
+      position: fixed;
+      left: var(--tutorial-label-left, 28px);
+      top: var(--tutorial-label-top, 226px);
+      width: var(--tutorial-label-width, calc(100vw - 56px));
+      padding: 9px 11px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.72);
+      color: #fff;
+      text-align: center;
+      font-size: .78rem;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .inventory-tutorial-minor-actions { min-height: 24px; }
+
+    .inventory-tutorial-link {
+      border: 0;
+      background: transparent;
+      color: var(--manager-muted, var(--g1));
+      font-family: inherit;
+      font-size: .72rem;
+      font-weight: 800;
+      cursor: pointer;
     }
 
     .hadong-msg.has-briefing {
@@ -4860,11 +5119,11 @@
         <span class="rh-bottom-action-icon" aria-hidden="true">+</span>
         <span class="rh-bottom-action-label">직접 추가</span>
       </button>
-      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="매니저 호출">
+      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="재고 AI 매니저 호출">
         <span class="rh-bottom-manager-avatar" aria-hidden="true">
           <img id="manager-bottom-img" src="assets/mascot-poodle.png" alt="">
         </span>
-        <span class="rh-bottom-action-label">매니저 호출</span>
+        <span class="rh-bottom-action-label">매니저야〰</span>
       </button>
     </div>
 
@@ -5166,7 +5425,7 @@
     <div class="manager-select-panel" role="dialog" aria-modal="true" aria-labelledby="manager-select-title">
       <div class="manager-select-handle"></div>
       <div class="manager-select-head">
-        <div class="manager-select-title" id="manager-select-title">같이 일할 매니저를 골라주세요</div>
+        <div class="manager-select-title" id="manager-select-title">재고 AI 매니저를 골라주세요</div>
         <div class="manager-select-subtitle">한 번 고르면 다음 접속부터 기본 매니저로 적용돼요.</div>
       </div>
       <div class="manager-choice-list">
@@ -5255,16 +5514,52 @@
         <button type="button" class="hadong-close" id="hadong-close" aria-label="닫기">×</button>
       </div>
       <div class="hadong-tabs" role="tablist" aria-label="하동이 매니저 보기 전환">
-        <button type="button" class="hadong-tab active" data-hadong-view="overview">한 번에 보기</button>
-        <button type="button" class="hadong-tab" data-hadong-view="chat">같이 일하기</button>
+        <button type="button" class="hadong-tab active" data-hadong-view="overview">재고 평가</button>
+        <button type="button" class="hadong-tab" data-hadong-view="chat">AI 검색</button>
+      </div>
+      <div class="inventory-ai-search-panel" id="inventory-ai-search-panel">
+        <div class="inventory-ai-kicker">재고 AI</div>
+        <div class="inventory-ai-search-title">찾고 싶은 재료를 편하게 말해 주세요</div>
+        <p class="inventory-ai-search-copy">두루뭉술하게 입력해도 현재 재고에서 비슷한 품목을 찾아 사장님이 바로 확인할 수 있게 정리해요.</p>
+        <div class="inventory-ai-quick-row" aria-label="재고 AI 예시 질문">
+          <button type="button" class="inventory-ai-quick" data-hadong-question="우유">우유</button>
+          <button type="button" class="inventory-ai-quick" data-hadong-question="라떼 재료">라떼 재료</button>
+          <button type="button" class="inventory-ai-quick" data-hadong-question="부족한 시럽">부족한 시럽</button>
+          <button type="button" class="inventory-ai-quick" data-hadong-question="오늘 재고 상태 평가해줘">오늘 재고 평가</button>
+        </div>
       </div>
       <div class="hadong-overview" id="hadong-overview"></div>
       <div class="hadong-messages" id="hadong-messages"></div>
       <div class="hadong-input-row">
-        <input id="hadong-input" type="text" placeholder="매니저에게 같이 할 일을 말해 주세요">
+        <input id="hadong-input" type="text" placeholder="예: 라떼 재료, 부족한 시럽, 우유 상태">
         <button type="button" id="hadong-send">전송</button>
       </div>
     </section>
+  </div>
+
+  <div id="inventory-tutorial-overlay" class="inventory-tutorial-overlay" hidden>
+    <div id="inventory-tutorial-live-focus" class="inventory-tutorial-live-focus" hidden></div>
+    <span class="inventory-tutorial-step" id="inventory-tutorial-step">1 / 5</span>
+    <button type="button" class="inventory-tutorial-close-top" id="inventory-tutorial-close" aria-label="닫기">×</button>
+    <div class="inventory-tutorial-card" role="dialog" aria-modal="true" aria-labelledby="inventory-tutorial-title">
+      <div class="inventory-tutorial-media">
+        <img id="inventory-tutorial-img" src="assets/mascot-collie.png" alt="">
+      </div>
+      <div class="inventory-tutorial-body">
+        <div>
+          <div class="inventory-tutorial-title" id="inventory-tutorial-title">재고 현황 먼저 보기</div>
+          <div class="inventory-tutorial-copy" id="inventory-tutorial-copy"></div>
+        </div>
+        <div class="inventory-tutorial-dots" id="inventory-tutorial-dots" aria-hidden="true"></div>
+        <div class="inventory-tutorial-nav">
+          <button type="button" class="inventory-tutorial-secondary" id="inventory-tutorial-prev">이전</button>
+          <button type="button" class="inventory-tutorial-primary" id="inventory-tutorial-next">다음</button>
+        </div>
+        <div class="inventory-tutorial-minor-actions">
+          <button type="button" class="inventory-tutorial-link" id="inventory-tutorial-hide-today">오늘 하루 안보기</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- WEBLLM OVERLAY -->
@@ -5303,6 +5598,9 @@
     const HADONG_AUDIT_KEY = 'tuz_inv_hadong_audit_v1';
     const INVENTORY_CLIENT_KEY = 'tuz_inv_client_id_v1';
     const INVENTORY_REMOTE_READY_KEY = 'tuz_inv_remote_ready_v1';
+    const INVENTORY_TUTORIAL_HIDDEN_UNTIL_KEY = 'tuz_inv_tutorial_hidden_until_v1';
+    const INVENTORY_TUTORIAL_SESSION_KEY = 'tuz_inv_tutorial_closed_session_v1';
+    const INVENTORY_TUTORIAL_FORCE = new URLSearchParams(location.search).get('tutorial') === '1';
     const INVENTORY_TABLE = 'inventory_items';
     const SUPABASE_MODULE_URL = '/shared/supabase.js?v=54';
     const INVENTORY_PRODUCTION_HOSTS = new Set(['tuz.kr', 'www.tuz.kr']);
@@ -5320,7 +5618,7 @@
         avatar: 'assets/mascot-poodle.png',
         alt: '하동이 매니저',
         themeColor: '#8C4F36',
-        headerSubtitle: '영업 중 재료 상태를 같이 보는 재고 파트너',
+        headerSubtitle: '찾고 싶은 재료를 편하게 말해 주세요',
         bridgeTitle: '지금 재료 상태를 같이 본다멍',
         bridgeSubtitle: '대화하면서 부족한 재료와 주문 필요 여부를 같이 본다멍.',
         opening: '하동이 매니저다멍🐶',
@@ -5334,7 +5632,7 @@
         avatar: 'assets/mascot-collie.png',
         alt: '쿠키 매니저',
         themeColor: '#202020',
-        headerSubtitle: '장난은 쳐도 재료 잔량은 똑부러지게 보는 매니저',
+        headerSubtitle: '찾고 싶은 재료를 편하게 말해 주세요',
         bridgeTitle: '재료 상태, 쿠키가 깔끔하게 잡아준다멍',
         bridgeSubtitle: '대화하면서 남은 양과 부족 가능성을 같이 본다멍.',
         opening: '쿠키 매니저다멍🐾',
@@ -5479,14 +5777,14 @@
       setElText('manager-bridge-name', profile.name);
       setElText('manager-bridge-title', profile.bridgeTitle);
       setElText('manager-bridge-subtitle', profile.bridgeSubtitle);
-      setElText('hadong-header-title', profile.fullName);
+      setElText('hadong-header-title', '재고 AI');
       setElText('hadong-header-subtitle', profile.headerSubtitle);
       setElText('ai-sheet-title', `${profile.name} 상세 점검`);
       const managerCallBtn = document.getElementById('manager-call-btn');
-      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', `${profile.fullName} 호출`);
+      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', `재고 AI ${profile.name} 호출`);
       setManagerDetailTabLabels(profile);
       const input = document.getElementById('hadong-input');
-      if (input) input.placeholder = `${profile.name}에게 같이 할 일을 말해 주세요`;
+      if (input) input.placeholder = '예: 라떼 재료, 부족한 시럽, 우유 상태';
       document.querySelectorAll('[data-manager-choice]').forEach(btn => {
         btn.classList.toggle('is-selected', btn.dataset.managerChoice === profile.id);
       });
@@ -5516,13 +5814,210 @@
       const profile = applyManagerProfile(id);
       closeManagerSelectSheet({ force: true });
       refreshAll?.();
-      showToast?.(`${profile.fullName}와 같이 일합니다.`);
+      showToast?.(`${profile.fullName}가 재고 AI를 맡습니다.`);
+      maybeShowInventoryTutorial();
     }
 
     function promptManagerIfNeeded() {
       if (getSelectedManagerId()) return;
       setTimeout(() => openManagerSelectSheet({ required: true }), 260);
     }
+
+    const INVENTORY_TUTORIAL_STEPS = [
+      {
+        image: '',
+        liveFocus: true,
+        focus: { left: 16, top: 174, width: 358, height: 156, radius: 20, labelTop: 342, label: '상단 숫자 카드를 눌러 재고를 바로 좁혀요' },
+        setup: 'dashboard',
+        title: '재고 현황 먼저 보기',
+        copy: '상단 숫자 카드에서 부족한 재료, 오늘·내일 기한, 이번 주 기한을 바로 확인합니다.'
+      },
+      {
+        image: '',
+        liveFocus: true,
+        focus: { left: 18, top: 354, width: 354, height: 196, radius: 18, labelTop: 562, label: '검색창과 카테고리로 필요한 품목만 남겨요' },
+        setup: 'search',
+        title: '품목은 검색과 필터로 좁히기',
+        copy: '품목명 일부만 입력해도 목록이 줄어듭니다. 묶음/개별 보기로 필요한 단위도 바꿀 수 있습니다.'
+      },
+      {
+        image: '',
+        liveFocus: true,
+        focus: { left: 16, top: 244, width: 358, height: 330, radius: 22, labelTop: 204, label: '추가 시트에서 수량, 기한, 기준 수량을 채워요' },
+        setup: 'add',
+        title: '재고는 사진 또는 직접 추가',
+        copy: '카메라로 라벨을 읽거나 직접 추가해서 수량, 기준 수량, 기한을 빠르게 채웁니다.'
+      },
+      {
+        image: '',
+        liveFocus: true,
+        focus: { left: 0, top: 118, width: 390, height: 264, radius: 24, labelTop: 394, label: '두루뭉술한 재료명도 재고 AI가 후보로 정리해요' },
+        setup: 'aiSearch',
+        title: '매니저야〰 로 재고 AI 열기',
+        copy: '라떼 재료처럼 두루뭉술하게 말해도 현재 재고에서 비슷한 품목을 찾아줍니다.'
+      },
+      {
+        image: '',
+        liveFocus: true,
+        focus: { left: 16, top: 336, width: 358, height: 236, radius: 18, labelTop: 584, label: 'AI 설명에서 수량, 기한, 오늘 할 일을 바로 판단해요' },
+        setup: 'aiDetail',
+        title: 'AI 설명 보고 바로 판단하기',
+        copy: '선택한 품목의 수량, 기한, 부족 여부를 사장님이 바로 결정할 수 있게 요약합니다.'
+      }
+    ];
+    let _inventoryTutorialIndex = 0;
+
+    function tomorrowStartMs() {
+      const tomorrow = new Date();
+      tomorrow.setHours(24, 0, 0, 0);
+      return tomorrow.getTime();
+    }
+
+    function shouldShowInventoryTutorial() {
+      if (!getAuth()) return false;
+      if (!getSelectedManagerId()) return false;
+      if (INVENTORY_TUTORIAL_FORCE) return true;
+      if (sessionStorage.getItem(INVENTORY_TUTORIAL_SESSION_KEY) === '1') return false;
+      const hiddenUntil = Number(localStorage.getItem(INVENTORY_TUTORIAL_HIDDEN_UNTIL_KEY) || 0);
+      return !Number.isFinite(hiddenUntil) || hiddenUntil <= Date.now();
+    }
+
+    function setTutorialFocus(step) {
+      const focus = step?.focus || {};
+      const root = document.getElementById('inventory-tutorial-overlay');
+      const el = document.getElementById('inventory-tutorial-live-focus');
+      const target = root || el;
+      if (!target || !el) return;
+      const left = focus.left ?? 16;
+      const top = focus.top ?? 112;
+      const width = focus.width ?? 358;
+      const closeLeft = Math.max(12, Math.min(window.innerWidth - 44, left + width - 44));
+      target.style.setProperty('--tutorial-focus-left', `${left}px`);
+      target.style.setProperty('--tutorial-focus-top', `${top}px`);
+      target.style.setProperty('--tutorial-focus-width', `${width}px`);
+      target.style.setProperty('--tutorial-focus-height', `${focus.height ?? 104}px`);
+      target.style.setProperty('--tutorial-focus-radius', `${focus.radius ?? 20}px`);
+      target.style.setProperty('--tutorial-label-left', `${focus.labelLeft ?? 28}px`);
+      target.style.setProperty('--tutorial-label-top', `${focus.labelTop ?? 226}px`);
+      target.style.setProperty('--tutorial-label-width', `${focus.labelWidth ?? 334}px`);
+      target.style.setProperty('--tutorial-step-left', `${left + 12}px`);
+      target.style.setProperty('--tutorial-step-top', `${top + 12}px`);
+      target.style.setProperty('--tutorial-close-left', `${closeLeft}px`);
+      target.style.setProperty('--tutorial-close-top', `${top + 12}px`);
+      el.dataset.label = focus.label || '';
+    }
+
+    function clearInventoryTutorialDemoMessages() {
+      document.querySelectorAll('[data-tutorial-demo-message="true"]').forEach(el => el.remove());
+    }
+
+    function closeTutorialTransientSheets() {
+      document.getElementById('add-item-sheet')?.classList.remove('open');
+      document.getElementById('hadong-overlay')?.classList.remove('open');
+      document.getElementById('hadong-sheet')?.classList.remove('open');
+      document.getElementById('ai-overlay')?.classList.remove('open');
+      document.getElementById('ai-sheet')?.classList.remove('open');
+      clearInventoryTutorialDemoMessages();
+    }
+
+    function prepareInventoryTutorialStep(step) {
+      if (!step) return;
+      closeTutorialTransientSheets();
+      clearInventoryTutorialDemoMessages();
+      if (step.setup === 'search') {
+        window.scrollTo(0, 0);
+      } else if (step.setup === 'add') {
+        openAddSheet({ reset: false });
+      } else if (step.setup === 'aiSearch') {
+        openHadongChat();
+      } else if (step.setup === 'aiDetail') {
+        openHadongChat();
+        const box = document.getElementById('hadong-messages');
+        if (box && !box.querySelector('[data-tutorial-demo-message="true"]')) {
+          const item = items.find(row => Number(row.quantity) > 0) || items[0];
+          const demo = document.createElement('div');
+          demo.className = 'hadong-msg bot';
+          demo.dataset.tutorialDemoMessage = 'true';
+          renderHadongMessageContent(demo, item ? makeInventoryAiItemExplanation(item) : '재고를 고르면 AI 설명이 여기에 표시됩니다.');
+          box.appendChild(demo);
+          box.scrollTop = box.scrollHeight;
+        }
+      }
+    }
+
+    function renderInventoryTutorialStep() {
+      const step = INVENTORY_TUTORIAL_STEPS[_inventoryTutorialIndex] || INVENTORY_TUTORIAL_STEPS[0];
+      prepareInventoryTutorialStep(step);
+      setTutorialFocus(step);
+      const img = document.getElementById('inventory-tutorial-img');
+      if (img) {
+        img.src = step.image || 'assets/mascot-collie.png';
+        img.alt = step.title;
+        img.hidden = Boolean(step.liveFocus);
+        img.onerror = () => { img.hidden = true; };
+        img.onload = () => { img.hidden = Boolean(step.liveFocus); };
+      }
+      document.getElementById('inventory-tutorial-live-focus')?.toggleAttribute('hidden', !step.liveFocus);
+      setElText('inventory-tutorial-step', `${_inventoryTutorialIndex + 1} / ${INVENTORY_TUTORIAL_STEPS.length}`);
+      setElText('inventory-tutorial-title', step.title);
+      setElText('inventory-tutorial-copy', step.copy);
+      const dots = document.getElementById('inventory-tutorial-dots');
+      if (dots) {
+        dots.innerHTML = INVENTORY_TUTORIAL_STEPS.map((_, index) =>
+          `<span class="inventory-tutorial-dot${index === _inventoryTutorialIndex ? ' active' : ''}"></span>`
+        ).join('');
+      }
+      const next = document.getElementById('inventory-tutorial-next');
+      const prev = document.getElementById('inventory-tutorial-prev');
+      if (next) next.disabled = _inventoryTutorialIndex >= INVENTORY_TUTORIAL_STEPS.length - 1;
+      if (prev) prev.disabled = _inventoryTutorialIndex <= 0;
+    }
+
+    function openInventoryTutorial() {
+      _inventoryTutorialIndex = 0;
+      renderInventoryTutorialStep();
+      document.getElementById('inventory-tutorial-overlay')?.removeAttribute('hidden');
+    }
+
+    function closeInventoryTutorial({ hideToday = false } = {}) {
+      if (hideToday) {
+        localStorage.setItem(INVENTORY_TUTORIAL_HIDDEN_UNTIL_KEY, String(tomorrowStartMs()));
+      } else {
+        sessionStorage.setItem(INVENTORY_TUTORIAL_SESSION_KEY, '1');
+      }
+      document.getElementById('inventory-tutorial-live-focus')?.setAttribute('hidden', '');
+      document.getElementById('inventory-tutorial-overlay')?.setAttribute('hidden', '');
+      closeTutorialTransientSheets();
+    }
+
+    function maybeShowInventoryTutorial() {
+      if (!shouldShowInventoryTutorial()) return;
+      setTimeout(openInventoryTutorial, 420);
+    }
+
+    document.getElementById('inventory-tutorial-next')?.addEventListener('click', () => {
+      if (_inventoryTutorialIndex >= INVENTORY_TUTORIAL_STEPS.length - 1) return;
+      _inventoryTutorialIndex += 1;
+      renderInventoryTutorialStep();
+    });
+
+    document.getElementById('inventory-tutorial-prev')?.addEventListener('click', () => {
+      if (_inventoryTutorialIndex <= 0) return;
+      _inventoryTutorialIndex -= 1;
+      renderInventoryTutorialStep();
+    });
+
+    document.getElementById('inventory-tutorial-hide-today')?.addEventListener('click', () => {
+      closeInventoryTutorial({ hideToday: true });
+    });
+
+    document.getElementById('inventory-tutorial-close')?.addEventListener('click', () => {
+      closeInventoryTutorial();
+    });
+
+    document.getElementById('inventory-tutorial-overlay')?.addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeInventoryTutorial();
+    });
 
     function updateInventoryEnvironmentBadge() {
       const badge = document.getElementById('inventory-dev-badge');
@@ -6102,6 +6597,7 @@
       updateAiModelStatus();
       preloadAiModelSoon();
       promptManagerIfNeeded();
+      maybeShowInventoryTutorial();
     }
 
     function updateDateDisplay() {
@@ -10536,12 +11032,12 @@
       const summary = parts.length ? parts.join(', ') : '급한 재고 알림은 없다멍';
       const hasWork = parts.length > 0;
       return {
-        text: `${profile.opening}\n지금 ${summary}.\n한 번에 보기에서 영업 중 먼저 볼 재료부터 같이 볼 수 있다멍.`,
+        text: `${profile.opening}\n지금 ${summary}.\n찾고 싶은 품목이나 메뉴 재료를 말하면 현재 재고에서 비슷한 항목부터 찾아준다멍.`,
         briefing: {
-          title: `${profile.name} 재료 상태`,
+          title: '오늘 재고 평가',
           icon: profile.id === 'cookie' ? '🐾' : '🐶',
           subtitle: hasWork
-            ? '지금 먼저 볼 재료만 숫자로 정리했다멍.'
+            ? '사장님이 지금 먼저 확인할 신호만 숫자로 정리했다멍.'
             : '지금 크게 걸리는 재료는 없어 보인다멍.',
           metrics: [
             { kind: 'expired', icon: '🚨', label: '기한 지남', count: stats.expired },
@@ -10550,7 +11046,7 @@
             { kind: 'low', icon: '📦', label: '부족 가능', count: stats.low }
           ],
           note: hasWork
-            ? '아래 예상 질문이나 한 번에 보기에서 지금 확인할 재료부터 보면 된다멍.'
+            ? '검색창에 품목명을 넣으면 해당 재고 설명까지 이어서 볼 수 있다멍.'
             : '그래도 영업 중에는 수량이 바뀐 재료만 한 번 훑어보면 좋다멍.'
         },
         actions: buildManagerOpeningActions()
@@ -10824,23 +11320,23 @@
     }
 
     function makeManagerSuggestionLabel(task) {
-      if (task.status === 'expired') return `${task.item.name} 사용 여부 같이 정리`;
-      if (task.status === 'today') return `${task.item.name} 오늘 먼저 쓸지 확인`;
-      if (task.status === 'tomorrow') return `${task.item.name} 오늘 버틸지 확인`;
-      if (task.status === 'low') return `${task.item.name} 주문 필요 같이 확인`;
-      return `${task.item.name} 먼저 쓸지 확인`;
+      if (task.status === 'expired') return `${task.item.name} 설명`;
+      if (task.status === 'today') return `${task.item.name} 오늘 확인`;
+      if (task.status === 'tomorrow') return `${task.item.name} 버틸지 보기`;
+      if (task.status === 'low') return `${task.item.name} 주문 판단`;
+      return `${task.item.name} 먼저 보기`;
     }
 
     function buildManagerOpeningActions(limit = 4) {
       const tasks = buildManagerBriefingTasks().slice(0, limit);
       if (!tasks.length) {
         return [
-          { type: 'overview', overviewFilter: 'all', label: '한 번에 보기' },
-          { type: 'ask', question: '재료 상태 한번 봐줘', label: '상태 먼저 확인' }
+          { type: 'ask', question: '라떼 재료', label: '라떼 재료' },
+          { type: 'ask', question: '오늘 재고 상태 평가해줘', label: '재고 평가' }
         ];
       }
       return tasks.map(task => ({
-        type: 'work',
+        type: 'explain',
         itemId: task.item.id,
         label: makeManagerSuggestionLabel(task)
       }));
@@ -10907,7 +11403,7 @@
       if (/^(안녕|하이|hello|hi)\s+(하동아|하동이|쿠키야|쿠키)/i.test(text)) return true;
       if (/(심심|졸려|피곤|힘들|배고|뭐해|기분|잡담|수다|괜찮아|좋은\s*하루|오늘\s*어때)/i.test(text)) return true;
 
-      const inventoryIntent = /마감|브리핑|한\s*번에|업무|할\s*일|같이\s*일|재고|수량|기한|유통기한|오늘\s*(마감|정리|처리|확인)|내일|이번\s*주|부족|최소|적정|폐기|버릴|지난|초과|만료|기한\s*없|발주|주문|구매|찾아|검색|수정|변경|추가|입고|사용|썼|소진|차감|삭제|점검|도움|사용법/i;
+      const inventoryIntent = /마감|브리핑|업무|할\s*일|재고|재료|품목|수량|기한|유통기한|오늘\s*(마감|정리|처리|확인)|내일|이번\s*주|부족|최소|적정|폐기|버릴|지난|초과|만료|기한\s*없|발주|주문|구매|찾아|검색|수정|변경|추가|입고|사용|썼|소진|차감|삭제|점검|도움|사용법|라떼|라테|커피|우유|시럽|크림|퓨레/i;
       return text.length <= 24 && !inventoryIntent.test(text);
     }
 
@@ -11405,7 +11901,7 @@
       return {
         text: `${icon} 발주 후보 ${low.length}개를 골랐다멍.\n부족한 순서로 보면 된다멍.\n\n${lines.join('\n')}`,
         actions: [
-          { type: 'overview-low', label: '한 번에 보기', variant: 'primary' }
+          { type: 'ask', question: '부족한 재료', label: '부족 재료 설명', variant: 'primary' }
         ]
       };
     }
@@ -11468,11 +11964,12 @@
       if (wantsLow) {
         const low = lowInventorySummaries(items);
         if (!low.length) return `${icon} 멍! 지금 주문이 급한 부족 가능 재료는 없다멍.`;
-        const lines = low.slice(0, 8).map(stock => formatOperatingStockLine(stock.item));
-        return {
-          text: `${icon} 부족 가능 재료 ${low.length}개를 확인했다멍.\n수량은 바꾸지 않고 주문 판단용으로만 보여준다멍.\n\n${lines.join('\n')}`,
-          overviewFilter: 'low'
-        };
+        return makeHadongRichReply(
+          `${icon} 부족 가능 재료 ${low.length}개`,
+          '수량은 바꾸지 않고 주문 판단용으로만 보여준다멍.',
+          low.slice(0, 8).map(stock => stock.item),
+          { includeDday: true, includeLow: true }
+        );
       }
 
       const query = cleanHadongItemQuery(text)
@@ -11481,18 +11978,112 @@
         .trim();
       const matches = query ? findOperatingItems(query).slice(0, 8) : [];
       if (matches.length) {
-        const lines = matches.map(formatOperatingStockLine);
-        return {
-          text: `${icon} ${query} 관련 재료 ${matches.length}개를 확인했다멍.\n수량은 바꾸지 않았다멍.\n\n${lines.join('\n')}`,
-          overviewFilter: matches.some(item => inventoryStockSummary(item).low) ? 'low' : 'attention'
-        };
+        return makeHadongRichReply(
+          `${icon} ${query} 관련 재료 ${matches.length}개`,
+          '수량은 바꾸지 않고 사장님 확인용으로만 보여준다멍.',
+          matches,
+          { includeDday: true, includeLow: true }
+        );
       }
 
       const priority = uniqueStockItems(getHadongAlertRows().map(row => row.item)).slice(0, 8);
       if (!priority.length) return `${icon} 지금 부족하거나 급한 재료는 뚜렷하지 않다멍.`;
+      return makeHadongRichReply(
+        `${icon} 지금 먼저 볼 재료 ${priority.length}개`,
+        '부족 가능성과 가까운 기한부터 보면 된다멍.',
+        priority,
+        { includeDday: true, includeLow: true }
+      );
+    }
+
+    function inventoryAiItemRisk(item) {
+      const stock = inventoryStockSummary(item);
+      const dday = calcDDay(item.expiry_date);
+      const risks = [];
+      if (stock.low) risks.push(`전체 ${stock.totalQuantity}${stock.unit || item.unit || '개'}로 기준 ${stock.minQuantity}${stock.unit || item.unit || '개'}보다 부족`);
+      if (dday !== null && dday < 0) risks.push(`${ddayLabel(dday)}라 사용 여부 확인 필요`);
+      else if (dday === 0) risks.push('오늘까지라 먼저 사용할지 확인 필요');
+      else if (dday === 1) risks.push('내일까지라 오늘 버틸 양인지 확인 필요');
+      else if (dday !== null && dday <= 6) risks.push(`${ddayLabel(dday)}라 먼저 쓸 재료로 분류`);
+      if (!risks.length) risks.push('현재 기준으로 급한 위험 신호는 뚜렷하지 않음');
+      return risks;
+    }
+
+    function makeInventoryAiItemExplanation(item) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const stock = inventoryStockSummary(item);
+      const unit = stock.unit || item.unit || '개';
+      const dday = calcDDay(item.expiry_date);
+      const risk = inventoryAiItemRisk(item);
+      const minText = stock.minQuantity !== null ? `${stock.minQuantity}${unit}` : '기준 없음';
+      const expiryText = item.expiry_type === 'NONE'
+        ? '기한 없음'
+        : dday === null ? '기한 미입력' : ddayLabel(dday);
+      const todayAction = stock.low
+        ? '발주 필요 여부를 먼저 판단해 주세요.'
+        : dday !== null && dday <= 1
+          ? '오늘 사용할 양과 폐기/보류 여부를 바로 확인해 주세요.'
+          : '수량이 바뀐 경우만 수정하면 됩니다.';
       return {
-        text: `${icon} 지금 먼저 볼 재료 ${priority.length}개를 확인했다멍.\n부족 가능성과 가까운 기한부터 보면 된다멍.\n\n${priority.map(formatOperatingStockLine).join('\n')}`,
-        overviewFilter: 'attention'
+        text:
+          `${icon} ${item.name} 재고 AI 설명이다멍.\n\n` +
+          `현재 상태\n- 전체 ${stock.totalQuantity}${unit} · 기준 ${minText} · ${expiryText}\n\n` +
+          `위험 신호\n- ${risk.join('\n- ')}\n\n` +
+          `오늘 할 일\n- ${todayAction}\n\n` +
+          `사장님 판단 포인트\n- 실제 보관 상태와 오늘 예상 판매량을 같이 보고, 필요하면 수정 버튼에서 수량/기한을 바로 바꿔 주세요.`,
+        actions: [
+          { type: 'edit', itemId: item.id, label: '수정하기', variant: 'primary' },
+          { type: 'inspect', itemId: item.id, label: '상세 점검' }
+        ]
+      };
+    }
+
+    function makeInventoryAiSearchReply(message) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const query = cleanHadongItemQuery(message)
+        .replace(/찾아|검색|보여|알려|설명|상태|평가|체크|확인|해줘|줘|좀/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (query.length < 2) return '';
+      const matches = findOperatingItems(query).slice(0, 8);
+      if (!matches.length) {
+        return `${icon} "${query}"로 찾은 재고가 없다멍.\n품목명, 카테고리, 메뉴 재료 이름을 조금 더 붙여서 다시 말해달라멍.`;
+      }
+      const rich = {
+        title: `${icon} "${query}" 관련 재고 ${matches.length}개`,
+        subtitle: '수량은 바꾸지 않고, 사장님 확인용으로만 정리했다멍.',
+        cards: matches.map(item => hadongCardFromItem(item, { includeDday: true, includeLow: true }))
+      };
+      return {
+        text: `${icon} "${query}"로 비슷한 재고를 찾았다멍.\n아래 후보에서 설명이 필요한 품목을 골라달라멍.`,
+        rich,
+        actions: matches.slice(0, 4).map((item, index) => ({
+          type: 'explain',
+          itemId: item.id,
+          label: `${item.name} 설명`,
+          variant: index === 0 ? 'primary' : ''
+        }))
+      };
+    }
+
+    function makeInventoryAiReadOnlyChangeReply(message) {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const matches = findOperatingItems(message).slice(0, 3);
+      return {
+        text:
+          `${icon} 재고 AI는 직접 차감/폐기/수정하지 않고 상태 확인과 조언만 한다멍.\n` +
+          `변경이 필요하면 아래 수정 버튼에서 사장님이 직접 확인해 주세요.`,
+        actions: matches.length
+          ? matches.map((item, index) => ({
+              type: 'edit',
+              itemId: item.id,
+              label: `${item.name} 수정`,
+              variant: index === 0 ? 'primary' : ''
+            }))
+          : [{ type: 'ask', question: '오늘 재고 상태 평가해줘', label: '재고 평가 보기', variant: 'primary' }]
       };
     }
 
@@ -11567,13 +12158,19 @@
 
       if (plan?.execution === 'reply') {
         const lines = formatHadongPlanCandidates(candidates, 6, { readOnly: true });
+        const itemActions = candidates.slice(0, 4).map((candidate, index) => ({
+          type: 'explain',
+          itemId: candidate.id,
+          label: `${candidate.name} 설명`,
+          variant: index === 0 ? 'primary' : ''
+        }));
         return {
           text:
             `${icon} ${plan.reply || '지금 재료 상태를 확인했다멍.'}` +
             `${lines ? `\n\n${lines}` : ''}`,
-          actions: [
-            { type: 'overview', overviewFilter: plan.action === 'low_stock_report' ? 'low' : 'attention', label: '지금 확인 보기', variant: 'primary' }
-          ]
+          actions: itemActions.length
+            ? itemActions
+            : [{ type: 'ask', question: '오늘 재고 상태 평가해줘', label: '재고 평가', variant: 'primary' }]
         };
       }
 
@@ -11581,8 +12178,7 @@
         return {
           text: `${icon} ${plan.reply || '자동 처리 전에 기준 확인이 필요하다멍.'}`,
           actions: [
-            { type: 'overview', overviewFilter: 'expired', label: '기한 초과 보기', variant: 'primary' },
-            { type: 'overview', overviewFilter: 'attention', label: '지금 확인 보기' }
+            { type: 'ask', question: '오늘 재고 상태 평가해줘', label: '재고 평가', variant: 'primary' }
           ]
         };
       }
@@ -11686,6 +12282,7 @@
       const plan = buildHadongActionPlan(message, geminiAction);
       if (!plan) return '';
       plan.originalMessage = message;
+      if (plan.operationType === 'write') return makeInventoryAiReadOnlyChangeReply(message);
       if (plan.execution === 'auto') return executeHadongActionPlan(plan);
       return renderHadongActionPlan(plan);
     }
@@ -11703,6 +12300,10 @@
 
       if (/발주|주문|구매|사야|사야할|부족.*리스트|리스트.*부족/.test(text)) {
         return makeHadongOrderReply();
+      }
+
+      if (/(폐기|삭제|버려|제거|목록에서\s*빼|차감|사용|소진|입고|추가|채워|보충|샀|수정|변경)/.test(text)) {
+        return makeInventoryAiReadOnlyChangeReply(text);
       }
 
       const deleteMatch = text.match(/^(.+?)\s*(폐기|삭제|버려|제거|목록에서\s*빼)/);
@@ -11796,17 +12397,27 @@
       }
 
       if (wantsBriefing) {
-        return { ...hadongOpeningText(), overviewFilter: 'all' };
+        return hadongOpeningText();
       }
 
       if (wantsLow) {
         if (!low.length) return `${icon} 멍! 부족 가능 재료는 없다멍.`;
-        return { text: `📦 부족 가능 재료 ${low.length}개를 한 번에 보기 탭에 올려뒀다멍.\n주문 필요 여부를 먼저 보면 좋다멍.`, overviewFilter: 'low' };
+        return makeHadongRichReply(
+          `📦 부족 가능 재료 ${low.length}개`,
+          '주문 필요 여부를 먼저 보면 좋다멍.',
+          low.slice(0, 8),
+          { includeDday: true, includeLow: true }
+        );
       }
 
       if (wantsDispose) {
         if (!expired.length) return `${icon} 멍! 지금 폐기 후보로 볼 기한 초과 재고는 없다멍.`;
-        return { text: `🚨 기한 초과 재고 ${expired.length}개를 한 번에 보기 탭에 올려뒀다멍.\n상세 점검도 ${profile.name}가 이어서 봐줄거다멍${profile.id === 'cookie' ? '🐾' : '🐶'}`, overviewFilter: 'expired' };
+        return makeHadongRichReply(
+          `🚨 기한 초과 재고 ${expired.length}개`,
+          '아직 처리하지 않고 확인용으로만 보여준다멍.',
+          expired.slice(0, 8),
+          { includeDday: true, includeLow: true }
+        );
       }
 
       if (wantsNoExpiry) {
@@ -11822,19 +12433,29 @@
       if (wantsToday) {
         const priority = [...expired, ...today, ...low.filter(i => !expired.some(e => e.id === i.id) && !today.some(t => t.id === i.id))];
         if (!priority.length) return `${icon} 멍! 오늘 먼저 볼 급한 재고는 없다멍.`;
-        return { text: `${icon} 지금 먼저 볼 재료 ${priority.length}개를 한 번에 보기 탭에 정리했다멍.\n부족 가능성과 오늘까지인 재료부터 보면 된다멍.`, overviewFilter: 'attention' };
+        return makeHadongRichReply(
+          `${icon} 지금 먼저 볼 재료 ${priority.length}개`,
+          '부족 가능성과 오늘까지인 재료부터 보면 된다멍.',
+          priority.slice(0, 8),
+          { includeDday: true, includeLow: true }
+        );
       }
 
       if (wantsWeek) {
         if (!week.length) return `${icon} 멍! 이번 주 안에 기한이 오는 재료는 없다멍.`;
-        return { text: `📅 곧 쓸 재료 ${week.length}개를 한 번에 보기 탭에 올려뒀다멍.\n가까운 기한부터 먼저 쓰면 된다멍.`, overviewFilter: 'week' };
+        return makeHadongRichReply(
+          `📅 곧 쓸 재료 ${week.length}개`,
+          '가까운 기한부터 먼저 쓰면 된다멍.',
+          week.slice(0, 8),
+          { includeDday: true, includeLow: true }
+        );
       }
 
       if (fallback) {
         return managerInventoryFallback(text);
       }
 
-      return '';
+      return makeInventoryAiSearchReply(text);
     }
 
     function dedupeHadongActions(actions) {
@@ -11857,32 +12478,30 @@
       };
 
       if (/부족|최소|적정|발주|주문|구매|사야|low/i.test(text)) {
-        push({ type: 'overview', overviewFilter: 'low', label: '부족 가능 보기', variant: 'primary' });
-        push({ type: 'ask', question: '발주 리스트 정리해줘', label: '발주 후보 정리' });
+        push({ type: 'ask', question: '부족한 재료', label: '부족 재료 보기', variant: 'primary' });
+        push({ type: 'ask', question: '오늘 재고 상태 평가해줘', label: '재고 평가' });
       }
       if (/폐기|버릴|지난|초과|만료/i.test(text)) {
-        push({ type: 'overview', overviewFilter: 'expired', label: '기한 초과 보기', variant: actions.length ? '' : 'primary' });
+        push({ type: 'ask', question: '기한 초과 재고', label: '기한 초과 보기', variant: actions.length ? '' : 'primary' });
       }
       if (/오늘|먼저|우선|급한|마감|상태|재료|버틸/i.test(text)) {
-        push({ type: 'overview', overviewFilter: 'attention', label: '지금 확인 보기', variant: actions.length ? '' : 'primary' });
+        push({ type: 'ask', question: '오늘 재고 상태 평가해줘', label: '재고 평가', variant: actions.length ? '' : 'primary' });
       }
       if (/이번\s*주|주간|7일|일주일|기한/i.test(text)) {
-        push({ type: 'overview', overviewFilter: 'week', label: '이번 주 기한 보기' });
+        push({ type: 'ask', question: '이번 주 기한 재고', label: '이번 주 기한' });
       }
-      if (/한\s*번에|브리핑|업무|할\s*일|같이\s*일|재료\s*상태/i.test(text)) {
-        push({ type: 'overview', overviewFilter: 'all', label: '한 번에 보기', variant: actions.length ? '' : 'primary' });
+      if (/브리핑|업무|할\s*일|재료\s*상태|평가/i.test(text)) {
+        push({ type: 'ask', question: '오늘 재고 상태 평가해줘', label: '재고 평가', variant: actions.length ? '' : 'primary' });
       }
 
       if (normalized.length >= 2) {
         findHadongItems(text).slice(0, 2).forEach(item => {
-          push({ type: 'work', itemId: item.id, label: `${item.name} 같이 보기`, variant: actions.length ? '' : 'primary' });
+          push({ type: 'explain', itemId: item.id, label: `${item.name} 설명`, variant: actions.length ? '' : 'primary' });
         });
       }
 
       if (!actions.length) {
         buildManagerOpeningActions(2).forEach(push);
-        const hasOverview = actions.some(action => action.type === 'overview');
-        if (!hasOverview) push({ type: 'overview', overviewFilter: 'all', label: '한 번에 보기' });
       }
 
       return dedupeHadongActions(actions).slice(0, 4);
@@ -11916,7 +12535,7 @@
       applyManagerProfile();
       document.getElementById('hadong-overlay').classList.add('open');
       document.getElementById('hadong-sheet').classList.add('open');
-      setHadongView('overview');
+      setHadongView('chat');
       if (!document.getElementById('hadong-messages').children.length) {
         addHadongMessage('bot', hadongOpeningText());
       }
@@ -12057,6 +12676,12 @@
 
       if (action === 'inspect') {
         openChildSheetFromManager(() => openAiSheet(itemId));
+        return;
+      }
+
+      if (action === 'explain') {
+        const item = items.find(row => row.id === itemId);
+        addHadongMessage('bot', item ? makeInventoryAiItemExplanation(item) : '멍, 설명할 재고를 찾지 못했다멍.');
         return;
       }
 
