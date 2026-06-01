@@ -5020,13 +5020,13 @@
       </div>
       <div class="rh-date" id="rh-date"></div>
       <div class="rh-stats">
-        <button type="button" class="rh-stat today" data-stat-filter="low" aria-label="재고 부족 재료 보기. 기준 수량보다 적거나 곧 써야 할 것을 빼면 부족한 재료입니다.">
+        <button type="button" class="rh-stat today" data-stat-filter="low" aria-label="재고 부족 재료 보기. 전체 수량이 최소재고보다 적은 재료입니다.">
           <span class="rh-stat-icon">📦</span>
           <span>
             <span class="rh-stat-count today" id="tile-today">0</span>
             <span class="rh-stat-label today">재고 부족</span>
             <span class="rh-stat-caption" id="tile-basis-today">주문 확인</span>
-            <span class="rh-stat-info">기준보다 적음</span>
+            <span class="rh-stat-info">최소재고 미달</span>
           </span>
         </button>
         <button type="button" class="rh-stat tomorrow" data-stat-filter="attention" aria-label="오늘 내일 기한 재료 보기. 기한 초과, 오늘까지, 내일까지인 재료입니다.">
@@ -7269,7 +7269,7 @@
 
     function isShortageAttentionSummary(summary) {
       if (!summary) return false;
-      return summary.low || stockRiskProfile(summary).shortAfterAttention;
+      return summary.low;
     }
 
     function shortageAttentionSummaries(sourceItems = items) {
@@ -7615,12 +7615,9 @@
       } else if (stock.low) {
         status = 'low';
         label = '부족';
-      } else if (shortAfterAttention) {
-        status = 'watch';
-        label = '곧 쓸 것 빼면 부족';
       } else if (weekQuantity > 0) {
         status = 'week';
-        label = `곧 쓸 ${quantityLabel(weekQuantity, unit)}`;
+        label = `이번 주 사용 ${quantityLabel(weekQuantity, unit)}`;
       }
 
       return {
@@ -7659,13 +7656,13 @@
       if (stock.low) {
         return {
           tone: 'warn',
-          text: `전체가 ${quantityLabel(stock.totalQuantity, unit)}만 남았어요. 기준 ${quantityLabel(min, unit)}보다 적어서 새로 채워야 해요.`
+          text: `전체가 ${quantityLabel(stock.totalQuantity, unit)}만 남았어요. 최소재고 ${quantityLabel(min, unit)}보다 적어서 새로 채워야 해요.`
         };
       }
       if (profile.shortAfterAttention) {
         return {
           tone: 'warn',
-          text: `전체 수량은 괜찮지만, 곧 써야 하는 걸 빼면 여유가 ${quantityLabel(profile.freshQuantity, unit)}뿐이에요. 가까운 기한부터 먼저 쓰고, 부족하면 새로 채워 주세요.`
+          text: `전체 수량은 최소재고보다 많아요. 다만 이번 주 안에 먼저 쓸 재고가 있어서, 판매가 많으면 추가 발주 여부만 확인해 주세요.`
         };
       }
       if (profile.tomorrowQuantity > 0 || profile.weekQuantity > 0) {
@@ -7728,14 +7725,10 @@
       if (profile.expiredQuantity > 0) push('expired', `기한 초과 ${quantityLabel(profile.expiredQuantity, unit)}`);
       else if (profile.todayQuantity > 0) push('today', `오늘까지 ${quantityLabel(profile.todayQuantity, unit)}`);
       else if (profile.tomorrowQuantity > 0) push('tomorrow', `내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
-      else if (stock.low) push('low', '기준 미달');
-      else if (profile.shortAfterAttention) push('watch', '곧 쓸 것 빼면 부족');
-      else if (profile.weekQuantity > 0) push('week', `곧 쓸 ${quantityLabel(profile.weekQuantity, unit)}`);
+      else if (stock.low) push('low', '최소재고 미달');
+      else if (profile.weekQuantity > 0) push('week', `이번 주 사용 ${quantityLabel(profile.weekQuantity, unit)}`);
 
-      if (stock.low && !badges.some(badge => badge.className === 'low')) push('low', '기준 미달');
-      if (profile.shortAfterAttention) {
-        push(profile.freshQuantity > 0 ? 'reserve' : 'low', `여유 ${quantityLabel(profile.freshQuantity, unit)}`);
-      }
+      if (stock.low && !badges.some(badge => badge.className === 'low')) push('low', '최소재고 미달');
       if (profile.recentlyUpdated) push('recent', '최근 수정');
 
       if (stock.lotCount > 1) push('lot', `기한 ${stock.lotCount}개`);
@@ -7755,9 +7748,7 @@
       else if (profile.todayQuantity > 0) parts.push(`오늘까지 ${quantityLabel(profile.todayQuantity, unit)}`);
       else if (profile.tomorrowQuantity > 0) parts.push(`내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
       else if (profile.weekQuantity > 0) parts.push(`이번 주 ${quantityLabel(profile.weekQuantity, unit)}`);
-      if (stock.low) parts.push('기준 미달');
-      else if (profile.shortAfterAttention) parts.push('곧 쓸 것 빼면 부족');
-      if ((stock.low || profile.shortAfterAttention) && profile.freshQuantity > 0) parts.push(`여유 ${quantityLabel(profile.freshQuantity, unit)}`);
+      if (stock.low) parts.push('최소재고 미달');
       if (!parts.length) parts.push('안정');
       return parts.slice(0, 2).join(' · ');
     }
@@ -7792,7 +7783,7 @@
         const unit = item.unit || '개';
         const stock = inventoryStockSummary(item, getVisibleItems());
         const lotStatus = lotStatusInfo(item);
-        const minText = stock.minQuantity !== null ? ` · 기준 ${quantityLabel(stock.minQuantity, unit)}` : '';
+        const minText = stock.minQuantity !== null ? ` · 최소재고 ${quantityLabel(stock.minQuantity, unit)}` : '';
         const expiryText = item.expiry_type === 'NONE'
           ? '기한 없음'
           : `${item.expiry_date || '날짜 미입력'} · ${lotExpiryLabel(item)}`;
@@ -7801,7 +7792,7 @@
           item.category ? { className: 'category', label: item.category } : null,
           item.storage_method ? { className: 'storage', label: item.storage_method } : null,
           item.origin ? { className: 'origin', label: item.origin } : null,
-          stock.low ? { className: 'low', label: '전체 기준 미달' } : null,
+          stock.low ? { className: 'low', label: '최소재고 미달' } : null,
           stock.lotCount > 1 ? { className: 'lot', label: `같은 품목 ${stock.lotCount}개` } : null
         ].filter(Boolean).map(badge =>
           `<span class="inv-badge ${escAttr(badge.className)}">${escHtml(badge.label)}</span>`
@@ -7862,7 +7853,7 @@
         const groupId = `g${index}`;
         const { item, stock, profile } = card;
         const unit = stock.unit || item.unit || '개';
-        const minText = stock.minQuantity !== null ? ` · 기준 ${quantityLabel(stock.minQuantity, unit)}` : '';
+        const minText = stock.minQuantity !== null ? ` · 최소재고 ${quantityLabel(stock.minQuantity, unit)}` : '';
         const badges = makeInventoryCardBadges(stock, profile, unit)
           .map(badge => `<span class="inv-badge ${escAttr(badge.className)}">${escHtml(badge.label)}</span>`)
           .join('');
@@ -7877,7 +7868,7 @@
                 <div class="inv-card-top">
                   <div class="inv-info">
                     <div class="inv-name">${escHtml(item.name)}</div>
-                    <div class="inv-summary-line">전체 ${escHtml(quantityLabel(stock.totalQuantity, unit))}${escHtml(minText)}</div>
+                    <div class="inv-summary-line">전체 수량 ${escHtml(quantityLabel(stock.totalQuantity, unit))}${escHtml(minText)}</div>
                   </div>
                   <span class="inv-card-chevron" aria-hidden="true">›</span>
                 </div>
@@ -7920,7 +7911,7 @@
       const attentionText = profile.attentionQuantity > 0
         ? quantityLabel(profile.attentionQuantity, unit)
         : '없음';
-      const minText = stock.minQuantity !== null ? quantityLabel(stock.minQuantity, unit) : '기준 없음';
+      const minText = stock.minQuantity !== null ? quantityLabel(stock.minQuantity, unit) : '최소재고 없음';
       const lotRows = profile.activeLots.map(lot => {
         const safeId = escAttr(lot.id);
         const lotStatus = lotStatusInfo(lot);
@@ -7950,7 +7941,7 @@
       document.getElementById('group-detail-body').innerHTML = `
         <div class="group-detail-metrics">
           <div class="group-detail-metric is-total"><span>전체</span><strong>${escHtml(quantityLabel(stock.totalQuantity, unit))}</strong></div>
-          <div class="group-detail-metric is-min"><span>기준</span><strong>${escHtml(minText)}</strong></div>
+          <div class="group-detail-metric is-min"><span>최소재고</span><strong>${escHtml(minText)}</strong></div>
           <div class="group-detail-metric is-attention${profile.attentionQuantity > 0 ? ' has-value' : ''}"><span>먼저 쓸 양</span><strong>${escHtml(attentionText)}</strong></div>
         </div>
         <div class="group-detail-advice${advice.tone === 'safe' ? ' is-safe' : ''}">${escHtml(advice.text)}</div>
@@ -8191,7 +8182,7 @@
     function stockGroupLabel(item) {
       const unit = item?.unit || '개';
       const stock = inventoryStockSummary(item);
-      return `${item.name} · 전체 ${stock.totalQuantity}${unit}${stock.minQuantity !== null ? ` · 기준 ${stock.minQuantity}${unit}` : ''}`;
+      return `${item.name} · 전체 수량 ${stock.totalQuantity}${unit}${stock.minQuantity !== null ? ` · 최소재고 ${stock.minQuantity}${unit}` : ''}`;
     }
 
     function maybeOpenStockGroupSuggestion(item) {
@@ -8386,7 +8377,7 @@
       },
       low: {
         title: '재고 부족 기준',
-        text: '전체 수량이 기준보다 적거나, 곧 써야 할 것을 빼면 기준보다 적어지는 재료예요.'
+        text: '전체 수량이 최소재고보다 적은 재료예요.'
       },
       week: {
         title: '이번 주 기한 기준',
