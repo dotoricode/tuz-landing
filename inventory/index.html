@@ -5827,7 +5827,12 @@
       {
         image: '',
         liveFocus: true,
-        focus: { left: 16, top: 174, width: 358, height: 156, radius: 20, labelTop: 342, label: '상단 숫자 카드를 눌러 재고를 바로 좁혀요' },
+        focus: {
+          targetSelectors: ['.rh-stats'],
+          padding: 6,
+          radius: 20,
+          label: '상단 숫자 카드를 눌러 재고를 바로 좁혀요'
+        },
         setup: 'dashboard',
         title: '재고 현황 먼저 보기',
         copy: '상단 숫자 카드에서 부족한 재료, 오늘·내일 기한, 이번 주 기한을 바로 확인합니다.'
@@ -5835,7 +5840,13 @@
       {
         image: '',
         liveFocus: true,
-        focus: { left: 18, top: 354, width: 354, height: 196, radius: 18, labelTop: 562, label: '검색창과 카테고리로 필요한 품목만 남겨요' },
+        focus: {
+          targetSelectors: ['.rh-search-row', '#category-chips', '.inventory-view-toggle'],
+          padding: 6,
+          radius: 18,
+          labelPlacement: 'before',
+          label: '검색창과 카테고리로 필요한 품목만 남겨요'
+        },
         setup: 'search',
         title: '품목은 검색과 필터로 좁히기',
         copy: '품목명 일부만 입력해도 목록이 줄어듭니다. 묶음/개별 보기로 필요한 단위도 바꿀 수 있습니다.'
@@ -5843,7 +5854,14 @@
       {
         image: '',
         liveFocus: true,
-        focus: { left: 16, top: 244, width: 358, height: 330, radius: 22, labelTop: 204, label: '추가 시트에서 수량, 기한, 기준 수량을 채워요' },
+        focus: {
+          targetSelectors: ['#add-name', '#add-quantity', '#add-expiry-presence', '#add-expiry-row'],
+          padding: 8,
+          radius: 22,
+          maxHeight: 280,
+          labelPlacement: 'before',
+          label: '추가 시트에서 수량, 기한, 기준 수량을 채워요'
+        },
         setup: 'add',
         title: '재고는 사진 또는 직접 추가',
         copy: '카메라로 라벨을 읽거나 직접 추가해서 수량, 기준 수량, 기한을 빠르게 채웁니다.'
@@ -5851,7 +5869,12 @@
       {
         image: '',
         liveFocus: true,
-        focus: { left: 0, top: 118, width: 390, height: 264, radius: 24, labelTop: 394, label: '두루뭉술한 재료명도 재고 AI가 후보로 정리해요' },
+        focus: {
+          targetSelectors: ['#inventory-ai-search-panel'],
+          padding: 8,
+          radius: 20,
+          label: '두루뭉술한 재료명도 재고 AI가 후보로 정리해요'
+        },
         setup: 'aiSearch',
         title: '매니저야〰 로 재고 AI 열기',
         copy: '라떼 재료처럼 두루뭉술하게 말해도 현재 재고에서 비슷한 품목을 찾아줍니다.'
@@ -5859,7 +5882,13 @@
       {
         image: '',
         liveFocus: true,
-        focus: { left: 16, top: 336, width: 358, height: 236, radius: 18, labelTop: 584, label: 'AI 설명에서 수량, 기한, 오늘 할 일을 바로 판단해요' },
+        focus: {
+          targetSelectors: ['#hadong-messages [data-tutorial-demo-message="true"]'],
+          padding: 8,
+          radius: 18,
+          maxHeight: 220,
+          label: 'AI 설명에서 수량, 기한, 오늘 할 일을 바로 판단해요'
+        },
         setup: 'aiDetail',
         title: 'AI 설명 보고 바로 판단하기',
         copy: '선택한 품목의 수량, 기한, 부족 여부를 사장님이 바로 결정할 수 있게 요약합니다.'
@@ -5882,23 +5911,77 @@
       return !Number.isFinite(hiddenUntil) || hiddenUntil <= Date.now();
     }
 
+    function getTutorialTargetRect(focus) {
+      const selectors = Array.isArray(focus?.targetSelectors) ? focus.targetSelectors : [];
+      const rects = selectors.flatMap(selector =>
+        Array.from(document.querySelectorAll(selector)).map(el => el.getBoundingClientRect())
+      ).filter(rect => rect.width > 0 && rect.height > 0);
+
+      if (!rects.length) {
+        return {
+          left: focus?.left ?? 16,
+          top: focus?.top ?? 112,
+          right: (focus?.left ?? 16) + (focus?.width ?? Math.max(1, window.innerWidth - 32)),
+          bottom: (focus?.top ?? 112) + (focus?.height ?? 104)
+        };
+      }
+
+      const padding = focus?.padding ?? 0;
+      return {
+        left: Math.min(...rects.map(rect => rect.left)) - padding,
+        top: Math.min(...rects.map(rect => rect.top)) - padding,
+        right: Math.max(...rects.map(rect => rect.right)) + padding,
+        bottom: Math.max(...rects.map(rect => rect.bottom)) + padding,
+        maxHeight: focus?.maxHeight
+      };
+    }
+
+    function clampTutorialRect(rect) {
+      const margin = 16;
+      const left = Math.max(margin, Math.min(rect.left, window.innerWidth - margin));
+      const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
+      const right = Math.max(left + 1, Math.min(rect.right, window.innerWidth - margin));
+      const bottom = Math.max(top + 1, Math.min(rect.bottom, window.innerHeight - margin));
+      const maxHeight = Number(rect.maxHeight || 0);
+      return {
+        left,
+        top,
+        width: right - left,
+        height: maxHeight > 0 ? Math.min(bottom - top, maxHeight) : bottom - top
+      };
+    }
+
+    function getTutorialLabelTop(focus, rect) {
+      if (focus?.labelTop != null) return focus.labelTop;
+      const labelHeight = 38;
+      const gap = 10;
+      const cardTop = document.querySelector('.inventory-tutorial-card')?.getBoundingClientRect().top || window.innerHeight;
+      const beforeTop = rect.top - labelHeight - gap;
+      const afterTop = rect.top + rect.height + gap;
+      if (focus?.labelPlacement === 'before' && beforeTop >= 12) return beforeTop;
+      if (afterTop + labelHeight < cardTop - gap && afterTop + labelHeight < window.innerHeight - 12) return afterTop;
+      if (beforeTop >= 12) return beforeTop;
+      return Math.max(12, Math.min(afterTop, window.innerHeight - labelHeight - 12));
+    }
+
     function setTutorialFocus(step) {
       const focus = step?.focus || {};
       const root = document.getElementById('inventory-tutorial-overlay');
       const el = document.getElementById('inventory-tutorial-live-focus');
       const target = root || el;
       if (!target || !el) return;
-      const left = focus.left ?? 16;
-      const top = focus.top ?? 112;
-      const width = focus.width ?? 358;
+      const rect = clampTutorialRect(getTutorialTargetRect(focus));
+      const left = rect.left;
+      const top = rect.top;
+      const width = rect.width;
       const closeLeft = Math.max(12, Math.min(window.innerWidth - 44, left + width - 44));
       target.style.setProperty('--tutorial-focus-left', `${left}px`);
       target.style.setProperty('--tutorial-focus-top', `${top}px`);
       target.style.setProperty('--tutorial-focus-width', `${width}px`);
-      target.style.setProperty('--tutorial-focus-height', `${focus.height ?? 104}px`);
+      target.style.setProperty('--tutorial-focus-height', `${rect.height}px`);
       target.style.setProperty('--tutorial-focus-radius', `${focus.radius ?? 20}px`);
       target.style.setProperty('--tutorial-label-left', `${focus.labelLeft ?? 28}px`);
-      target.style.setProperty('--tutorial-label-top', `${focus.labelTop ?? 226}px`);
+      target.style.setProperty('--tutorial-label-top', `${getTutorialLabelTop(focus, rect)}px`);
       target.style.setProperty('--tutorial-label-width', `${focus.labelWidth ?? 334}px`);
       target.style.setProperty('--tutorial-step-left', `${left + 12}px`);
       target.style.setProperty('--tutorial-step-top', `${top + 12}px`);
@@ -5949,6 +6032,8 @@
       const step = INVENTORY_TUTORIAL_STEPS[_inventoryTutorialIndex] || INVENTORY_TUTORIAL_STEPS[0];
       prepareInventoryTutorialStep(step);
       setTutorialFocus(step);
+      requestAnimationFrame(() => setTutorialFocus(step));
+      setTimeout(() => setTutorialFocus(step), 380);
       const img = document.getElementById('inventory-tutorial-img');
       if (img) {
         img.src = step.image || 'assets/mascot-collie.png';
