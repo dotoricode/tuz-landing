@@ -5941,7 +5941,9 @@
       const left = Math.max(margin, Math.min(rect.left, window.innerWidth - margin));
       const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
       const right = Math.max(left + 1, Math.min(rect.right, window.innerWidth - margin));
-      const bottom = Math.max(top + 1, Math.min(rect.bottom, window.innerHeight - margin));
+      const cardTop = document.querySelector('.inventory-tutorial-card')?.getBoundingClientRect().top || window.innerHeight;
+      const visibleBottom = Math.min(rect.bottom, cardTop - 14, window.innerHeight - margin);
+      const bottom = Math.max(top + 48, visibleBottom);
       const maxHeight = Number(rect.maxHeight || 0);
       return {
         left,
