@@ -5125,7 +5125,7 @@
         <span class="rh-bottom-manager-avatar" aria-hidden="true">
           <img id="manager-bottom-img" src="assets/mascot-poodle.png" alt="">
         </span>
-        <span class="rh-bottom-action-label">매니저야〰</span>
+        <span class="rh-bottom-action-label" id="manager-call-label">하동 AI</span>
       </button>
     </div>
 
@@ -5617,6 +5617,7 @@
         id: 'hadong',
         name: '하동이',
         fullName: '하동이 매니저',
+        aiButtonLabel: '하동 AI',
         avatar: 'assets/mascot-poodle.png',
         alt: '하동이 매니저',
         themeColor: '#8C4F36',
@@ -5631,6 +5632,7 @@
         id: 'cookie',
         name: '쿠키',
         fullName: '쿠키 매니저',
+        aiButtonLabel: '쿠키 AI',
         avatar: 'assets/mascot-collie.png',
         alt: '쿠키 매니저',
         themeColor: '#202020',
@@ -5782,8 +5784,9 @@
       setElText('hadong-header-title', '재고 AI');
       setElText('hadong-header-subtitle', profile.headerSubtitle);
       setElText('ai-sheet-title', `${profile.name} 상세 점검`);
+      setElText('manager-call-label', profile.aiButtonLabel || `${profile.name} AI`);
       const managerCallBtn = document.getElementById('manager-call-btn');
-      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', `재고 AI ${profile.name} 호출`);
+      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', `${profile.aiButtonLabel || `${profile.name} AI`} 호출`);
       setManagerDetailTabLabels(profile);
       const input = document.getElementById('hadong-input');
       if (input) input.placeholder = '예: 라떼 재료, 부족한 시럽, 우유 상태';
@@ -5876,12 +5879,12 @@
           padding: 8,
           radius: 18,
           labelPlacement: 'before',
-          label: '하단 매니저야〰 버튼을 눌러 재고 AI를 열어요'
+          label: '하단 매니저 AI 버튼을 눌러 재고 AI를 열어요'
         },
         cardPlacement: 'top',
         setup: 'aiSearch',
-        title: '매니저야〰 로 재고 AI 열기',
-        copy: '하단 매니저야〰 버튼에서 재고 AI를 엽니다. 라떼 재료처럼 두루뭉술하게 말해도 비슷한 품목을 찾아줍니다.'
+        title: '매니저 AI로 재고 AI 열기',
+        copy: '하단 쿠키 AI 또는 하동 AI 버튼에서 재고 AI를 엽니다. 라떼 재료처럼 두루뭉술하게 말해도 비슷한 품목을 찾아줍니다.'
       },
       {
         image: '',
