@@ -11838,6 +11838,13 @@
         .trim();
     }
 
+    function cleanInventoryAiSearchQuery(value) {
+      return cleanHadongItemQuery(value)
+        .replace(/찾아|검색|보여|알려|설명|상태|평가|체크|확인|해줘|줘|좀|부족한|부족|떨어질|남은|관련|재료|품목|메뉴/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
     function parseHadongNumber(value) {
       const num = Number(String(value || '').replace(/,/g, ''));
       return Number.isFinite(num) ? num : null;
@@ -11851,12 +11858,21 @@
       return items
         .map(item => {
           const name = normalizeHadongSearchText(item.name);
+          const text = normalizeHadongSearchText([
+            item.name,
+            item.category,
+            item.storage_method,
+            item.origin
+          ].filter(Boolean).join(' '));
           const compactName = name.replace(/\s+/g, '');
+          const compactText = text.replace(/\s+/g, '');
           let score = 0;
           if (name === cleaned || compactName === compactNeedle) score = 100;
           else if (name.startsWith(cleaned) || compactName.startsWith(compactNeedle)) score = 80;
           else if (name.includes(cleaned) || compactName.includes(compactNeedle)) score = 60;
-          else if (tokens.length && tokens.every(token => name.includes(token) || compactName.includes(token))) score = 40;
+          else if (text.includes(cleaned) || compactText.includes(compactNeedle)) score = 48;
+          else if (tokens.length && tokens.every(token => text.includes(token) || compactText.includes(token))) score = 40;
+          else if (tokens.length && tokens.some(token => token.length >= 2 && (text.includes(token) || compactText.includes(token)))) score = 24;
           return { item, score };
         })
         .filter(row => row.score > 0)
@@ -12041,13 +12057,20 @@
       const exactDirect = direct.filter(item => normalizeHadongSearchText(item.name).replace(/\s+/g, '') === compactQuery);
       if (exactDirect.length) return exactDirect;
       const text = normalizeHadongSearchText(query);
-      const aliasTerms = /라떼|라테|카페라떼|바닐라라떼/.test(text)
-        ? ['우유', '원두', '커피', '시럽']
-        : /아메리카노|커피/.test(text)
-          ? ['원두', '커피', '콜드브루']
-          : [];
+      let aliasTerms = [];
+      if (/라떼|라테|카페라떼|바닐라라떼/.test(text)) {
+        aliasTerms = ['우유', '밀크', '유제품', '생크림', '휘핑', '크림', '원두', '커피', '에스프레소', '시럽', '바닐라', '카라멜', '소스'];
+      } else if (/우유|밀크|milk/.test(text)) {
+        aliasTerms = ['우유', '밀크', '유제품', '생크림', '휘핑', '크림'];
+      } else if (/크림|휘핑|생크림|cream/.test(text)) {
+        aliasTerms = ['생크림', '휘핑', '크림', '유제품'];
+      } else if (/시럽|syrup/.test(text)) {
+        aliasTerms = ['시럽', '바닐라', '카라멜', '소스'];
+      } else if (/아메리카노|커피/.test(text)) {
+        aliasTerms = ['원두', '커피', '콜드브루'];
+      }
       if (!aliasTerms.length) return direct;
-      return uniqueStockItems(aliasTerms.flatMap(term => findHadongItems(term)));
+      return uniqueStockItems([...direct, ...aliasTerms.flatMap(term => findHadongItems(term))]);
     }
 
     function makeOperatingStockReply(message) {
@@ -12139,10 +12162,7 @@
     function makeInventoryAiSearchReply(message) {
       const profile = getManagerProfile();
       const icon = profile.id === 'cookie' ? '🐾' : '🐶';
-      const query = cleanHadongItemQuery(message)
-        .replace(/찾아|검색|보여|알려|설명|상태|평가|체크|확인|해줘|줘|좀/gi, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+      const query = cleanInventoryAiSearchQuery(message);
       if (query.length < 2) return '';
       const matches = findOperatingItems(query).slice(0, 8);
       if (!matches.length) {
@@ -12163,6 +12183,80 @@
           variant: index === 0 ? 'primary' : ''
         }))
       };
+    }
+
+    function isInventoryAiEvaluationRequest(message) {
+      return /재고\s*(평가|상태|점검|피드백|조언)|오늘\s*재고|카페\s*운영|운영\s*(평가|조언|피드백)|전체\s*(평가|상태)|브리핑/i.test(String(message || ''));
+    }
+
+    function makeCafeInventoryEvaluationReply() {
+      const profile = getManagerProfile();
+      const icon = profile.id === 'cookie' ? '🐾' : '🐶';
+      const alertRows = getHadongAlertRows();
+      const low = lowInventorySummaries(items);
+      const withDday = items.map(item => ({ item, dday: calcDDay(item.expiry_date) }));
+      const expired = withDday.filter(row => row.dday !== null && row.dday < 0);
+      const today = withDday.filter(row => row.dday === 0);
+      const tomorrow = withDday.filter(row => row.dday === 1);
+      const week = withDday.filter(row => row.dday !== null && row.dday >= 2 && row.dday <= 6);
+      const latteRows = findOperatingItems('라떼 재료');
+      const criticalRows = uniqueStockItems([
+        ...latteRows,
+        ...findOperatingItems('우유'),
+        ...findOperatingItems('시럽'),
+        ...findOperatingItems('원두')
+      ]);
+      const latteRisk = latteRows.filter(item => {
+        const stock = inventoryStockSummary(item);
+        const dday = calcDDay(item.expiry_date);
+        return stock.low || (dday !== null && dday <= 2);
+      });
+      const candidates = uniqueStockItems([
+        ...alertRows.map(row => row.item),
+        ...latteRisk,
+        ...criticalRows
+      ]).slice(0, 8);
+
+      const riskCount = expired.length + today.length + tomorrow.length + low.length;
+      const latteNames = latteRows.slice(0, 4).map(item => item.name).join(', ') || '우유/크림/원두/시럽';
+      const firstLine = riskCount
+        ? `오늘은 영업 전에 ${riskCount}개 신호를 먼저 처리하는 게 맞다멍.`
+        : '큰 경고는 없지만, 음료 핵심 재료는 피크 전에 한 번 더 보는 게 좋다멍.';
+      const orderLine = low.length
+        ? `기준보다 부족한 재료 ${low.length}개는 발주 여부를 먼저 판단해달라멍.`
+        : '기준 수량 기준으로 바로 발주가 필요한 재료는 뚜렷하지 않다멍.';
+      const expiryLine = expired.length || today.length || tomorrow.length
+        ? `기한은 초과 ${expired.length}개, 오늘까지 ${today.length}개, 내일까지 ${tomorrow.length}개라 폐기/선사용 판단이 먼저다멍.`
+        : `기한 급한 재료는 적지만 이번 주 안에 ${week.length}개는 먼저 쓸 후보로 봐두면 된다멍.`;
+
+      return {
+        text:
+          `${icon} 카페 운영 기준으로 재고를 평가했다멍.\n\n` +
+          `내 생각\n- ${firstLine}\n- ${orderLine}\n- ${expiryLine}\n\n` +
+          `음료 운영 체크\n- 라떼/크림 음료 쪽은 ${latteNames}부터 확인하면 된다멍.\n- 특히 생크림처럼 대체가 어려운 재료는 2개처럼 적게 보이면 오늘 예상 판매량 기준으로 추가 발주 여부를 빨리 정하는 게 좋다멍.\n\n` +
+          `오늘 우선순위\n1. 기한 초과/오늘까지 재료 사용 여부 결정\n2. 기준 수량보다 낮은 재료 발주 판단\n3. 라떼·크림·시럽·원두처럼 메뉴 영향 큰 재료 수량 확인`,
+        rich: candidates.length
+          ? {
+              title: `${icon} 오늘 운영 기준 재고 평가`,
+              subtitle: '급한 신호와 카페 핵심 재료를 같이 골랐다멍.',
+              cards: candidates.map(item => hadongCardFromItem(item, { includeDday: true, includeLow: true }))
+            }
+          : null,
+        actions: [
+          { type: 'ask', question: '라떼 재료', label: '라떼 재료 보기', variant: 'primary' },
+          { type: 'ask', question: '부족한 재료', label: '부족 재료' },
+          { type: 'overview', overviewFilter: 'attention', label: '전체 확인' }
+        ]
+      };
+    }
+
+    function makeInventoryAiPriorityReply(message) {
+      const text = String(message || '');
+      if (isInventoryAiEvaluationRequest(text)) return makeCafeInventoryEvaluationReply();
+      if (/라떼|라테|우유|밀크|크림|휘핑|생크림|시럽|커피|원두|유제품|부족한\s+\S+/i.test(text)) {
+        return makeInventoryAiSearchReply(text);
+      }
+      return '';
     }
 
     function makeInventoryAiReadOnlyChangeReply(message) {
@@ -12649,6 +12743,12 @@
       if (!msg) return;
       document.getElementById('hadong-input').value = '';
       addHadongMessage('user', msg);
+
+      const priorityReply = makeInventoryAiPriorityReply(msg);
+      if (priorityReply) {
+        addHadongMessage('bot', withManagerReplyActions(priorityReply, msg));
+        return;
+      }
 
       const structuredPlan = buildHadongActionPlan(msg);
       if (structuredPlan) {

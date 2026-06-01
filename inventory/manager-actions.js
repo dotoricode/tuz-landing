@@ -17,7 +17,7 @@
   const READ_ONLY_RE = /(목록|리스트|후보|보여|알려|찾아|조회|있어|뭐|어떤|확인|확인만|보기만)/i;
   const LOW_STOCK_RE = /(부족|떨어질|떨어져|모자라|최소|발주|주문|사야|low\s*stock)/i;
   const EXCESS_STOCK_RE = /(많이\s*남|많은\s*재고|과잉|넘치|쌓인|남는|excess|overstock)/i;
-  const STOCK_STATUS_RE = /(얼마|몇|남았|수량|재료\s*상태|상태\s*(한\s*)?번|괜찮|버틸|재고\s*봐|재료\s*봐)/i;
+  const STOCK_STATUS_RE = /(얼마|몇|남았|수량|재료\s*상태|상태\s*(한\s*)?번|괜찮|버틸|재고\s*봐|재료\s*봐|라떼|라테|우유|밀크|크림|휘핑|생크림|시럽|커피|원두|유제품)/i;
   const GENERIC_TARGET_RE = /(폐기\s*(처리\s*)?해야\s*할\s*(거|것|목록|리스트)?|처리\s*해야\s*할\s*(거|것|목록|리스트)|폐기할\s*(거|것|목록|리스트)?|버릴\s*(거|것|목록|리스트)?|유통기한\s*지난\s*(거|것|목록|리스트)?|기한\s*지난\s*(거|것|목록|리스트)?|지난\s*(거|것|목록|리스트)|만료된\s*(거|것|목록|리스트)?|오늘\s*(정리|처리)할\s*(거|것|목록|리스트)?|정리할\s*(거|것|목록|리스트)?|처리할\s*(거|것|목록|리스트)?)/i;
   const VAGUE_RE = /(이상한\s*(거|것)|문제\s*있는\s*(거|것)|찝찝한\s*(거|것)|뭔가\s*이상)/i;
 
@@ -153,17 +153,25 @@
     if (exactDirect.length) return exactDirect;
 
     const text = normalizeText(query);
-    const aliasTerms = /라떼|라테|카페라떼|바닐라라떼/.test(text)
-      ? ['우유', '원두', '커피', '시럽']
-      : /아메리카노|커피/.test(text)
-        ? ['원두', '커피', '콜드브루']
-        : [];
+    let aliasTerms = [];
+    if (/라떼|라테|카페라떼|바닐라라떼/.test(text)) {
+      aliasTerms = ['우유', '밀크', '유제품', '생크림', '휘핑', '크림', '원두', '커피', '에스프레소', '시럽', '바닐라', '카라멜', '소스'];
+    } else if (/우유|밀크|milk/.test(text)) {
+      aliasTerms = ['우유', '밀크', '유제품', '생크림', '휘핑', '크림'];
+    } else if (/크림|휘핑|생크림|cream/.test(text)) {
+      aliasTerms = ['생크림', '휘핑', '크림', '유제품'];
+    } else if (/시럽|syrup/.test(text)) {
+      aliasTerms = ['시럽', '바닐라', '카라멜', '소스'];
+    } else if (/아메리카노|커피/.test(text)) {
+      aliasTerms = ['원두', '커피', '콜드브루'];
+    }
     if (!aliasTerms.length) return direct;
 
     const seen = new Set();
-    return aliasTerms.flatMap(term => findInventoryMatches(items, term)).filter(item => {
-      if (seen.has(item.id)) return false;
-      seen.add(item.id);
+    return [...direct, ...aliasTerms.flatMap(term => findInventoryMatches(items, term))].filter(item => {
+      const key = inventoryStockKey(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }
