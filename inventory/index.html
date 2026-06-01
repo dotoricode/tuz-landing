@@ -4267,8 +4267,8 @@
 
     .inventory-tutorial-close-top {
       position: fixed;
-      left: var(--tutorial-close-left, 326px);
-      top: var(--tutorial-close-top, 124px);
+      right: max(18px, env(safe-area-inset-right));
+      top: max(18px, env(safe-area-inset-top));
       z-index: 3;
       width: 32px;
       height: 32px;
@@ -5976,7 +5976,6 @@
       const left = rect.left;
       const top = rect.top;
       const width = rect.width;
-      const closeLeft = Math.max(12, Math.min(window.innerWidth - 44, left + width - 44));
       target.style.setProperty('--tutorial-focus-left', `${left}px`);
       target.style.setProperty('--tutorial-focus-top', `${top}px`);
       target.style.setProperty('--tutorial-focus-width', `${width}px`);
@@ -5987,8 +5986,6 @@
       target.style.setProperty('--tutorial-label-width', `${focus.labelWidth ?? 334}px`);
       target.style.setProperty('--tutorial-step-left', `${left + 12}px`);
       target.style.setProperty('--tutorial-step-top', `${top + 12}px`);
-      target.style.setProperty('--tutorial-close-left', `${closeLeft}px`);
-      target.style.setProperty('--tutorial-close-top', `${top + 12}px`);
       el.dataset.label = focus.label || '';
     }
 
