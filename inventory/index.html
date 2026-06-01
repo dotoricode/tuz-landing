@@ -7802,7 +7802,6 @@
               <div class="inv-badge-grid">${detailBadges}</div>
               <div class="inv-actions">
                 <button type="button" class="inv-btn" data-expanded-action="edit" data-item-id="${safeId}">수정</button>
-                <button type="button" class="inv-btn ai" data-expanded-action="inspect" data-item-id="${safeId}">상세 점검</button>
                 <button type="button" class="inv-btn del" data-expanded-action="delete" data-item-id="${safeId}">삭제</button>
               </div>
             </div>
@@ -7815,10 +7814,6 @@
           bumpFeedback(btn);
           if (btn.dataset.expandedAction === 'edit') {
             openItemEditSheet(id, 'qty');
-            return;
-          }
-          if (btn.dataset.expandedAction === 'inspect') {
-            openAiSheet(id);
             return;
           }
           if (btn.dataset.expandedAction === 'delete') {
@@ -7924,7 +7919,6 @@
             </div>
             <div class="inv-actions">
               <button type="button" class="inv-btn" data-group-lot-action="edit" data-item-id="${safeId}">수정</button>
-              <button type="button" class="inv-btn ai" data-group-lot-action="inspect" data-item-id="${safeId}">상세 점검</button>
               <button type="button" class="inv-btn del" data-group-lot-action="delete" data-item-id="${safeId}">삭제</button>
             </div>
           </article>`;
@@ -8160,10 +8154,6 @@
       closeInventoryGroupDetail();
       if (btn.dataset.groupLotAction === 'edit') {
         openItemEditSheet(id, 'qty');
-        return;
-      }
-      if (btn.dataset.groupLotAction === 'inspect') {
-        openAiSheet(id);
         return;
       }
       if (btn.dataset.groupLotAction === 'delete') {
@@ -11356,7 +11346,6 @@
           </div>
           <div class="manager-task-actions">
             <button type="button" class="manager-task-btn primary" data-manager-action="edit" data-item-id="${escAttr(item.id)}">수정하기</button>
-            <button type="button" class="manager-task-btn" data-manager-action="inspect" data-item-id="${escAttr(item.id)}">상세 점검</button>
           </div>
         </article>`;
     }
@@ -11441,10 +11430,9 @@
         text:
           `${profile.workPrefix}\n` +
           `${topicName(item.name)} ${managerWorkReason(item)}\n` +
-          `상세 점검도 ${profile.name}가 이어서 봐줄거다멍${profile.id === 'cookie' ? '🐾' : '🐶'}`,
+          `필요하면 수량이나 기한만 바로 수정하면 된다멍${profile.id === 'cookie' ? '🐾' : '🐶'}`,
         actions: [
-          { type: 'edit', itemId: item.id, label: '수정하기', variant: 'primary' },
-          { type: 'inspect', itemId: item.id, label: '상세 점검' }
+          { type: 'edit', itemId: item.id, label: '수정하기', variant: 'primary' }
         ]
       };
     }
@@ -12136,8 +12124,7 @@
           `오늘 할 일\n- ${todayAction}\n\n` +
           `사장님 판단 포인트\n- 실제 보관 상태와 오늘 예상 판매량을 같이 보고, 필요하면 수정 버튼에서 수량/기한을 바로 바꿔 주세요.`,
         actions: [
-          { type: 'edit', itemId: item.id, label: '수정하기', variant: 'primary' },
-          { type: 'inspect', itemId: item.id, label: '상세 점검' }
+          { type: 'edit', itemId: item.id, label: '수정하기', variant: 'primary' }
         ]
       };
     }
@@ -12854,11 +12841,6 @@
         return;
       }
 
-      if (action === 'inspect') {
-        openChildSheetFromManager(() => openAiSheet(itemId));
-        return;
-      }
-
       if (action === 'explain') {
         const item = items.find(row => row.id === itemId);
         addHadongMessage('bot', item ? makeInventoryAiItemExplanation(item) : '멍, 설명할 재고를 찾지 못했다멍.');
@@ -12925,10 +12907,6 @@
       bumpFeedback(actionBtn);
       if (actionBtn.dataset.managerAction === 'edit') {
         openChildSheetFromManager(() => openItemEditSheet(id, 'qty'));
-        return;
-      }
-      if (actionBtn.dataset.managerAction === 'inspect') {
-        openChildSheetFromManager(() => openAiSheet(id));
         return;
       }
     });
