@@ -897,6 +897,7 @@
     }
 
     .rh-stat {
+      position: relative;
       display: grid;
       grid-template-columns: 30px minmax(0, 1fr);
       gap: 8px;
@@ -911,17 +912,11 @@
       font-family: inherit;
       text-align: left;
       cursor: pointer;
-      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+      transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease;
     }
 
     .rh-stat:active {
       transform: scale(.98);
-    }
-
-    .rh-stat.active {
-      border-color: rgba(255,255,255,.5);
-      background: rgba(255,255,255,.2);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
     }
 
     .rh-stat.today {
@@ -935,6 +930,39 @@
 
     .rh-stat.week {
       background: rgba(239,246,255,.12);
+    }
+
+    .rh-stat.active {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.95);
+      background: rgba(255,255,255,.3);
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,.22),
+        0 14px 32px rgba(0,0,0,.28),
+        inset 0 0 0 1px rgba(255,255,255,.28);
+    }
+
+    .rh-stat.active::after {
+      content: '선택됨';
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--manager-accent, var(--red));
+      font-size: .54rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,.18);
+    }
+
+    .rh-stat.active .rh-stat-caption,
+    .rh-stat.active .rh-stat-info,
+    .rh-stat.active .rh-stat-label,
+    .rh-stat.active .rh-stat-count {
+      color: #fff;
     }
 
     .rh-stat-icon {
