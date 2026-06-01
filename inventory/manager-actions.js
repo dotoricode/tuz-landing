@@ -46,6 +46,46 @@
     return normalizeText(value).replace(/\s+/g, '');
   }
 
+  function isSupplyLike(item) {
+    const text = normalizeText([
+      item?.name,
+      item?.category
+    ].filter(Boolean).join(' '));
+    return /(소모품|일회용|컵|뚜껑|리드|빨대|스틱|홀더|캐리어|포장재)/.test(text);
+  }
+
+  function canonicalStockName(item) {
+    const raw = normalizeText(item?.name);
+    if (!raw) return '';
+    const compact = compactText(raw);
+    const aliases = [
+      { re: /(휘핑크림|휘핑)/, key: '휘핑크림' },
+      { re: /(생크림|생크림베이스)/, key: '생크림' },
+      { re: /(딸기퓨레|스트로베리퓨레)/, key: '딸기퓨레' },
+      { re: /(바닐라시럽|바닐라향시럽)/, key: '바닐라시럽' },
+      { re: /(카라멜시럽|카라멜소스|카라멜)/, key: '카라멜' },
+      { re: /(초코소스|초콜릿소스|초코시럽)/, key: '초코소스' },
+      { re: /(레몬청|레몬베이스)/, key: '레몬청' },
+      { re: /(콜드브루원액|콜드브루베이스|콜드브루)/, key: '콜드브루원액' },
+      { re: /(원두|커피빈|coffeebean)/, key: '원두' },
+      { re: /(우유|밀크|milk)/, key: '우유' }
+    ];
+    const alias = aliases.find(entry => entry.re.test(compact));
+    if (alias) return alias.key;
+
+    let cleaned = raw;
+    if (!isSupplyLike(item)) {
+      cleaned = cleaned
+        .replace(/(^|\s)\d+(?:\.\d+)?\s*(ml|m l|밀리|l|리터|kg|킬로|g|그램|oz|온스)(?=\s|$)/gi, ' ')
+        .replace(/(^|\s)\d+(?:\.\d+)?\s*(개입|입|팩|병|봉|통|개|장|박스|box)(?=\s|$)/gi, ' ');
+    }
+    cleaned = cleaned
+      .replace(/(^|\s)(국내산|수입산|수입|냉장|냉동|상온|실온|수제|업소용|대용량|소분|신선|프리미엄)(?=\s|$)/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return compactText(cleaned || raw);
+  }
+
   function ddayFromDate(expiryDate, baseIso = todayIso()) {
     if (!expiryDate) return null;
     const base = new Date(`${baseIso}T00:00:00`);
@@ -179,7 +219,7 @@
   function inventoryStockKey(item) {
     if (item?.stock_group) return `group:${normalizeText(item.stock_group)}`;
     return [
-      normalizeText(item?.name),
+      canonicalStockName(item),
       normalizeText(item?.unit || '개'),
       normalizeText(item?.category),
       normalizeText(item?.storage_method)

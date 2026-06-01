@@ -1701,6 +1701,7 @@
     .inv-btn.del     { color: var(--red); }
 
     .group-detail-panel {
+      position: relative;
       max-height: 76vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -1753,7 +1754,7 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 12px;
-      padding: 2px 2px 10px;
+      padding: 2px 44px 10px 2px;
     }
 
     .group-detail-title-row {
@@ -1792,17 +1793,25 @@
     }
 
     .group-detail-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
       flex-shrink: 0;
       width: 34px;
       height: 34px;
-      border: 1px solid var(--manager-border, var(--bone));
-      border-radius: 12px;
-      background: rgba(255,255,255,.7);
-      color: var(--detail-accent-ink);
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #111;
       font-size: 1.12rem;
       font-weight: 900;
       cursor: pointer;
       font-family: inherit;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
     }
 
     .group-detail-metrics {
@@ -7257,6 +7266,50 @@
         .replace(/\s+/g, ' ');
     }
 
+    function isInventorySupplyLike(item) {
+      const text = normalizeInventoryMergeText([
+        item?.name,
+        item?.category
+      ].filter(Boolean).join(' '));
+      return /(소모품|일회용|컵|뚜껑|리드|빨대|스틱|홀더|캐리어|포장재)/.test(text);
+    }
+
+    function canonicalInventoryStockName(item) {
+      const raw = normalizeInventoryMergeText(item?.name)
+        .replace(/[()[\]{}"'`~!@#$%^&*_+=|\\:;,.?/<>\-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!raw) return '';
+
+      const compact = raw.replace(/\s+/g, '');
+      const aliases = [
+        { re: /(휘핑크림|휘핑)/, key: '휘핑크림' },
+        { re: /(생크림|생크림베이스)/, key: '생크림' },
+        { re: /(딸기퓨레|스트로베리퓨레)/, key: '딸기퓨레' },
+        { re: /(바닐라시럽|바닐라향시럽)/, key: '바닐라시럽' },
+        { re: /(카라멜시럽|카라멜소스|카라멜)/, key: '카라멜' },
+        { re: /(초코소스|초콜릿소스|초코시럽)/, key: '초코소스' },
+        { re: /(레몬청|레몬베이스)/, key: '레몬청' },
+        { re: /(콜드브루원액|콜드브루베이스|콜드브루)/, key: '콜드브루원액' },
+        { re: /(원두|커피빈|coffeebean)/, key: '원두' },
+        { re: /(우유|밀크|milk)/, key: '우유' }
+      ];
+      const alias = aliases.find(entry => entry.re.test(compact));
+      if (alias) return alias.key;
+
+      let cleaned = raw;
+      if (!isInventorySupplyLike(item)) {
+        cleaned = cleaned
+          .replace(/(^|\s)\d+(?:\.\d+)?\s*(ml|m l|밀리|l|리터|kg|킬로|g|그램|oz|온스)(?=\s|$)/gi, ' ')
+          .replace(/(^|\s)\d+(?:\.\d+)?\s*(개입|입|팩|병|봉|통|개|장|박스|box)(?=\s|$)/gi, ' ');
+      }
+      cleaned = cleaned
+        .replace(/(^|\s)(국내산|수입산|수입|냉장|냉동|상온|실온|수제|업소용|대용량|소분|신선|프리미엄)(?=\s|$)/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return (cleaned || raw).replace(/\s+/g, '');
+    }
+
     function inventoryMergeKey(item) {
       const expiryType = item?.expiry_type === 'NONE' ? 'NONE' : 'SELL-BY';
       return [
@@ -7273,7 +7326,7 @@
     function inventoryStockKey(item) {
       if (item?.stock_group) return `group:${normalizeInventoryMergeText(item.stock_group)}`;
       return [
-        normalizeInventoryMergeText(item?.name),
+        canonicalInventoryStockName(item),
         normalizeInventoryMergeText(item?.unit || '개'),
         normalizeInventoryMergeText(item?.category),
         normalizeInventoryMergeText(item?.storage_method)
