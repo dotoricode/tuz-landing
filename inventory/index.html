@@ -4220,6 +4220,10 @@
 
     .inventory-tutorial-overlay[hidden] { display: none; }
 
+    .inventory-tutorial-overlay.is-card-top {
+      align-items: flex-start;
+    }
+
     .inventory-tutorial-card {
       position: relative;
       z-index: 2;
@@ -5853,29 +5857,31 @@
         image: '',
         liveFocus: true,
         focus: {
-          targetSelectors: ['#add-name', '#add-quantity', '#add-expiry-presence', '#add-expiry-row'],
+          targetSelectors: ['#rh-add-btn'],
           padding: 8,
-          radius: 22,
-          maxHeight: 280,
+          radius: 18,
           labelPlacement: 'before',
-          label: '추가 시트에서 수량, 기한, 기준 수량을 채워요'
+          label: '하단 직접 추가 버튼에서 재고를 등록해요'
         },
+        cardPlacement: 'top',
         setup: 'add',
-        title: '재고는 사진 또는 직접 추가',
-        copy: '카메라로 라벨을 읽거나 직접 추가해서 수량, 기준 수량, 기한을 빠르게 채웁니다.'
+        title: '재고는 직접 추가',
+        copy: '하단 직접 추가 버튼에서 새 재고를 등록합니다. 이후 수량, 기준 수량, 기한을 채우면 됩니다.'
       },
       {
         image: '',
         liveFocus: true,
         focus: {
-          targetSelectors: ['#inventory-ai-search-panel'],
+          targetSelectors: ['#manager-call-btn'],
           padding: 8,
-          radius: 20,
-          label: '두루뭉술한 재료명도 재고 AI가 후보로 정리해요'
+          radius: 18,
+          labelPlacement: 'before',
+          label: '하단 매니저야〰 버튼을 눌러 재고 AI를 열어요'
         },
+        cardPlacement: 'top',
         setup: 'aiSearch',
         title: '매니저야〰 로 재고 AI 열기',
-        copy: '라떼 재료처럼 두루뭉술하게 말해도 현재 재고에서 비슷한 품목을 찾아줍니다.'
+        copy: '하단 매니저야〰 버튼에서 재고 AI를 엽니다. 라떼 재료처럼 두루뭉술하게 말해도 비슷한 품목을 찾아줍니다.'
       },
       {
         image: '',
@@ -5939,8 +5945,9 @@
       const left = Math.max(margin, Math.min(rect.left, window.innerWidth - margin));
       const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
       const right = Math.max(left + 1, Math.min(rect.right, window.innerWidth - margin));
-      const cardTop = document.querySelector('.inventory-tutorial-card')?.getBoundingClientRect().top || window.innerHeight;
-      const visibleBottom = Math.min(rect.bottom, cardTop - 14, window.innerHeight - margin);
+      const cardRect = document.querySelector('.inventory-tutorial-card')?.getBoundingClientRect();
+      const cardLimit = cardRect && cardRect.top > top ? cardRect.top - 14 : window.innerHeight - margin;
+      const visibleBottom = Math.min(rect.bottom, cardLimit, window.innerHeight - margin);
       const bottom = Math.max(top + 48, visibleBottom);
       const maxHeight = Number(rect.maxHeight || 0);
       return {
@@ -6005,9 +6012,9 @@
       if (step.setup === 'search') {
         window.scrollTo(0, 0);
       } else if (step.setup === 'add') {
-        openAddSheet({ reset: false });
+        window.scrollTo(0, 0);
       } else if (step.setup === 'aiSearch') {
-        openHadongChat();
+        window.scrollTo(0, 0);
       } else if (step.setup === 'aiDetail') {
         openHadongChat();
         const box = document.getElementById('hadong-messages');
@@ -6026,6 +6033,7 @@
     function renderInventoryTutorialStep() {
       const step = INVENTORY_TUTORIAL_STEPS[_inventoryTutorialIndex] || INVENTORY_TUTORIAL_STEPS[0];
       prepareInventoryTutorialStep(step);
+      document.getElementById('inventory-tutorial-overlay')?.classList.toggle('is-card-top', step.cardPlacement === 'top');
       setTutorialFocus(step);
       requestAnimationFrame(() => setTutorialFocus(step));
       setTimeout(() => setTutorialFocus(step), 380);
