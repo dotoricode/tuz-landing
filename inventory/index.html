@@ -7729,12 +7729,8 @@
       else if (profile.weekQuantity > 0) push('week', `2~6일 남음 ${quantityLabel(profile.weekQuantity, unit)}`);
 
       if (stock.low && !badges.some(badge => badge.className === 'low')) push('low', '최소재고 미달');
-      if (profile.recentlyUpdated) push('recent', '최근 수정');
 
-      if (stock.lotCount > 1) push('lot', `기한 ${stock.lotCount}개`);
-      if (!badges.length) push('safe', '안정');
-
-      return badges.slice(0, 4);
+      return badges.slice(0, 2);
     }
 
     function detailStatusClass(status) {
@@ -7788,12 +7784,8 @@
           ? '기한 없음'
           : `${item.expiry_date || '날짜 미입력'} · ${lotExpiryLabel(item)}`;
         const detailBadges = [
-          { className: badgeClassForStatus(lotStatus.status), label: lotStatus.label },
-          item.category ? { className: 'category', label: item.category } : null,
-          item.storage_method ? { className: 'storage', label: item.storage_method } : null,
-          item.origin ? { className: 'origin', label: item.origin } : null,
-          stock.low ? { className: 'low', label: '최소재고 미달' } : null,
-          stock.lotCount > 1 ? { className: 'lot', label: `같은 품목 ${stock.lotCount}개` } : null
+          lotStatus.status !== 'safe' ? { className: badgeClassForStatus(lotStatus.status), label: lotStatus.label } : null,
+          stock.low ? { className: 'low', label: '최소재고 미달' } : null
         ].filter(Boolean).map(badge =>
           `<span class="inv-badge ${escAttr(badge.className)}">${escHtml(badge.label)}</span>`
         ).join('');
