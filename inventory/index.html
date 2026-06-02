@@ -8781,8 +8781,6 @@
         const expiryText = item.expiry_type === 'NONE'
           ? '기한 없음'
           : `${item.expiry_date || '날짜 미입력'} · ${lotExpiryLabel(item)}`;
-        const quickQtyText = quantityLabel(item.quantity, unit);
-        const showQuickIncrease = !inventoryLotHasExpiryInput(item);
         const detailBadges = [
           lotStatus.status !== 'safe' ? { className: badgeClassForStatus(lotStatus.status), label: lotStatus.label } : null,
           stock.low ? { className: 'low', label: '최소재고 미달' } : null
@@ -8801,26 +8799,11 @@
               </div>
               <div class="inv-badge-grid">${detailBadges}</div>
               <div class="inv-actions">
-                <div class="inv-quick-actions" aria-label="${escHtml(item.name)} 수량 빠른 조절">
-                  <button type="button" class="inv-quick-btn is-minus" data-quick-adjust="decrease-item" data-item-id="${safeId}" aria-label="${escHtml(item.name)} 수량 1 줄이기">−</button>
-                  <span class="inv-quick-qty" aria-label="현재 수량 ${escHtml(quickQtyText)}">${escHtml(quickQtyText)}</span>
-                  ${showQuickIncrease
-                    ? `<button type="button" class="inv-quick-btn is-plus" data-quick-adjust="increase-item" data-item-id="${safeId}" aria-label="${escHtml(item.name)} 수량 1 늘리기">+</button>`
-                    : '<span class="inv-quick-spacer" aria-hidden="true"></span>'}
-                </div>
                 <button type="button" class="inv-btn" data-expanded-action="edit" data-item-id="${safeId}">수정</button>
               </div>
             </div>
           </article>`;
       }).join('');
-
-      listEl.querySelectorAll('[data-quick-adjust]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          bumpFeedback(btn);
-          handleInventoryQuickAdjust(btn.dataset.quickAdjust, btn.dataset.itemId);
-        });
-      });
 
       listEl.querySelectorAll('[data-expanded-action]').forEach(btn => {
         btn.addEventListener('click', () => {

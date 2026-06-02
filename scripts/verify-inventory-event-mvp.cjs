@@ -98,19 +98,16 @@ const quickAdjust = functionBody('handleInventoryQuickAdjust');
 assert(quickAdjust.includes('captureQuickAdjustOrder'), 'Quick +/- must lock the current visible order before refreshing');
 assert(quickAdjust.includes("action === 'increase-group'"), 'Group quick controls must support increase');
 assert(quickAdjust.includes('canQuickIncreaseStock'), 'Group quick increase must be gated by missing expiry input');
-assert(quickAdjust.includes("action === 'increase-item'"), 'Item quick controls must support increase');
-assert(quickAdjust.includes('inventoryLotHasExpiryInput'), 'Item quick increase must be gated by missing expiry input');
 
 const renderList = functionBody('renderList');
 assert(renderList.includes('inv-quick-qty'), 'Grouped quick controls must show current quantity');
 assert(renderList.includes('increase-group'), 'Grouped quick controls must include plus action');
 assert(renderList.includes('canQuickIncreaseStock'), 'Grouped plus action must render only when expiry is missing');
-assert(renderList.includes('sortByQuickAdjustItemOrder'), 'Expanded quick +/- must preserve visible item order after refresh');
+assert(renderList.includes('sortByQuickAdjustItemOrder'), 'Expanded item view must use grouped-style risk sorting');
 
 const renderExpanded = functionBody('renderExpandedList');
-assert(renderExpanded.includes('inv-quick-qty'), 'Expanded quick controls must show current quantity');
-assert(renderExpanded.includes('increase-item'), 'Expanded quick controls must include plus action');
-assert(renderExpanded.includes('inventoryLotHasExpiryInput'), 'Expanded plus action must render only when expiry is missing');
+assert(!renderExpanded.includes('data-quick-adjust'), 'Expanded item view must not expose quick quantity controls');
+assert(renderExpanded.includes('data-expanded-action="edit"'), 'Expanded item view must keep the edit action');
 
 const captureOrder = functionBody('captureQuickAdjustOrder');
 assert(captureOrder.includes('data-group-card-id'), 'Quick order lock must capture grouped card order');
