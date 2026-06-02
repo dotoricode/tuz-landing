@@ -87,11 +87,8 @@ assert(undo.includes('restoreInventoryItemSnapshot'), 'Undo must be able to rest
 const restoreQuick = functionBody('restoreQuickDecrease');
 assert(restoreQuick.includes('undoInventoryEvent'), 'Toast undo must use the generic event undo path');
 
-const opened = functionBody('markInventoryLotOpened');
-assert(opened.includes('opened_at'), 'Open action must stamp opened_at');
-assert(opened.includes("recordInventoryEvent('open'"), 'Open action must record an open event');
-assert(opened.includes('quantity_delta: 0'), 'Open action must not change quantity');
-assert(opened.includes('previous_opened_at'), 'Open undo must preserve the previous opened_at value');
+assert(!html.includes('data-group-lot-action="open"'), 'Lot detail UI must not expose an open action');
+assert(!html.includes('function markInventoryLotOpened'), 'Inventory open action handler must not ship');
 
 const quickIncreaseGate = functionBody('canQuickIncreaseStock');
 assert(quickIncreaseGate.includes('lots.every'), 'Quick plus must be limited by stock lots');

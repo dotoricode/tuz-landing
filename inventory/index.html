@@ -9166,8 +9166,7 @@
         const expiryMarkup = lotExpiryTitleMarkup(lot, lotStatus);
         const detailBits = [
           lot.storage_method || null,
-          lot.origin || null,
-          lot.opened_at ? `개봉 ${lot.opened_at.slice(0, 10)}` : null
+          lot.origin || null
         ].filter(Boolean);
         return `
           <article class="group-lot-card ${detailStatusClass(lotStatus.status)}">
@@ -9180,7 +9179,6 @@
               <div class="group-lot-qty">${escHtml(quantityLabel(lot.quantity, lot.unit || unit))}</div>
             </div>
             <div class="inv-actions">
-              <button type="button" class="inv-btn" data-group-lot-action="open" data-item-id="${safeId}">개봉</button>
               <button type="button" class="inv-btn" data-group-lot-action="edit" data-item-id="${safeId}">수정</button>
               <button type="button" class="inv-btn del" data-group-lot-action="delete" data-item-id="${safeId}">삭제</button>
             </div>
@@ -9437,24 +9435,6 @@
     });
     document.getElementById('group-detail-close').addEventListener('click', closeInventoryGroupDetail);
     document.getElementById('group-detail-backdrop').addEventListener('click', closeInventoryGroupDetail);
-    function markInventoryLotOpened(id) {
-      const item = items.find(row => row.id === id);
-      if (!item) return;
-      const now = new Date().toISOString();
-      const previousOpenedAt = item.opened_at || null;
-      item.opened_at = now;
-      item.updated_at = now;
-      recordInventoryEvent('open', {
-        item,
-        lot: item,
-        quantity_delta: 0,
-        reason: 'opened',
-        metadata: { opened_at: now, previous_opened_at: previousOpenedAt }
-      });
-      saveData(items);
-      refreshAll();
-      showToast(`[${item.name}] 개봉 기록했어요.`);
-    }
 
     document.getElementById('group-detail-body').addEventListener('click', e => {
       const groupDeleteBtn = e.target.closest('[data-group-delete-ids]');
@@ -9471,10 +9451,6 @@
       const id = btn.dataset.itemId;
       bumpFeedback(btn);
       closeInventoryGroupDetail();
-      if (btn.dataset.groupLotAction === 'open') {
-        markInventoryLotOpened(id);
-        return;
-      }
       if (btn.dataset.groupLotAction === 'edit') {
         openItemEditSheet(id, 'qty');
         return;
