@@ -107,7 +107,11 @@ assert(renderList.includes('sortByQuickAdjustItemOrder'), 'Expanded item view mu
 
 const renderExpanded = functionBody('renderExpandedList');
 assert(!renderExpanded.includes('data-quick-adjust'), 'Expanded item view must not expose quick quantity controls');
+assert(renderExpanded.includes('inventoryExpandedItemRiskProfile'), 'Expanded item view must use grouped-style risk color status');
 assert(renderExpanded.includes('data-expanded-action="edit"'), 'Expanded item view must keep the edit action');
+
+const cardClass = functionBody('cardClassForProfile');
+assert(cardClass.includes('detailStatusClass'), 'Grouped and expanded cards must share status color classes');
 
 const captureOrder = functionBody('captureQuickAdjustOrder');
 assert(captureOrder.includes('data-group-card-id'), 'Quick order lock must capture grouped card order');

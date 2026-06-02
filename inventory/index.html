@@ -1520,6 +1520,13 @@
     .inv-card.soon::before   { background: #f79009; }
     .inv-card.low::before    { background: #7a5af8; }
     .inv-card.watch::before  { background: #2e90fa; }
+    .inv-card.status-expired::before,
+    .inv-card.status-today::before { background: var(--red); }
+    .inv-card.status-tomorrow::before,
+    .inv-card.status-week::before { background: #f79009; }
+    .inv-card.status-low::before { background: #7a5af8; }
+    .inv-card.status-watch::before { background: #2e90fa; }
+    .inv-card.status-safe::before { background: #d7ccc1; }
 
     .inv-card[data-item-card-id] {
       cursor: default;
@@ -8684,11 +8691,7 @@
     }
 
     function cardClassForProfile(profile) {
-      if (profile.status === 'expired' || profile.status === 'today') return 'inv-card urgent';
-      if (profile.status === 'tomorrow' || profile.status === 'week') return 'inv-card soon';
-      if (profile.status === 'low') return 'inv-card low';
-      if (profile.status === 'watch') return 'inv-card watch';
-      return 'inv-card';
+      return `inv-card ${detailStatusClass(profile?.status)}`;
     }
 
     function badgeClassForStatus(status) {
@@ -8777,6 +8780,7 @@
         const unit = item.unit || '개';
         const stock = inventoryStockSummary(item, getVisibleItems());
         const lotStatus = lotStatusInfo(item);
+        const riskProfile = inventoryExpandedItemRiskProfile(item);
         const minText = stock.minQuantity !== null ? ` · 최소재고 ${quantityLabel(stock.minQuantity, unit)}` : '';
         const expiryText = item.expiry_type === 'NONE'
           ? '기한 없음'
@@ -8789,7 +8793,7 @@
         ).join('');
 
         return `
-          <article class="${cardClassForProfile({ status: lotStatus.status })}" data-item-card-id="${safeId}">
+          <article class="${cardClassForProfile(riskProfile)}" data-item-card-id="${safeId}">
             <div class="inv-body">
               <div class="inv-card-top">
                 <div class="inv-info">
