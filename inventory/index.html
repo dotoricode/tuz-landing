@@ -1532,6 +1532,26 @@
       cursor: default;
     }
 
+    .inv-card[data-item-card-id] .inv-body {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px 10px;
+    }
+
+    .inv-card[data-item-card-id] .inv-card-top,
+    .inv-card[data-item-card-id] .inv-badge-grid {
+      grid-column: 1;
+    }
+
+    .inv-card[data-item-card-id] .inv-actions {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+      justify-self: end;
+      margin-top: 0;
+      flex-wrap: nowrap;
+    }
+
     .inv-card.group-card {
       cursor: default;
       align-items: center;
@@ -8782,9 +8802,6 @@
         const lotStatus = lotStatusInfo(item);
         const riskProfile = inventoryExpandedItemRiskProfile(item);
         const minText = stock.minQuantity !== null ? ` · 최소재고 ${quantityLabel(stock.minQuantity, unit)}` : '';
-        const expiryText = item.expiry_type === 'NONE'
-          ? '기한 없음'
-          : `${item.expiry_date || '날짜 미입력'} · ${lotExpiryLabel(item)}`;
         const detailBadges = [
           lotStatus.status !== 'safe' ? { className: badgeClassForStatus(lotStatus.status), label: lotStatus.label } : null,
           stock.low ? { className: 'low', label: '최소재고 미달' } : null
@@ -8798,7 +8815,7 @@
               <div class="inv-card-top">
                 <div class="inv-info">
                   <div class="inv-name">${escHtml(item.name)}</div>
-                  <div class="inv-summary-line">${escHtml(quantityLabel(item.quantity, unit))}${escHtml(minText)} · ${escHtml(expiryText)}</div>
+                  <div class="inv-summary-line">현재 수량 ${escHtml(quantityLabel(item.quantity, unit))}${escHtml(minText)}</div>
                 </div>
               </div>
               <div class="inv-badge-grid">${detailBadges}</div>

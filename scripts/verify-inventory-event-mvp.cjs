@@ -108,6 +108,8 @@ assert(renderList.includes('sortByQuickAdjustItemOrder'), 'Expanded item view mu
 const renderExpanded = functionBody('renderExpandedList');
 assert(!renderExpanded.includes('data-quick-adjust'), 'Expanded item view must not expose quick quantity controls');
 assert(renderExpanded.includes('inventoryExpandedItemRiskProfile'), 'Expanded item view must use grouped-style risk color status');
+assert(renderExpanded.includes('현재 수량'), 'Expanded item view must label the current quantity');
+assert(!renderExpanded.includes('expiryText'), 'Expanded item view summary must not include expiry text');
 assert(renderExpanded.includes('data-expanded-action="edit"'), 'Expanded item view must keep the edit action');
 
 const cardClass = functionBody('cardClassForProfile');
