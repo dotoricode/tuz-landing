@@ -1829,7 +1829,6 @@
       width: 34px;
       height: 34px;
       border: 0;
-      border-radius: 50%;
       background: transparent;
       color: #111;
       font-size: 1.12rem;
@@ -2506,6 +2505,10 @@
 
     .delete-confirm-sheet.open .delete-confirm-panel {
       transform: translateY(0);
+    }
+
+    .delete-confirm-sheet:not(.open) .delete-confirm-panel {
+      transform: translateY(100%) !important;
     }
 
     .delete-confirm-panel.sheet-dragging {
@@ -3944,7 +3947,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 16px 18px 13px;
+      padding: 16px 60px 13px 18px;
       background: var(--manager-accent, var(--red));
       color: #fff;
       flex-shrink: 0;
@@ -3963,16 +3966,24 @@
     .hadong-subtitle { font-size: .76rem; opacity: .76; margin-top: 2px; }
 
     .hadong-close {
-      margin-left: auto;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 3;
       width: 34px;
       height: 34px;
       border: 0;
-      border-radius: 11px;
-      background: rgba(255,255,255,.15);
+      background: transparent;
       color: #fff;
       font-size: 1.15rem;
       cursor: pointer;
       font-family: inherit;
+      font-weight: 900;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
     }
 
     .hadong-tabs {
@@ -5198,6 +5209,7 @@
     }
 
     .today-used-sheet-panel {
+      position: relative;
       max-height: min(88vh, 720px);
       overflow-y: auto;
       background: var(--manager-sheet, #fff);
@@ -5213,7 +5225,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      padding: 0 2px 12px;
+      padding: 0 42px 12px 2px;
       border-bottom: 1px solid var(--manager-border, var(--bone));
       margin-bottom: 2px;
     }
@@ -5252,17 +5264,24 @@
     }
 
     .today-used-close {
-      width: 32px;
-      height: 32px;
-      border: 1px solid var(--manager-border, var(--bone));
-      border-radius: 50%;
-      background: #fff;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 3;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      background: transparent;
       color: var(--manager-ink, var(--ink));
       font-family: inherit;
-      font-size: .9rem;
+      font-size: 1rem;
       font-weight: 950;
       cursor: pointer;
       line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
     }
 
     .today-oneclick-panel,
@@ -5279,6 +5298,7 @@
       align-items: flex-start;
       gap: 12px;
       margin-bottom: 12px;
+      padding-right: 42px;
     }
 
     .today-oneclick-title,
@@ -5300,17 +5320,26 @@
 
     .today-oneclick-close,
     .today-ai-result-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 3;
       width: 34px;
       height: 34px;
       flex: 0 0 auto;
-      border: 1px solid var(--manager-border, var(--bone));
-      border-radius: 50%;
-      background: #fff;
+      border: 0;
+      background: transparent;
       color: var(--manager-ink, var(--ink));
       font-family: inherit;
       font-size: .95rem;
       font-weight: 950;
       cursor: pointer;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      pointer-events: auto;
     }
 
     .today-oneclick-options {
@@ -5377,31 +5406,44 @@
     }
 
     .today-used-section {
-      padding-top: 12px;
-      border-bottom: 1px solid var(--manager-border, var(--bone));
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 18px;
+      background: rgba(255,255,255,.48);
     }
 
     .today-used-section:last-of-type {
-      border-bottom: 0;
+      margin-bottom: 0;
     }
 
     .today-used-section-head {
       display: flex;
-      align-items: baseline;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
     }
 
     .today-used-section-title {
       color: var(--manager-ink, var(--ink));
-      font-size: .8rem;
+      font-size: .86rem;
       font-weight: 950;
       line-height: 1.2;
     }
 
-    .today-used-section-caption {
+    .today-used-section-kicker {
+      display: block;
       margin-bottom: 3px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .58rem;
+      font-weight: 950;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .today-used-section-caption {
+      margin-bottom: 9px;
       color: var(--manager-muted, var(--g1));
       font-size: .64rem;
       font-weight: 750;
@@ -5544,17 +5586,33 @@
     }
 
     .today-used-actions {
-      display: block;
+      display: grid;
+      gap: 10px;
     }
 
     .today-used-action {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
+      gap: 8px;
       min-width: 0;
-      min-height: 58px;
-      border-bottom: 1px solid var(--manager-border, var(--bone));
+      min-height: 62px;
+      padding: 9px 0;
+      border-top: 1px solid color-mix(in srgb, var(--manager-border, var(--bone)) 78%, transparent);
       background: transparent;
+    }
+
+    .today-used-action:first-of-type {
+      padding-top: 0;
+    }
+
+    .today-used-action:last-of-type {
+      padding-bottom: 0;
+    }
+
+    .today-used-section-caption + .today-used-action {
+      border-top: 0;
+      padding-top: 0;
     }
 
     .today-used-btn,
@@ -5569,8 +5627,16 @@
 
     .today-used-btn {
       min-width: 0;
-      padding: 10px 10px 10px 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      padding: 0;
       text-align: left;
+    }
+
+    .today-used-main {
+      min-width: 0;
     }
 
     .today-used-name {
@@ -5620,6 +5686,35 @@
       color: #3730a3;
     }
 
+    .today-used-use-chip {
+      align-self: center;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 34px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--manager-accent, var(--red));
+      color: #fff;
+      font-size: .62rem;
+      font-weight: 950;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--manager-accent, var(--red)) 22%, transparent);
+    }
+
+    .today-used-use-chip::before {
+      content: "-1";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      font-size: .58rem;
+      font-weight: 950;
+    }
+
     .today-used-favorite {
       min-height: 32px;
       padding: 0 10px;
@@ -5631,27 +5726,15 @@
       white-space: nowrap;
     }
 
-    .today-used-favorite::before {
-      content: "핀 ";
-      color: var(--manager-muted, var(--g1));
-      font-size: .58rem;
-      font-weight: 900;
-    }
-
     .today-used-favorite.is-active {
       color: #fff;
       border-color: var(--manager-accent, var(--red));
       background: var(--manager-accent, var(--red));
     }
 
-    .today-used-favorite.is-active::before {
-      color: rgba(255,255,255,.78);
-    }
-
     .today-used-direct {
       min-height: 48px;
       width: 100%;
-      margin-top: 10px;
       border: 1px dashed rgba(0,0,0,.16);
       border-radius: 14px;
       background: rgba(255,255,255,.52);
@@ -5661,8 +5744,10 @@
 
     .today-used-log {
       margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(0,0,0,.08);
+      padding: 12px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 18px;
+      background: rgba(255,255,255,.38);
     }
 
     .today-used-log-title {
@@ -5912,9 +5997,9 @@
         <span class="rh-bottom-action-icon" aria-hidden="true">+</span>
         <span class="rh-bottom-action-label">직접 추가</span>
       </button>
-      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="원클릭 정리 열기">
-        <span class="rh-bottom-manager-avatar rh-bottom-today-icon" id="today-used-bottom-icon" aria-hidden="true">☝️</span>
-        <span class="rh-bottom-action-label" id="manager-call-label">원클릭 정리</span>
+      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="한 번에 정리 열기">
+        <span class="rh-bottom-manager-avatar rh-bottom-today-icon" id="today-used-bottom-icon" aria-hidden="true">👆🏻</span>
+        <span class="rh-bottom-action-label" id="manager-call-label">한 번에 정리</span>
       </button>
     </div>
 
@@ -6089,7 +6174,7 @@
       <div class="today-use-intro-manager">
         <img class="today-use-intro-avatar" id="today-use-intro-avatar" src="assets/mascot-poodle.png" alt="">
         <div>
-          <strong id="today-use-intro-title">하동이가 원클릭 정리를 도와줘요</strong>
+          <strong id="today-use-intro-title">하동이가 한 번에 정리를 도와줘요</strong>
           <span id="today-use-intro-text">직접 선택하거나 AI 차감으로 오늘 쓴 재료를 빠르게 정리할 수 있어요.</span>
           <small id="today-use-intro-manager-copy">사용 기록이 쌓이면 하동이가 더 정확한 차감 후보를 골라볼게요.</small>
         </div>
@@ -6110,7 +6195,7 @@
       </div>
       <div class="delete-confirm-actions">
         <button type="button" class="delete-confirm-cancel" id="today-use-intro-cancel">나중에</button>
-        <button type="button" class="delete-confirm-accept" id="today-use-intro-accept">원클릭 정리 열기</button>
+        <button type="button" class="delete-confirm-accept" id="today-use-intro-accept">한 번에 정리 열기</button>
       </div>
     </div>
   </div>
@@ -6121,10 +6206,10 @@
       <div class="add-sheet-handle"></div>
       <div class="today-oneclick-head">
         <div>
-          <div class="today-oneclick-title" id="today-oneclick-title">원클릭 정리</div>
+          <div class="today-oneclick-title" id="today-oneclick-title">한 번에 정리</div>
           <div class="today-oneclick-copy" id="today-oneclick-copy">오늘 쓴 재료를 어떻게 차감할지 골라주세요.</div>
         </div>
-        <button type="button" class="today-oneclick-close" id="today-oneclick-close" aria-label="원클릭 정리 닫기">×</button>
+        <button type="button" class="today-oneclick-close" id="today-oneclick-close" aria-label="한 번에 정리 닫기">×</button>
       </div>
       <div class="today-oneclick-options">
         <button type="button" class="today-oneclick-option" id="today-oneclick-direct">
@@ -6679,9 +6764,9 @@
       setElText('hadong-header-title', '재고 AI');
       setElText('hadong-header-subtitle', profile.headerSubtitle);
       setElText('ai-sheet-title', `${profile.name} 상세 점검`);
-      setElText('manager-call-label', '원클릭 정리');
+      setElText('manager-call-label', '한 번에 정리');
       const managerCallBtn = document.getElementById('manager-call-btn');
-      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', '원클릭 정리 열기');
+      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', '한 번에 정리 열기');
       setManagerDetailTabLabels(profile);
       const input = document.getElementById('hadong-input');
       if (input) input.placeholder = '예: 라떼 재료, 부족한 시럽, 우유 상태';
@@ -6789,11 +6874,11 @@
           padding: 8,
           radius: 18,
           labelPlacement: 'before',
-          label: '원클릭 정리에서 방식을 골라요'
+          label: '한 번에 정리에서 방식을 골라요'
         },
         cardPlacement: 'top',
         setup: 'todayUse',
-        title: '원클릭 정리로 빠르게 차감',
+        title: '한 번에 정리로 빠르게 차감',
         copy: '직접 선택은 재료를 눌러 1개씩 차감하고, AI 차감은 사용 패턴이 쌓인 재료를 한 번에 정리합니다.'
       },
       {
@@ -7251,8 +7336,14 @@
     document.getElementById('today-use-intro-accept')?.addEventListener('click', acceptTodayUseIntro);
     document.getElementById('today-use-intro-cancel')?.addEventListener('click', closeTodayUseIntro);
     document.getElementById('today-use-intro-backdrop')?.addEventListener('click', closeTodayUseIntro);
-    document.getElementById('today-oneclick-backdrop')?.addEventListener('click', closeTodayOneClickChoice);
-    document.getElementById('today-oneclick-close')?.addEventListener('click', closeTodayOneClickChoice);
+    document.getElementById('today-oneclick-backdrop')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-oneclick-close')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-oneclick-sheet')?.addEventListener('click', e => {
+      if (!e.target.closest('#today-oneclick-close, #today-oneclick-backdrop')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeTodayOneClickStack();
+    }, true);
     document.getElementById('today-oneclick-direct')?.addEventListener('click', () => {
       closeTodayOneClickChoice();
       focusTodayUsedPanel();
@@ -7261,13 +7352,27 @@
       useTodayRecommendedBatchBeta();
     });
     document.getElementById('today-used-backdrop')?.addEventListener('click', closeTodayUsedPanel);
-    document.getElementById('today-ai-result-backdrop')?.addEventListener('click', closeTodayAiResult);
-    document.getElementById('today-ai-result-close')?.addEventListener('click', closeTodayAiResult);
-    document.getElementById('today-ai-result-done')?.addEventListener('click', closeTodayAiResult);
+    document.getElementById('today-ai-result-backdrop')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-ai-result-close')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-ai-result-sheet')?.addEventListener('click', e => {
+      if (!e.target.closest('#today-ai-result-close, #today-ai-result-backdrop')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeTodayOneClickStack();
+    }, true);
+    document.getElementById('today-ai-result-done')?.addEventListener('click', closeTodayOneClickStack);
     document.getElementById('today-ai-result-direct')?.addEventListener('click', () => {
       closeTodayAiResult();
       focusTodayUsedPanel();
     });
+    document.addEventListener('click', e => {
+      if (!e.target.closest(
+        '#today-oneclick-close, #today-oneclick-backdrop, #today-ai-result-close, #today-ai-result-backdrop, #today-ai-result-done'
+      )) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeTodayOneClickStack();
+    }, true);
 
     // ──────────────────────────────────────────────────────────────
     // ADD SHEET
@@ -9141,15 +9246,15 @@
     function todayUseIntroCopy(profile = getManagerProfile()) {
       if (profile.id === 'cookie') {
         return {
-          title: '쿠키가 원클릭 정리를 도와줘요',
-          text: '직접 선택하거나 AI 차감으로 오늘 쓴 재료를 빠르게 정리할 수 있어요.',
-          managerCopy: '사용 기록이 쌓이면 쿠키가 더 정확한 차감 후보를 골라볼게요.'
+          title: '쿠키가 재고 정리를 더 편하게 도와줘요',
+          text: '오늘 쓴 재료를 빠르게 차감하고, 먼저 써야 할 재고를 놓치지 않게 정리해요.',
+          managerCopy: '사용할수록 자주 쓰는 재료와 기한 가까운 재료를 쿠키가 더 잘 골라드릴게요.'
         };
       }
       return {
-        title: '하동이가 원클릭 정리를 도와줘요',
-        text: '직접 선택하거나 AI 차감으로 오늘 쓴 재료를 빠르게 정리할 수 있어요.',
-        managerCopy: '사용 기록이 쌓이면 하동이가 더 정확한 차감 후보를 골라볼게요.'
+        title: '하동이가 재고 정리를 더 편하게 도와줘요',
+        text: '오늘 쓴 재료를 빠르게 차감하고, 먼저 써야 할 재고를 놓치지 않게 정리해요.',
+        managerCopy: '사용할수록 자주 쓰는 재료와 기한 가까운 재료를 하동이가 더 잘 골라드릴게요.'
       };
     }
 
@@ -9178,6 +9283,7 @@
       const sheet = document.getElementById('today-use-intro-sheet');
       sheet?.classList.remove('open');
       sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
     }
 
     function acceptTodayUseIntro() {
@@ -9189,6 +9295,14 @@
     function oneClickChoiceCopy(profile = getManagerProfile()) {
       const name = profile.name || '매니저';
       return `${name}가 오늘 쓴 재료를 정리할 방법을 골라드릴게요.`;
+    }
+
+    function resetSheetMotion(sheet) {
+      sheet?.querySelectorAll('.delete-confirm-panel').forEach(panel => {
+        panel.classList.remove('sheet-dragging');
+        panel.style.transform = '';
+        panel.style.transition = '';
+      });
     }
 
     function openTodayOneClickChoice() {
@@ -9216,6 +9330,13 @@
       const sheet = document.getElementById('today-oneclick-sheet');
       sheet?.classList.remove('open');
       sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
+    }
+
+    function closeTodayOneClickStack() {
+      closeTodayOneClickChoice();
+      closeTodayAiResult();
+      closeTodayUsedPanel();
     }
 
     function closeTodayUsedPanel() {
@@ -9223,6 +9344,7 @@
       const sheet = document.getElementById('today-used-sheet');
       sheet?.classList.remove('open');
       sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
       const panel = document.getElementById('today-used-panel');
       if (panel) {
         panel.classList.remove('is-focused');
@@ -9232,18 +9354,14 @@
     }
 
     function toggleTodayUsedPanel() {
-      if (_todayUsedPanelOpen) {
-        closeTodayUsedPanel();
-        return;
-      }
       const choiceSheet = document.getElementById('today-oneclick-sheet');
-      if (choiceSheet?.classList.contains('open')) {
-        closeTodayOneClickChoice();
-        return;
-      }
       const resultSheet = document.getElementById('today-ai-result-sheet');
-      if (resultSheet?.classList.contains('open')) {
-        closeTodayAiResult();
+      if (
+        _todayUsedPanelOpen ||
+        choiceSheet?.classList.contains('open') ||
+        resultSheet?.classList.contains('open')
+      ) {
+        closeTodayOneClickStack();
         return;
       }
       if (!hasSeenTodayUseIntro()) {
@@ -9257,9 +9375,12 @@
       const sheet = document.getElementById('today-ai-result-sheet');
       sheet?.classList.remove('open');
       sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
     }
 
     function openTodayAiResult(results) {
+      closeTodayOneClickChoice();
+      closeTodayUsedPanel();
       const sheet = document.getElementById('today-ai-result-sheet');
       const list = document.getElementById('today-ai-result-list');
       if (!sheet || !list) {
@@ -9460,11 +9581,14 @@
         return `
           <div class="today-used-action">
             <button type="button" class="today-used-btn" data-today-use-key="${escHtml(encodeURIComponent(row.key))}">
-              <span class="today-used-name">${escHtml(row.item.name)} -1</span>
-              <span class="today-used-meta">${escHtml(meta)}</span>
-              ${reasons ? `<span class="today-used-reasons">${reasons}</span>` : ''}
+              <span class="today-used-main">
+                <span class="today-used-name">${escHtml(row.item.name)}</span>
+                <span class="today-used-meta">${escHtml(meta)}</span>
+                ${reasons ? `<span class="today-used-reasons">${reasons}</span>` : ''}
+              </span>
+              <span class="today-used-use-chip">차감하기</span>
             </button>
-            <button type="button" class="today-used-favorite${row.favorite ? ' is-active' : ''}" data-today-favorite-key="${escHtml(encodeURIComponent(row.key))}" aria-label="${escHtml(row.item.name)} 빠른 차감 고정">${row.favorite ? '고정됨' : '고정'}</button>
+            <button type="button" class="today-used-favorite${row.favorite ? ' is-active' : ''}" data-today-favorite-key="${escHtml(encodeURIComponent(row.key))}" aria-label="${escHtml(row.item.name)} 다음부터 우선 표시">${row.favorite ? '우선 표시 중' : '자주 보여줘'}</button>
           </div>`;
       }).join('');
       panel.innerHTML = `
@@ -9482,22 +9606,36 @@
           ${aiRows.length ? `
             <div class="today-used-section">
               <div class="today-used-section-head">
-                <div class="today-used-section-title">AI 추천</div>
+                <div>
+                  <span class="today-used-section-kicker">먼저 쓸 재료</span>
+                  <div class="today-used-section-title">AI 추천 차감</div>
+                </div>
                 <div class="today-used-count">${escHtml(aiRows.length)}개</div>
               </div>
-              <div class="today-used-section-caption">사용 패턴, 기한, 재고 상태를 보고 먼저 보여드려요.</div>
+              <div class="today-used-section-caption">기한과 최소재고, 사용 기록을 보고 먼저 차감할 후보를 모았어요.</div>
               ${renderRows(aiRows)}
             </div>` : ''}
           ${directRows.length ? `
             <div class="today-used-section">
               <div class="today-used-section-head">
-                <div class="today-used-section-title">직접 선택</div>
+                <div>
+                  <span class="today-used-section-kicker">사장님 선택</span>
+                  <div class="today-used-section-title">직접 골라 차감</div>
+                </div>
                 <div class="today-used-count">${escHtml(directRows.length)}개</div>
               </div>
-              <div class="today-used-section-caption">고정한 재료와 최근 자주 쓴 재료를 골라 차감해요.</div>
+              <div class="today-used-section-caption">자주 보여달라고 표시한 재료와 최근 자주 쓴 재료를 모았어요.</div>
               ${renderRows(directRows)}
             </div>` : ''}
-          <button type="button" class="today-used-direct" id="today-used-direct">직접 찾기</button>
+          <div class="today-used-section">
+            <div class="today-used-section-head">
+              <div>
+                <span class="today-used-section-kicker">목록에 없을 때</span>
+                <div class="today-used-section-title">재료 직접 찾기</div>
+              </div>
+            </div>
+            <button type="button" class="today-used-direct" id="today-used-direct">검색해서 차감하기</button>
+          </div>
         </div>
         ${eventRows}`;
 
@@ -9840,7 +9978,7 @@
       });
       saveData(items);
       refreshAll();
-      showToast(next ? '빠른 차감에 고정했어요.' : '빠른 차감 고정을 풀었어요.');
+      showToast(next ? '다음부터 위쪽에 더 자주 보여드릴게요.' : '우선 표시를 해제했어요.');
     }
 
     function handleInventoryQuickAdjust(action, refId) {
