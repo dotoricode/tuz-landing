@@ -41,8 +41,8 @@ requireMatch(/id="today-used-sheet"/, 'Today-used quick panel must open in a sep
 requireMatch(/id="today-oneclick-sheet"/, 'One-click choice sheet is missing');
 requireMatch(/id="today-ai-result-sheet"/, 'AI deduction result sheet is missing');
 requireMatch(/<section id="today-used-panel"[^>]*직접 선택 차감/, 'Manual deduction panel is missing');
-requireMatch(/id="manager-call-btn"[^>]*원클릭 정리 열기/, 'Bottom action must open one-click cleanup');
-requireMatch(/id="manager-call-label">원클릭 정리<\/span>/, 'Bottom action label must be one-click focused');
+requireMatch(/id="manager-call-btn"[^>]*한 번에 정리 열기/, 'Bottom action must open one-click cleanup');
+requireMatch(/id="manager-call-label">한 번에 정리<\/span>/, 'Bottom action label must be one-click focused');
 requireMatch(/let _todayUsedPanelOpen = false/, 'Today-used panel must be hidden by default');
 requireMatch(/id="today-use-intro-sheet"/, 'First-run today-use intro sheet is missing');
 requireMatch(/<strong id="today-use-intro-title">/, 'Today-use intro title must be integrated into the manager card');
@@ -156,16 +156,17 @@ assert(aiResult.includes('data-ai-result-undo'), 'AI result sheet must expose un
 assert(aiResult.includes('undoInventoryEvent'), 'AI result undo must use event-based undo');
 
 const toggleToday = functionBody('toggleTodayUsedPanel');
-assert(toggleToday.includes('closeTodayUsedPanel'), 'Bottom today-use action must toggle the panel closed');
+assert(toggleToday.includes('closeTodayOneClickStack'), 'Bottom today-use action must close open one-click sheets');
 assert(toggleToday.includes('openTodayOneClickChoice'), 'Bottom today-use action must open the choice sheet');
 assert(toggleToday.includes('hasSeenTodayUseIntro'), 'Bottom today-use action must show the first-run explainer');
 assert(toggleToday.includes('openTodayUseIntro'), 'Bottom today-use action must open the first-run explainer');
 
 const introCopy = functionBody('todayUseIntroCopy');
 assert(introCopy.includes("profile.id === 'cookie'"), 'Today-use intro must adapt to manager theme');
-assert(introCopy.includes('쿠키가 원클릭 정리를 도와줘요'), 'Today-use intro must include Cookie theme copy');
-assert(introCopy.includes('하동이가 원클릭 정리를 도와줘요'), 'Today-use intro must include Hadong theme copy');
-assert(introCopy.includes('AI 차감'), 'Today-use intro must clarify the AI deduction option');
+assert(introCopy.includes('쿠키가 재고 정리를 더 편하게 도와줘요'), 'Today-use intro must include Cookie theme copy');
+assert(introCopy.includes('하동이가 재고 정리를 더 편하게 도와줘요'), 'Today-use intro must include Hadong theme copy');
+assert(introCopy.includes('사용할수록'), 'Today-use intro must clarify that recommendations improve with use');
+assert(introCopy.includes('더 잘 골라드릴게요'), 'Today-use intro must describe the recommendation behavior');
 
 const introTheme = functionBody('applyTodayUseIntroTheme');
 assert(introTheme.includes('setElImage'), 'Today-use intro must set the active manager image');
@@ -178,7 +179,8 @@ assert(introAccept.includes('openTodayOneClickChoice'), 'Today-use intro accept 
 const renderToday = functionBody('renderTodayUsedPanel');
 assert(renderToday.includes('if (!_todayUsedPanelOpen)'), 'Today-used panel must not render inline until opened');
 assert(renderToday.includes('id="today-used-close"'), 'Today-use sheet must expose an explicit close button');
-assert(renderToday.includes('고정됨'), 'Favorite action must use owner-facing text instead of an unclear icon');
+assert(renderToday.includes('우선 표시 중'), 'Favorite action must use owner-facing text instead of an unclear icon');
+assert(renderToday.includes('자주 보여줘'), 'Favorite action must explain the priority display behavior');
 assert(renderToday.includes('직접 선택 차감'), 'Manual sheet must be clearly labeled as direct selection');
 assert(renderToday.includes('AI 추천'), 'Manual sheet must group AI recommendations under a section title');
 assert(renderToday.includes("reason.key !== 'ai'"), 'Manual rows must not repeat AI recommendation badges on every item');
