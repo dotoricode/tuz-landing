@@ -94,7 +94,7 @@ const mixed = loadInventoryDebug(mixedExpiryLots);
 const mixedStock = mixed.inventoryStockSummary(mixedExpiryLots[0]);
 const mixedProfile = mixed.stockRiskProfile(mixedStock);
 assert.equal(mixedStock.totalQuantity, 2);
-assert.equal(mixedProfile.status, 'watch');
+assert.equal(mixedProfile.status, 'week');
 assert.equal(mixedProfile.shortAfterAttention, true);
 assert.equal(mixed.shortageAttentionSummaries().length, 1);
 assert.equal(

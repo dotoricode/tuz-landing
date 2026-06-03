@@ -943,19 +943,6 @@
       transform: scale(.98);
     }
 
-    .rh-stat.today {
-      background: rgba(255,255,255,.16);
-      border-color: rgba(255,255,255,.28);
-    }
-
-    .rh-stat.tomorrow {
-      background: rgba(255,247,237,.12);
-    }
-
-    .rh-stat.week {
-      background: rgba(239,246,255,.12);
-    }
-
     .rh-stat.active {
       transform: translateY(-2px);
       border-color: rgba(255,255,255,.95);
@@ -1011,9 +998,6 @@
       letter-spacing: 0;
     }
 
-    .rh-stat-count.tomorrow { color: rgba(255,255,255,.82); }
-    .rh-stat-count.week     { color: rgba(255,255,255,.76); }
-
     .rh-stat-label {
       display: block;
       font-size: .72rem;
@@ -1024,8 +1008,6 @@
       line-height: 1.25;
       white-space: nowrap;
     }
-
-    .rh-stat-label.today { color: #fff; }
 
     .rh-stat-caption {
       display: block;
@@ -1060,7 +1042,9 @@
     }
 
     .rh-toggle {
-      display: inline-flex;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: min(300px, calc(100vw - 84px));
       background: var(--manager-card, var(--cream));
       border-radius: 22px;
       padding: 3px;
@@ -1069,7 +1053,8 @@
     }
 
     .rh-toggle-btn {
-      padding: 8px 16px;
+      min-width: 0;
+      padding: 8px 10px;
       border: none;
       border-radius: 19px;
       background: transparent;
@@ -1113,16 +1098,26 @@
     .rh-search-row {
       display: flex;
       gap: 8px;
-      padding: 0 18px 12px;
+      padding: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .inventory-tools-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 18px 10px;
     }
 
     #search-input {
       flex: 1;
-      height: 42px;
-      padding: 0 14px;
+      min-width: 0;
+      height: 36px;
+      padding: 0 11px;
       border: 1.5px solid var(--manager-border, var(--g3));
       border-radius: 12px;
-      font-size: .9rem;
+      font-size: .8rem;
       font-family: inherit;
       background: var(--manager-field, var(--cream));
       color: var(--manager-ink, var(--ink));
@@ -1209,10 +1204,11 @@
 
     .inventory-view-toggle {
       display: grid;
-      grid-template-columns: repeat(2, auto);
+      grid-template-columns: repeat(3, auto);
       gap: 4px;
       width: max-content;
-      margin: -5px 18px 12px auto;
+      flex: 0 0 auto;
+      margin: 0;
       padding: 3px;
       border-radius: 12px;
       background: rgba(255, 255, 255, .74);
@@ -1239,6 +1235,81 @@
       color: #fff;
       box-shadow: 0 4px 10px rgba(83, 42, 25, .14);
     }
+
+    .inventory-view-btn.is-help {
+      min-width: 44px;
+      background: color-mix(in srgb, var(--manager-accent, var(--red)) 9%, #fff);
+      border: 1px solid color-mix(in srgb, var(--manager-accent, var(--red)) 28%, var(--manager-border, var(--bone)));
+      color: var(--manager-accent-deep, var(--red-deep));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.38);
+    }
+
+    .inventory-view-btn.is-help[aria-expanded="true"] {
+      background: color-mix(in srgb, var(--manager-accent, var(--red)) 16%, #fff);
+      border-color: color-mix(in srgb, var(--manager-accent, var(--red)) 44%, var(--manager-border, var(--bone)));
+    }
+
+    .inventory-help-popover {
+      margin: -6px 18px 12px auto;
+      width: min(344px, calc(100% - 36px));
+      padding: 12px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 14px;
+      background: rgba(255,255,255,.96);
+      color: var(--manager-ink, var(--ink));
+      box-shadow: 0 12px 26px rgba(83,42,25,.11);
+      font-size: .72rem;
+      line-height: 1.45;
+    }
+
+    .inventory-help-popover[hidden] {
+      display: none;
+    }
+
+    .inventory-help-title {
+      font-size: .82rem;
+      font-weight: 950;
+      margin-bottom: 7px;
+    }
+
+    .inventory-help-section + .inventory-help-section {
+      margin-top: 9px;
+      padding-top: 9px;
+      border-top: 1px solid var(--manager-border, var(--bone));
+    }
+
+    .inventory-help-section strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: .7rem;
+      font-weight: 950;
+    }
+
+    .inventory-help-list {
+      display: grid;
+      gap: 5px;
+    }
+
+    .inventory-help-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--manager-muted, var(--g1));
+      font-weight: 800;
+    }
+
+    .inventory-help-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      background: #d7ccc1;
+    }
+
+    .inventory-help-dot.is-urgent { background: #b42318; }
+    .inventory-help-dot.is-soon { background: #d97008; }
+    .inventory-help-dot.is-watch { background: #5f6f52; }
+    .inventory-help-dot.is-safe { background: #d7ccc1; }
 
     /* ── CRISIS ALERT ─────────────────────────────────────────── */
     #crisis-alert {
@@ -1510,32 +1581,43 @@
       position: absolute;
       left: 0;
       top: 0;
-      bottom: 0;
-      width: 3px;
+      width: 26px;
+      height: 26px;
       background: #d7ccc1;
-      border-radius: 12px 0 0 12px;
+      border-radius: 12px 0 9px 0;
+      clip-path: polygon(0 0, 100% 0, 0 100%);
     }
 
     .inv-card.urgent::before { background: var(--red); }
     .inv-card.soon::before   { background: #f79009; }
-    .inv-card.low::before    { background: #7a5af8; }
-    .inv-card.watch::before  { background: #2e90fa; }
+    .inv-card.low::before    { background: #5f6f52; }
+    .inv-card.watch::before  { background: #5f6f52; }
     .inv-card.status-expired::before,
-    .inv-card.status-today::before { background: var(--red); }
+    .inv-card.status-today::before { background: #b42318; }
     .inv-card.status-tomorrow::before,
-    .inv-card.status-week::before { background: #f79009; }
-    .inv-card.status-low::before { background: #7a5af8; }
-    .inv-card.status-watch::before { background: #2e90fa; }
+    .inv-card.status-week::before { background: #d97008; }
+    .inv-card.status-low::before,
+    .inv-card.status-watch::before { background: #5f6f52; }
     .inv-card.status-safe::before { background: #d7ccc1; }
 
     .inv-card[data-item-card-id] {
-      cursor: default;
+      cursor: pointer;
+      min-height: 94px;
+    }
+
+    .inv-card.has-menu-open {
+      overflow: visible;
+      z-index: 6;
     }
 
     .inv-card[data-item-card-id] .inv-body {
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 8px 10px;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+      gap: 7px;
+    }
+
+    .inv-card[data-item-card-id] .inv-card-main {
+      padding-right: 82px;
     }
 
     .inv-card[data-item-card-id] .inv-card-top,
@@ -1543,19 +1625,104 @@
       grid-column: 1;
     }
 
-    .inv-card[data-item-card-id] .inv-actions {
-      grid-column: 2;
-      grid-row: 1 / span 2;
-      align-self: center;
-      justify-self: end;
-      margin-top: 0;
-      flex-wrap: nowrap;
+    .inv-expanded-qty {
+      position: absolute;
+      right: 17px;
+      bottom: 16px;
+      color: var(--manager-ink, var(--ink));
+      font-size: .78rem;
+      font-weight: 950;
+      line-height: 1;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .inv-card-menu {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 12;
+      pointer-events: auto;
+      isolation: isolate;
+    }
+
+    .inv-card-menu-btn {
+      position: relative;
+      z-index: 2;
+      width: 30px;
+      height: 30px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--manager-muted, var(--g1));
+      box-shadow: none;
+      font-size: 1rem;
+      font-weight: 950;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0 4px;
+      cursor: pointer;
+      appearance: none;
+    }
+
+    .inv-card-menu-btn:active {
+      transform: scale(.94);
+    }
+
+    .inv-card-menu-popover {
+      position: absolute;
+      right: 0;
+      top: 34px;
+      z-index: 14;
+      min-width: 92px;
+      padding: 5px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 12px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 14px 28px rgba(43,33,25,.16);
+      display: grid;
+      gap: 3px;
+    }
+
+    .inv-card-menu-popover[hidden] {
+      display: none;
+    }
+
+    .inv-card-menu-action {
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--manager-ink, var(--ink));
+      min-height: 38px;
+      padding: 9px 10px;
+      font: inherit;
+      font-size: .76rem;
+      font-weight: 900;
+      text-align: left;
+      cursor: pointer;
+      white-space: nowrap;
+      appearance: none;
+    }
+
+    .inv-card-menu-action:active,
+    .inv-card-menu-action:hover {
+      background: color-mix(in srgb, var(--manager-accent, var(--red)) 9%, #fff);
+    }
+
+    .inv-card-menu-action.is-danger {
+      color: var(--red-deep);
     }
 
     .inv-card.group-card {
       cursor: default;
-      align-items: center;
+      align-items: flex-end;
       gap: 8px;
+    }
+
+    .inv-card.group-card .inv-card-main {
+      padding-right: 30px;
     }
 
     .inv-card-main {
@@ -1612,22 +1779,32 @@
     }
 
     .inv-quick-actions {
+      position: absolute;
+      right: 17px;
+      bottom: 4px;
       flex: 0 0 auto;
       display: inline-grid;
-      grid-template-columns: 28px minmax(34px, auto) 28px;
+      grid-template-columns: 28px minmax(28px, auto);
       align-items: center;
-      gap: 2px;
+      gap: 0;
       margin-left: 4px;
-      padding: 3px;
-      border: 1px solid var(--manager-border, var(--bone));
-      border-radius: 999px;
-      background: rgba(255,255,255,.78);
-      box-shadow: 0 4px 12px rgba(0,0,0,.055);
+      min-height: 36px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .inv-quick-actions.has-plus {
+      right: 7px;
+      grid-template-columns: 28px minmax(28px, auto) 28px;
+      margin-right: 0;
     }
 
     .inv-quick-btn {
       width: 28px;
-      height: 28px;
+      height: 36px;
       border: 0;
       border-radius: 50%;
       background: transparent;
@@ -1646,12 +1823,23 @@
 
     .inv-quick-btn.is-minus {
       color: var(--red);
-      background: #fff7f7;
+      background: transparent;
     }
 
     .inv-quick-btn.is-plus {
       color: var(--manager-accent, var(--red));
-      background: color-mix(in srgb, var(--manager-accent, var(--red)) 10%, #fff);
+      background: transparent;
+    }
+
+    .inv-quick-btn.is-date-add {
+      width: 40px;
+      border-radius: 999px;
+      color: var(--manager-accent-deep, var(--red-deep));
+      background: transparent;
+      border: 0;
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: 0;
     }
 
     .inv-quick-btn:active {
@@ -1659,19 +1847,14 @@
     }
 
     .inv-quick-qty {
-      min-width: 34px;
-      padding: 0 3px;
+      min-width: 30px;
+      padding: 0 1px;
       color: var(--manager-ink, var(--ink));
-      font-size: .68rem;
+      font-size: .78rem;
       font-weight: 950;
       line-height: 1;
       text-align: center;
       white-space: nowrap;
-    }
-
-    .inv-quick-spacer {
-      width: 28px;
-      height: 28px;
     }
 
     .inv-badge-grid {
@@ -1679,6 +1862,7 @@
       flex-wrap: wrap;
       gap: 5px;
       align-items: center;
+      min-height: 23px;
     }
 
     .inv-badge {
@@ -1698,6 +1882,11 @@
       white-space: nowrap;
     }
 
+    .inv-badge-grid .inv-badge:first-child {
+      border-width: 1.5px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.48);
+    }
+
     .inv-badge strong {
       color: var(--ink);
       font-weight: 950;
@@ -1715,11 +1904,11 @@
       border-color: #eadfd3;
       color: var(--manager-muted, var(--g1));
     }
-    .inv-badge.low      { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
-    .inv-badge.expired  { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
-    .inv-badge.today    { background: #ffedd5; border-color: #fed7aa; color: #9a3412; }
-    .inv-badge.tomorrow { background: #fef3c7; border-color: #fde68a; color: #92400e; }
-    .inv-badge.week     { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+    .inv-badge.low      { background: #f5f8ef; border-color: #c8d5b9; color: #3f4f34; }
+    .inv-badge.expired  { background: #fee4e2; border-color: #fda29b; color: #b42318; }
+    .inv-badge.today    { background: #fee4e2; border-color: #fda29b; color: #b42318; }
+    .inv-badge.tomorrow { background: #fff1e6; border-color: #f7b27a; color: #b54708; }
+    .inv-badge.week     { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
     .inv-badge.safe     { background: #f6f7f4; border-color: #dfe5d8; color: #596354; }
     .inv-badge.reserve  { background: #ecfdf3; border-color: #abefc6; color: #027a48; }
     .inv-badge.recent   { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
@@ -1734,14 +1923,14 @@
 
     .inv-badge.attention {
       background: #fff7ed;
-      border-color: #fed7aa;
+      border-color: #fdba74;
       color: #9a3412;
     }
 
     .inv-badge.watch {
-      background: #eff6ff;
-      border-color: #bfdbfe;
-      color: #175cd3;
+      background: #f5f8ef;
+      border-color: #c8d5b9;
+      color: #3f4f34;
     }
 
     .origin-flag {
@@ -2415,6 +2604,13 @@
       touch-action: pan-y;
     }
 
+    #item-edit-sheet[data-edit-mode="group-common"] .edit-field-qty,
+    #item-edit-sheet[data-edit-mode="group-common"] .edit-field-expiry-type,
+    #item-edit-sheet[data-edit-mode="group-common"] .edit-field-expiry-date,
+    #item-edit-sheet[data-edit-mode="group-common"] #item-edit-delete {
+      display: none;
+    }
+
     .edit-sheet-subtitle {
       margin: -8px 0 4px;
       color: var(--g1);
@@ -2642,6 +2838,47 @@
       cursor: pointer;
     }
 
+    .group-edit-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .group-edit-option {
+      width: 100%;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 12px;
+      background: rgba(255,255,255,.84);
+      color: var(--manager-ink, var(--ink));
+      padding: 12px;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      gap: 4px;
+      appearance: none;
+    }
+
+    .group-edit-option strong {
+      font-size: .86rem;
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .group-edit-option span {
+      color: var(--manager-muted, var(--g1));
+      font-size: .72rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .group-edit-section-label {
+      margin-top: 4px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .7rem;
+      font-weight: 950;
+    }
+
     .delete-confirm-icon {
       width: 44px;
       height: 44px;
@@ -2695,6 +2932,11 @@
     .delete-confirm-cancel {
       background: var(--bone);
       color: var(--ink);
+    }
+
+    #group-edit-sheet .delete-confirm-actions {
+      grid-template-columns: minmax(150px, 220px);
+      justify-content: center;
     }
 
     .delete-confirm-accept {
@@ -3044,42 +3286,83 @@
     }
 
     /* ── TOAST ────────────────────────────────────────────────── */
+    #add-item-sheet .add-sheet-panel {
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--manager-soft, var(--cream)) 72%, #fff 28%) 0%,
+        var(--manager-sheet, #fff) 100%
+      );
+    }
+
+    #add-item-sheet .form-input,
+    #add-item-sheet .form-select,
+    #add-item-sheet #expiry-type-toggle,
+    #add-item-sheet #expiry-date-input,
+    #add-item-sheet .qty-stepper button,
+    #add-item-sheet .edit-type-segment {
+      background: color-mix(in srgb, var(--manager-soft, var(--cream)) 74%, #fff 26%);
+      border-color: color-mix(in srgb, var(--manager-accent, var(--red)) 22%, var(--manager-border, var(--bone)));
+    }
+
+    #add-item-sheet .edit-type-btn.active {
+      background: color-mix(in srgb, var(--manager-soft, var(--cream)) 42%, #fff 58%);
+      color: var(--manager-accent-deep, var(--red-deep));
+    }
+
     #toast {
       position: fixed;
       bottom: 110px;
       left: 50%;
-      transform: translateX(-50%);
-      background: var(--ink);
+      width: min(360px, calc(100vw - 28px));
+      min-height: 48px;
+      transform: translate(-50%, 10px);
+      background: color-mix(in srgb, var(--manager-ink, var(--ink)) 92%, #000);
       color: #fff;
-      padding: 10px 14px;
-      border-radius: 20px;
-      font-size: .875rem;
+      padding: 11px 13px 11px 15px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 16px;
+      box-shadow: 0 18px 44px rgba(0,0,0,.34), 0 0 0 1px rgba(0,0,0,.08);
+      font-size: .86rem;
       font-weight: 500;
+      line-height: 1.28;
       pointer-events: none;
       opacity: 0;
-      transition: opacity .25s;
+      transition: opacity .2s ease, transform .2s ease;
       z-index: 9999;
-      white-space: nowrap;
       display: inline-flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
+      word-break: keep-all;
     }
 
     #toast.show {
       opacity: 1;
+      transform: translate(-50%, 0);
       pointer-events: auto;
+    }
+
+    #toast.has-undo {
+      padding-right: 9px;
+    }
+
+    #toast span {
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .toast-undo-btn {
       border: 0;
       border-radius: 999px;
-      background: rgba(255,255,255,.18);
-      color: #fff;
-      padding: 6px 9px;
+      background: #fff;
+      color: var(--manager-ink, var(--ink));
+      padding: 8px 11px;
       font-family: inherit;
-      font-size: .78rem;
-      font-weight: 900;
+      font-size: .8rem;
+      font-weight: 950;
       cursor: pointer;
+      box-shadow: 0 8px 18px rgba(0,0,0,.18);
+      white-space: nowrap;
     }
 
     /* ── OCR MODAL ────────────────────────────────────────────── */
@@ -5657,20 +5940,28 @@
     <div class="rh-sheet">
       <div class="rh-sheet-inner">
 
-        <!-- Search + expiry filter -->
-        <div class="rh-search-row">
-          <input id="search-input" type="search" placeholder="품목 검색…">
-          <select id="expiry-filter" hidden aria-hidden="true" tabindex="-1">
-            <option value="">전체</option>
-            <option value="attention">오늘·내일</option>
-            <option value="low">재고 부족</option>
-            <option value="expired">초과</option>
-            <option value="today">오늘</option>
-            <option value="tomorrow">내일</option>
-            <option value="week">이번 주</option>
-            <option value="safe">여유</option>
-            <option value="none">기한 없음/미입력</option>
-          </select>
+        <div class="inventory-tools-row">
+          <!-- Search + expiry filter -->
+          <div class="rh-search-row">
+            <input id="search-input" type="search" placeholder="품목 검색…">
+            <select id="expiry-filter" hidden aria-hidden="true" tabindex="-1">
+              <option value="">전체</option>
+              <option value="attention">오늘·내일</option>
+              <option value="low">재고 부족</option>
+              <option value="expired">초과</option>
+              <option value="today">오늘</option>
+              <option value="tomorrow">내일</option>
+              <option value="week">이번 주</option>
+              <option value="safe">여유</option>
+              <option value="none">기한 없음/미입력</option>
+            </select>
+          </div>
+
+          <div class="inventory-view-toggle" role="group" aria-label="목록 보기 방식">
+            <button type="button" class="inventory-view-btn active" data-inventory-view="grouped" aria-pressed="true">묶음</button>
+            <button type="button" class="inventory-view-btn" data-inventory-view="expanded" aria-pressed="false">개별</button>
+            <button type="button" class="inventory-view-btn is-help" id="inventory-status-help-toggle" aria-label="목록 안내 보기" aria-expanded="false" aria-controls="inventory-status-help">?</button>
+          </div>
         </div>
 
         <!-- Category chips (populated by refreshCategories) -->
@@ -5678,9 +5969,26 @@
 
         <div id="filter-criteria-note" class="filter-criteria-note" hidden></div>
 
-        <div class="inventory-view-toggle" role="group" aria-label="목록 보기 방식">
-          <button type="button" class="inventory-view-btn active" data-inventory-view="grouped" aria-pressed="true">묶음</button>
-          <button type="button" class="inventory-view-btn" data-inventory-view="expanded" aria-pressed="false">개별</button>
+        <div class="inventory-help-popover" id="inventory-status-help" hidden>
+          <div class="inventory-help-title">목록과 색 표시 안내</div>
+          <div class="inventory-help-section">
+            <strong>보기 방식</strong>
+            <div class="inventory-help-list">
+              <div class="inventory-help-row">묶음은 유통기한이 달라도 같은 품목을 하나로 모아서 보여줘요.</div>
+              <div class="inventory-help-row">개별은 유통기한별 재고를 각각 따로 보여줘요.</div>
+            </div>
+          </div>
+          <div class="inventory-help-section">
+            <strong>색 기준</strong>
+            <div class="inventory-help-list">
+              <div class="inventory-help-row">모서리는 이 카드에서 가장 먼저 볼 대표 상태를 보여줘요.</div>
+              <div class="inventory-help-row">뱃지는 어디에 붙어도 같은 상태면 같은 색으로 보여줘요.</div>
+              <div class="inventory-help-row"><span class="inventory-help-dot is-urgent"></span>빨강: 기한 초과나 오늘까지예요.</div>
+              <div class="inventory-help-row"><span class="inventory-help-dot is-soon"></span>주황: 내일까지나 이번 주 안에 먼저 써요.</div>
+              <div class="inventory-help-row"><span class="inventory-help-dot is-watch"></span>초록: 재고가 부족하거나 부족해질 수 있어요.</div>
+              <div class="inventory-help-row"><span class="inventory-help-dot is-safe"></span>회색: 지금은 여유가 있어요.</div>
+            </div>
+          </div>
         </div>
 
         <!-- Hidden select: keeps filter logic working -->
@@ -5795,11 +6103,11 @@
       <div class="add-sheet-title" id="item-edit-title">재고 수정</div>
       <p class="edit-sheet-subtitle" id="item-edit-subtitle"></p>
       <form id="item-edit-form">
-        <label>
+        <label class="edit-field-name">
           <span class="field-label">품목명</span>
           <input type="text" id="edit-name-input" required class="form-input" placeholder="품목명">
         </label>
-        <label>
+        <label class="edit-field-qty">
           <span class="field-label">수량</span>
           <div class="qty-stepper">
             <button type="button" id="edit-qty-minus" aria-label="수량 줄이기">−</button>
@@ -5807,7 +6115,7 @@
             <button type="button" id="edit-qty-plus" aria-label="수량 늘리기">+</button>
           </div>
         </label>
-        <label>
+        <label class="edit-field-min">
           <span class="field-label">최소 재고량</span>
           <input type="number" id="edit-min-qty-input" min="0" step="1" class="form-input" placeholder="비워두면 기준 없음">
         </label>
@@ -5821,14 +6129,14 @@
           <button type="button" class="ocr-picker-trigger" data-add-picker-target="edit-storage" data-add-picker-title="보관 방식 선택">보관 방식</button>
           <button type="button" class="ocr-picker-trigger is-wide" data-add-picker-target="edit-origin" data-add-picker-title="원산지 선택">원산지</button>
         </div>
-        <label>
+        <label class="edit-field-expiry-type">
           <span class="field-label">기한 유형</span>
           <div class="edit-type-segment">
             <button type="button" class="edit-type-btn active" data-edit-expiry-type="SELL-BY">유통기한</button>
             <button type="button" class="edit-type-btn" data-edit-expiry-type="NONE">기한 없음</button>
           </div>
         </label>
-        <label>
+        <label class="edit-field-expiry-date">
           <span class="field-label">기한 날짜</span>
           <input type="text" id="edit-expiry-date" class="form-input" placeholder="연도-월-일" readonly inputmode="none" aria-haspopup="dialog">
         </label>
@@ -5868,6 +6176,19 @@
       <div class="delete-confirm-actions">
         <button type="button" class="delete-confirm-cancel" id="group-delete-cancel">취소</button>
         <button type="button" class="delete-confirm-accept" id="group-delete-all">묶음 전체 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="group-edit-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="group-edit-backdrop"></div>
+    <div class="delete-confirm-panel group-delete-panel" role="dialog" aria-modal="true" aria-labelledby="group-edit-title">
+      <div class="add-sheet-handle"></div>
+      <div class="delete-confirm-title" id="group-edit-title">무엇을 수정할까요?</div>
+      <p class="delete-confirm-text" id="group-edit-text"></p>
+      <div class="group-edit-list" id="group-edit-list"></div>
+      <div class="delete-confirm-actions">
+        <button type="button" class="delete-confirm-cancel" id="group-edit-cancel">취소</button>
       </div>
     </div>
   </div>
@@ -7000,6 +7321,40 @@
       if (options.reset !== false) resetAddSheetForm();
       document.getElementById('add-item-sheet').classList.add('open');
       updateAddPickerButtons();
+    }
+
+    function openAddSheetForStockReceipt(stock, options = {}) {
+      const source = stock?.item || sortedLots(stock?.lots || [])[0];
+      if (!source) return;
+      const forceDated = options.forceDated === true;
+      const hasDatedLot = (stock?.lots || []).some(lot => inventoryLotHasExpiryInput(lot));
+      const useDatedMode = forceDated || hasDatedLot;
+
+      openAddSheet({ reset: true });
+      document.getElementById('add-name').value = source.name || '';
+      document.getElementById('add-quantity').value = '1';
+      document.getElementById('add-unit').value = stock?.unit || source.unit || '';
+      document.getElementById('add-category').value = source.category || '';
+      document.getElementById('add-min-qty').value = minQuantityFieldValue(stock?.minQuantity ?? source.min_quantity);
+      document.getElementById('add-storage').value = source.storage_method || '';
+      document.getElementById('add-origin').value = source.origin || '';
+      document.getElementById('expiry-date-input').value = '';
+      document.getElementById('expiry-type-toggle').dataset.type = 'SELL-BY';
+      document.getElementById('expiry-type-toggle').textContent = '유통기한';
+      document.getElementById('expiry-type-hidden').value = 'SELL-BY';
+      setAddExpiryPresence(useDatedMode ? 'dated' : 'none');
+      updateAddPickerButtons();
+      showAddAutoFillHint(useDatedMode
+        ? `${source.name || '이 품목'} 새 유통기한 재고를 입고해요. 날짜와 수량만 확인하고 저장하면 같은 품목으로 추가돼요.`
+        : `${source.name || '이 품목'} 기한 없는 재고를 입고해요. 수량만 확인하고 저장하면 같은 품목으로 추가돼요.`);
+      setTimeout(() => {
+        const focusTarget = useDatedMode ? 'expiry-date-input' : 'add-quantity';
+        document.getElementById(focusTarget)?.focus();
+      }, 120);
+    }
+
+    function openAddSheetForNewExpiry(stock) {
+      openAddSheetForStockReceipt(stock, { forceDated: true });
     }
 
     function closeAddSheet(options = {}) {
@@ -8161,6 +8516,11 @@
       return Boolean(lots.length) && lots.every(lot => !inventoryLotHasExpiryInput(lot));
     }
 
+    function canQuickAddDatedStock(stock) {
+      const lots = stock?.lots || [];
+      return Boolean(lots.length) && lots.some(lot => inventoryLotHasExpiryInput(lot));
+    }
+
     function lowInventorySummaries(sourceItems = items) {
       const seen = new Set();
       return (sourceItems || [])
@@ -8489,7 +8849,8 @@
       });
     }
 
-    const INVENTORY_STATUS_SORT_RANK = { expired: 0, today: 1, tomorrow: 2, low: 3, watch: 4, week: 5, safe: 6 };
+    const INVENTORY_STATUS_SORT_RANK = { expired: 0, today: 1, tomorrow: 2, week: 3, low: 4, watch: 5, safe: 6 };
+    const INVENTORY_BADGE_SORT_RANK = { expired: 0, today: 1, tomorrow: 2, week: 3, low: 4, watch: 5, safe: 6 };
 
     function clearQuickAdjustOrderLock() {
       _quickAdjustGroupOrder = null;
@@ -8531,13 +8892,19 @@
       let status = lotStatus.status;
 
       if (!['expired', 'today', 'tomorrow'].includes(status)) {
-        if (stock.low) status = 'low';
+        if (lotStatus.status === 'week') status = 'week';
+        else if (stock.low) status = 'low';
         else if (stockProfile.status === 'watch') status = 'watch';
-        else if (lotStatus.status === 'week') status = 'week';
         else status = stockProfile.status || 'safe';
       }
 
       return {
+        expiredQuantity: stockProfile.expiredQuantity || 0,
+        shortAfterAttention: stockProfile.shortAfterAttention || false,
+        todayQuantity: stockProfile.todayQuantity || 0,
+        tomorrowQuantity: stockProfile.tomorrowQuantity || 0,
+        unit: stockProfile.unit || item.unit || stock.unit || '개',
+        weekQuantity: stockProfile.weekQuantity || 0,
         recentlyUpdated: isRecentlyUpdatedInventoryItem(item),
         status
       };
@@ -8625,15 +8992,15 @@
       } else if (tomorrowQuantity > 0) {
         status = 'tomorrow';
         label = `내일 ${quantityLabel(tomorrowQuantity, unit)}`;
+      } else if (weekQuantity > 0) {
+        status = 'week';
+        label = `2~6일 남음 ${quantityLabel(weekQuantity, unit)}`;
       } else if (stock.low) {
         status = 'low';
         label = '부족';
       } else if (shortAfterAttention) {
         status = 'watch';
         label = `곧 쓸 것 제외 ${quantityLabel(freshQuantity, unit)}`;
-      } else if (weekQuantity > 0) {
-        status = 'week';
-        label = `2~6일 남음 ${quantityLabel(weekQuantity, unit)}`;
       }
 
       return {
@@ -8727,15 +9094,37 @@
       const badges = [];
       const push = (className, label) => badges.push({ className, label });
 
-      if (profile.expiredQuantity > 0) push('expired', `기한 초과 ${quantityLabel(profile.expiredQuantity, unit)}`);
-      else if (profile.todayQuantity > 0) push('today', `오늘까지 ${quantityLabel(profile.todayQuantity, unit)}`);
-      else if (profile.tomorrowQuantity > 0) push('tomorrow', `내일까지 ${quantityLabel(profile.tomorrowQuantity, unit)}`);
-      else if (stock.low) push('low', '최소재고 미달');
-      else if (profile.weekQuantity > 0) push('week', `2~6일 남음 ${quantityLabel(profile.weekQuantity, unit)}`);
+      switch (profile.status) {
+        case 'expired':
+          push('expired', '기한 초과');
+          break;
+        case 'today':
+          push('today', '오늘까지');
+          break;
+        case 'tomorrow':
+          push('tomorrow', '내일까지');
+          break;
+        case 'low':
+          push('low', '최소재고 미달');
+          break;
+        case 'watch':
+          push('watch', '사용 후 부족 가능');
+          break;
+        case 'week':
+          push('week', '2~6일 남음');
+          break;
+        default:
+          break;
+      }
 
       if (stock.low && !badges.some(badge => badge.className === 'low')) push('low', '최소재고 미달');
+      if (profile.weekQuantity > 0 && !badges.some(badge => badge.className === 'week')) {
+        push('week', '2~6일 남음');
+      }
 
-      return badges.slice(0, 2);
+      return badges
+        .sort((a, b) => (INVENTORY_BADGE_SORT_RANK[a.className] ?? 99) - (INVENTORY_BADGE_SORT_RANK[b.className] ?? 99))
+        .slice(0, 2);
     }
 
     function detailStatusClass(status) {
@@ -8770,6 +9159,26 @@
       return ddayLabel(calcDDay(item.expiry_date));
     }
 
+    function compactExpiryDateLabel(item) {
+      if (item?.expiry_type === 'NONE') return '기한 없음';
+      const dday = calcDDay(item?.expiry_date);
+      if (dday === null) return '기한 미입력';
+      if (dday < 0) return `+${Math.abs(dday)}일`;
+      if (dday === 0) return '오늘';
+      return `-${dday}일`;
+    }
+
+    function compactStockExpiryDateLabel(stock) {
+      const activeLots = (stock?.lots || []).filter(lot => Number(lot.quantity) > 0);
+      const datedLots = activeLots
+        .filter(lot => lot.expiry_type !== 'NONE' && lot.expiry_date && calcDDay(lot.expiry_date) !== null)
+        .map(lot => ({ lot, dday: calcDDay(lot.expiry_date) }))
+        .sort((a, b) => a.dday - b.dday);
+      if (datedLots.length) return compactExpiryDateLabel(datedLots[0].lot);
+      if (activeLots.some(lot => lot.expiry_type !== 'NONE')) return '기한 미입력';
+      return '기한 없음';
+    }
+
     function lotExpiryTitleMarkup(lot, lotStatus) {
       if (lot.expiry_type === 'NONE') {
         return `<span class="group-lot-date">기한 없음</span>`;
@@ -8794,45 +9203,95 @@
       return live?.name || metadata.item_name || metadata.snapshot?.name || '재료';
     }
 
+    let _expandedMenuCloseCleanup = null;
+    let _groupMenuCloseCleanup = null;
+
     function renderExpandedList(data) {
       listEl.innerHTML = data.map(item => {
         const safeId = escAttr(item.id);
         const unit = item.unit || '개';
         const stock = inventoryStockSummary(item, getVisibleItems());
-        const lotStatus = lotStatusInfo(item);
         const riskProfile = inventoryExpandedItemRiskProfile(item);
-        const minText = stock.minQuantity !== null ? ` · 최소재고 ${quantityLabel(stock.minQuantity, unit)}` : '';
-        const detailBadges = [
-          lotStatus.status !== 'safe' ? { className: badgeClassForStatus(lotStatus.status), label: lotStatus.label } : null,
-          stock.low ? { className: 'low', label: '최소재고 미달' } : null
-        ].filter(Boolean).map(badge =>
+        const minText = stock.minQuantity !== null ? `최소 ${quantityLabel(stock.minQuantity, unit)}` : '최소 없음';
+        const summaryText = `${minText}, 기한 ${compactExpiryDateLabel(item)}`;
+        const quantityText = quantityLabel(item.quantity, unit);
+        const detailBadges = makeInventoryCardBadges(stock, riskProfile, unit).map(badge =>
           `<span class="inv-badge ${escAttr(badge.className)}">${escHtml(badge.label)}</span>`
         ).join('');
 
         return `
           <article class="${cardClassForProfile(riskProfile)}" data-item-card-id="${safeId}">
-            <div class="inv-body">
-              <div class="inv-card-top">
-                <div class="inv-info">
-                  <div class="inv-name">${escHtml(item.name)}</div>
-                  <div class="inv-summary-line">현재 수량 ${escHtml(quantityLabel(item.quantity, unit))}${escHtml(minText)}</div>
+            <button type="button" class="inv-card-main" data-expanded-edit="${safeId}" aria-label="${escHtml(item.name)} 수정">
+              <div class="inv-body">
+                <div class="inv-card-top">
+                  <div class="inv-info">
+                    <div class="inv-name">${escHtml(item.name)}</div>
+                    <div class="inv-summary-line">${escHtml(summaryText)}</div>
+                  </div>
                 </div>
+                <div class="inv-badge-grid">${detailBadges}</div>
               </div>
-              <div class="inv-badge-grid">${detailBadges}</div>
-              <div class="inv-actions">
-                <button type="button" class="inv-btn" data-expanded-action="edit" data-item-id="${safeId}">수정</button>
+            </button>
+            <div class="inv-expanded-qty" aria-label="현재 수량 ${escHtml(quantityText)}">${escHtml(quantityText)}</div>
+            <div class="inv-card-menu" data-expanded-menu-root>
+              <button type="button" class="inv-card-menu-btn" data-expanded-menu="${safeId}" aria-label="${escHtml(item.name)} 메뉴 열기" aria-expanded="false">⋯</button>
+              <div class="inv-card-menu-popover" data-expanded-menu-popover hidden>
+                <button type="button" class="inv-card-menu-action" data-expanded-menu-action="edit" data-item-id="${safeId}">수정</button>
+                <button type="button" class="inv-card-menu-action is-danger" data-expanded-menu-action="delete" data-item-id="${safeId}">삭제</button>
               </div>
             </div>
           </article>`;
       }).join('');
 
-      listEl.querySelectorAll('[data-expanded-action]').forEach(btn => {
+      const closeExpandedCardMenus = () => {
+        listEl.querySelectorAll('[data-expanded-menu-root]').forEach(root => {
+          root.closest('[data-item-card-id]')?.classList.remove('has-menu-open');
+          root.querySelector('[data-expanded-menu-popover]')?.setAttribute('hidden', '');
+          root.querySelector('[data-expanded-menu]')?.setAttribute('aria-expanded', 'false');
+        });
+      };
+
+      _expandedMenuCloseCleanup?.();
+      const onExpandedMenuDocumentClick = e => {
+        if (e.target.closest('[data-expanded-menu-root]')) return;
+        closeExpandedCardMenus();
+      };
+      document.addEventListener('click', onExpandedMenuDocumentClick);
+      _expandedMenuCloseCleanup = () => document.removeEventListener('click', onExpandedMenuDocumentClick);
+
+      listEl.querySelectorAll('[data-expanded-edit]').forEach(btn => {
         btn.addEventListener('click', () => {
-          const id = btn.dataset.itemId;
+          closeExpandedCardMenus();
           bumpFeedback(btn);
-          if (btn.dataset.expandedAction === 'edit') {
-            openItemEditSheet(id, 'qty');
-          }
+          openItemEditSheet(btn.dataset.expandedEdit, 'qty');
+        });
+      });
+
+      listEl.querySelectorAll('[data-expanded-menu]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const root = btn.closest('[data-expanded-menu-root]');
+          const card = btn.closest('[data-item-card-id]');
+          const popover = root?.querySelector('[data-expanded-menu-popover]');
+          const willOpen = popover?.hidden !== false;
+          closeExpandedCardMenus();
+          bumpFeedback(btn);
+          if (!popover || !willOpen) return;
+          card?.classList.add('has-menu-open');
+          popover.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
+        });
+      });
+
+      listEl.querySelectorAll('[data-expanded-menu-action]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const id = btn.dataset.itemId;
+          const action = btn.dataset.expandedMenuAction;
+          closeExpandedCardMenus();
+          bumpFeedback(btn);
+          if (action === 'edit') openItemEditSheet(id, 'qty');
+          if (action === 'delete') deleteItem(id);
         });
       });
     }
@@ -8854,7 +9313,8 @@
         const groupId = `g${index}`;
         const { item, stock, profile } = card;
         const unit = stock.unit || item.unit || '개';
-        const minText = stock.minQuantity !== null ? ` · 최소재고 ${quantityLabel(stock.minQuantity, unit)}` : '';
+        const minText = stock.minQuantity !== null ? `최소 ${quantityLabel(stock.minQuantity, unit)}` : '';
+        const summaryText = `${minText || '최소 없음'}, 기한 ${compactStockExpiryDateLabel(stock)}`;
         const quickQtyText = quantityLabel(stock.totalQuantity, unit);
         const showQuickIncrease = canQuickIncreaseStock(stock);
         const badges = makeInventoryCardBadges(stock, profile, unit)
@@ -8867,7 +9327,7 @@
                 <div class="inv-card-top">
                   <div class="inv-info">
                     <div class="inv-name">${escHtml(item.name)}</div>
-                    <div class="inv-summary-line">전체 수량 ${escHtml(quantityLabel(stock.totalQuantity, unit))}${escHtml(minText)}</div>
+                    <div class="inv-summary-line">${escHtml(summaryText)}</div>
                   </div>
                 </div>
                   <div class="inv-badge-grid">
@@ -8875,37 +9335,140 @@
                   </div>
               </div>
             </button>
-            <div class="inv-quick-actions" aria-label="${escHtml(item.name)} 수량 빠른 차감">
+            <div class="inv-quick-actions${showQuickIncrease ? ' has-plus' : ''}" aria-label="${escHtml(item.name)} 수량 빠른 조절">
               <button type="button" class="inv-quick-btn is-minus" data-quick-adjust="decrease-group" data-quick-group-id="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 수량 1 줄이기">−</button>
               <span class="inv-quick-qty" aria-label="현재 수량 ${escHtml(quickQtyText)}">${escHtml(quickQtyText)}</span>
               ${showQuickIncrease
                 ? `<button type="button" class="inv-quick-btn is-plus" data-quick-adjust="increase-group" data-quick-group-id="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 수량 1 늘리기">+</button>`
-                : '<span class="inv-quick-spacer" aria-hidden="true"></span>'}
+                : ''}
+            </div>
+            <div class="inv-card-menu" data-group-menu-root>
+              <button type="button" class="inv-card-menu-btn" data-group-menu="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 관리 메뉴 열기" aria-expanded="false">⋯</button>
+              <div class="inv-card-menu-popover" data-group-menu-popover hidden>
+                <button type="button" class="inv-card-menu-action" data-group-menu-action="restock" data-group-id="${escAttr(groupId)}">입고</button>
+                <button type="button" class="inv-card-menu-action" data-group-menu-action="edit" data-group-id="${escAttr(groupId)}">수정</button>
+                <button type="button" class="inv-card-menu-action is-danger" data-group-menu-action="delete" data-group-id="${escAttr(groupId)}">삭제</button>
+              </div>
             </div>
           </article>`;
       }).join('');
+      const closeGroupCardMenus = () => {
+        listEl.querySelectorAll('[data-group-menu-root]').forEach(root => {
+          root.closest('[data-group-card-id]')?.classList.remove('has-menu-open');
+          root.querySelector('[data-group-menu-popover]')?.setAttribute('hidden', '');
+          root.querySelector('[data-group-menu]')?.setAttribute('aria-expanded', 'false');
+        });
+      };
+
+      _groupMenuCloseCleanup?.();
+      const onGroupMenuDocumentClick = e => {
+        if (e.target.closest('[data-group-menu-root]')) return;
+        closeGroupCardMenus();
+      };
+      document.addEventListener('click', onGroupMenuDocumentClick);
+      _groupMenuCloseCleanup = () => document.removeEventListener('click', onGroupMenuDocumentClick);
+
       listEl.querySelectorAll('[data-quick-adjust]').forEach(btn => {
         btn.addEventListener('click', e => {
           e.stopPropagation();
           bumpFeedback(btn);
-          handleInventoryQuickAdjust(btn.dataset.quickAdjust, btn.dataset.quickGroupId);
+          handleInventoryQuickAdjust(btn.dataset.quickAdjust, btn.dataset.quickGroupId || btn.dataset.quickItemId);
         });
       });
       listEl.querySelectorAll('[data-group-id]').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', e => {
+          const groupCard = card.closest('[data-group-card-id]');
+          if (e.target.closest('[data-group-menu-root]') || groupCard?.classList.contains('has-menu-open')) {
+            e.stopPropagation();
+            closeGroupCardMenus();
+            return;
+          }
           bumpFeedback(card);
           openInventoryGroupDetail(card.dataset.groupId);
         });
       });
+      listEl.querySelectorAll('[data-group-menu-root]').forEach(root => {
+        root.addEventListener('click', e => {
+          e.stopPropagation();
+        });
+      });
+      listEl.querySelectorAll('[data-group-menu]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          e.preventDefault();
+          const root = btn.closest('[data-group-menu-root]');
+          const card = btn.closest('[data-group-card-id]');
+          const popover = root?.querySelector('[data-group-menu-popover]');
+          const willOpen = popover?.hidden !== false;
+          closeGroupCardMenus();
+          bumpFeedback(btn);
+          if (!popover || !willOpen) return;
+          card?.classList.add('has-menu-open');
+          popover.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
+        });
+      });
+      listEl.querySelectorAll('[data-group-menu-action]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          e.preventDefault();
+          const card = _inventoryGroupCards.get(btn.dataset.groupId);
+          if (!card) return;
+          closeGroupCardMenus();
+          bumpFeedback(btn);
+          if (btn.dataset.groupMenuAction === 'restock') {
+            openAddSheetForStockReceipt(card.stock);
+            return;
+          }
+          if (btn.dataset.groupMenuAction === 'edit') {
+            openGroupEditChoice(card);
+            return;
+          }
+          if (btn.dataset.groupMenuAction === 'delete') {
+            openGroupDeletePicker((card.stock.lots || []).map(lot => lot.id), card.item.name);
+          }
+        });
+      });
     }
 
+    const QUICK_DECREASE_BATCH_WINDOW_MS = 1800;
     let _lastQuickDecreaseUndo = null;
 
+    function canMergeQuickAdjustmentUndo(payload = {}) {
+      const batchKey = payload.batchKey || payload.stockKey || payload.itemId || '';
+      return Boolean(_lastQuickDecreaseUndo &&
+        _lastQuickDecreaseUndo.batchKey === batchKey &&
+        Date.now() - _lastQuickDecreaseUndo.at <= QUICK_DECREASE_BATCH_WINDOW_MS);
+    }
+
     function rememberQuickDecreaseUndo(payload) {
+      const now = Date.now();
+      const batchKey = payload.batchKey || payload.stockKey || payload.itemId || '';
+      const canMerge = canMergeQuickAdjustmentUndo({ batchKey });
+
+      if (canMerge) {
+        _lastQuickDecreaseUndo = {
+          ..._lastQuickDecreaseUndo,
+          actionCount: (_lastQuickDecreaseUndo.actionCount || _lastQuickDecreaseUndo.eventIds.length) + 1,
+          amount: Number((_lastQuickDecreaseUndo.amount + (Number(payload.amount) || 0)).toFixed(3)),
+          eventIds: [..._lastQuickDecreaseUndo.eventIds, payload.eventId],
+          netDelta: Number(((_lastQuickDecreaseUndo.netDelta || 0) + (Number(payload.quantityDelta) || 0)).toFixed(3)),
+          at: now,
+          depleted: Boolean(_lastQuickDecreaseUndo.depleted || payload.depleted)
+        };
+        return _lastQuickDecreaseUndo;
+      }
+
       _lastQuickDecreaseUndo = {
         ...payload,
-        at: Date.now()
+        actionCount: 1,
+        amount: Number(payload.amount) || 0,
+        batchKey,
+        eventIds: [payload.eventId],
+        netDelta: Number(payload.quantityDelta) || 0,
+        at: now
       };
+      return _lastQuickDecreaseUndo;
     }
 
     function restoreInventoryItemSnapshot(snapshot) {
@@ -9027,6 +9590,7 @@
       markInventoryEventUndone(event.id, reversal.id);
       saveData(items);
       refreshAll();
+      if (options.silent) return true;
       showToast(options.successMessage || `[${inventoryEventItemName(event)}] 기록을 되돌렸어요.`);
       return true;
     }
@@ -9036,6 +9600,18 @@
       if (!undo) return;
       _lastQuickDecreaseUndo = null;
       hideToast();
+      const eventIds = [...(undo.eventIds || [undo.eventId])].filter(Boolean).reverse();
+      let restoredCount = 0;
+      eventIds.forEach(eventId => {
+        if (undoInventoryEvent(eventId, { silent: true })) restoredCount += 1;
+      });
+      if (restoredCount) {
+        const message = restoredCount > 1
+          ? `[${undo.name}] 수량 변경 ${restoredCount}건 되돌렸어요.`
+          : `[${undo.name}] ${quantityLabel(undo.amount || Math.abs(undo.netDelta || 0), undo.unit || '개')} 되돌렸어요.`;
+        showToast(message);
+      }
+      return;
       undoInventoryEvent(undo.eventId, { successMessage: `[${undo.name}] 되돌렸어요.` });
     }
 
@@ -9060,12 +9636,18 @@
           snapshot: inventoryEventItemSnapshot(lot)
         }
       });
-      rememberQuickDecreaseUndo({
+      const undoBatch = rememberQuickDecreaseUndo({
         amount: consumeAmount,
+        batchKey: event.stock_key || inventoryStockKey(lot),
         eventId: event.id,
         itemId: lot.id,
         name: lot.name,
-        snapshot: { ...lot }
+        quantityDelta: -consumeAmount,
+        snapshot: { ...lot },
+        stockKey: event.stock_key || inventoryStockKey(lot),
+        type,
+        unit,
+        depleted: nextQty <= 0
       });
       lot.quantity = nextQty;
       lot.updated_at = new Date().toISOString();
@@ -9073,7 +9655,10 @@
       refreshAll();
       const emptyText = nextQty <= 0 ? ' · 소진' : '';
       const verb = type === 'discard' ? '폐기 기록했어요' : '차감했어요';
-      showUndoToast(`[${lot.name}] ${quantityLabel(consumeAmount, unit)} ${verb}${emptyText}`);
+      const undoMessage = undoBatch.actionCount > 1
+        ? `[${lot.name}] 수량 변경 ${undoBatch.actionCount}건 저장했어요${emptyText}`
+        : `[${lot.name}] ${quantityLabel(undoBatch.amount, unit)} ${verb}${emptyText}`;
+      showUndoToast(undoMessage);
     }
 
     function decreaseInventoryLot(lot) {
@@ -9087,7 +9672,7 @@
       if (!addAmount) return;
       const unit = lot.unit || '개';
       const nextQty = Number((qty + addAmount).toFixed(3));
-      recordInventoryEvent('adjust', {
+      const event = recordInventoryEvent('adjust', {
         item: lot,
         lot,
         quantity_delta: addAmount,
@@ -9100,11 +9685,30 @@
           snapshot: inventoryEventItemSnapshot(lot)
         }
       });
+      const batchKey = event.stock_key || inventoryStockKey(lot);
+      const shouldAttachToUndo = canMergeQuickAdjustmentUndo({ batchKey });
+      const undoBatch = rememberQuickDecreaseUndo({
+        amount: 0,
+        batchKey,
+        eventId: event.id,
+        itemId: lot.id,
+        name: lot.name,
+        quantityDelta: addAmount,
+        snapshot: { ...lot },
+        stockKey: batchKey,
+        type: 'adjust',
+        unit,
+        depleted: false
+      });
       lot.quantity = nextQty;
       lot.updated_at = new Date().toISOString();
       saveData(items);
       refreshAll();
-      showToast(`[${lot.name}] ${quantityLabel(addAmount, unit)} 더했어요.`);
+      if (shouldAttachToUndo) {
+        showUndoToast(`[${lot.name}] 수량 변경 ${undoBatch.actionCount}건 저장했어요.`);
+      } else {
+        showToast(`[${lot.name}] ${quantityLabel(addAmount, unit)} 더했어요.`);
+      }
     }
 
     function handleInventoryQuickAdjust(action, refId) {
@@ -9132,10 +9736,6 @@
       if (action === 'decrease-item') {
         decreaseInventoryLot(item);
       } else if (action === 'increase-item') {
-        if (inventoryLotHasExpiryInput(item)) {
-          showToast('유통기한이 있는 재고는 직접 추가로 새 기한을 입력해주세요.');
-          return;
-        }
         increaseInventoryLot(item);
       }
     }
@@ -9316,6 +9916,8 @@
     let _deleteTargetIds = [];
     let _groupDeleteTargetIds = [];
     let _groupDeleteName = '';
+    let _groupEditTargetIds = [];
+    let _groupEditName = '';
 
     function groupDeleteLotMeta(item) {
       const status = lotStatusInfo(item);
@@ -9351,6 +9953,49 @@
       const sheet = document.getElementById('group-delete-sheet');
       sheet.classList.add('open');
       sheet.setAttribute('aria-hidden', 'false');
+    }
+
+    function openGroupEditChoice(card) {
+      const lots = sortedLots(card?.stock?.lots || []);
+      if (!lots.length) return;
+      _groupEditTargetIds = lots.map(item => item.id);
+      _groupEditName = card?.item?.name || lots[0]?.name || '재고';
+      document.getElementById('group-edit-text').textContent = `${_groupEditName} 묶음`;
+      document.getElementById('group-edit-list').innerHTML = `
+        <div class="group-edit-section-label">일괄 수정</div>
+        <button type="button" class="group-edit-option" data-group-edit-common="1">
+          <strong>공통 정보</strong>
+          <span>이름, 단위, 최소재고를 함께 바꿔요.</span>
+        </button>
+        <div class="group-edit-section-label">개별 수정</div>
+        ${lots.map(item => `
+          <button type="button" class="group-edit-option" data-group-edit-one="${escAttr(item.id)}">
+            <strong>${escHtml(item.name || _groupEditName)}</strong>
+            <span>${escHtml(groupDeleteLotMeta(item))}</span>
+          </button>
+        `).join('')}
+      `;
+      const sheet = document.getElementById('group-edit-sheet');
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeGroupEditChoice() {
+      const sheet = document.getElementById('group-edit-sheet');
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+      _groupEditTargetIds = [];
+      _groupEditName = '';
+    }
+
+    function openGroupCommonEditSheet(ids, name = '') {
+      const matched = items.filter(item => ids.includes(item.id));
+      if (!matched.length) return;
+      openItemEditSheet(matched[0].id, 'name', {
+        mode: 'group-common',
+        commonIds: matched.map(item => item.id),
+        groupName: name || matched[0].name
+      });
     }
 
     function closeGroupDeletePicker() {
@@ -9436,6 +10081,25 @@
       bumpFeedback(btn);
       closeGroupDeletePicker();
       openDeleteConfirm(id);
+    });
+    document.getElementById('group-edit-cancel').addEventListener('click', closeGroupEditChoice);
+    document.getElementById('group-edit-backdrop').addEventListener('click', closeGroupEditChoice);
+    document.getElementById('group-edit-list').addEventListener('click', e => {
+      const commonBtn = e.target.closest('[data-group-edit-common]');
+      if (commonBtn) {
+        const ids = [..._groupEditTargetIds];
+        const name = _groupEditName;
+        bumpFeedback(commonBtn);
+        closeGroupEditChoice();
+        openGroupCommonEditSheet(ids, name);
+        return;
+      }
+      const itemBtn = e.target.closest('[data-group-edit-one]');
+      if (!itemBtn) return;
+      const id = itemBtn.dataset.groupEditOne;
+      bumpFeedback(itemBtn);
+      closeGroupEditChoice();
+      openItemEditSheet(id, 'qty');
     });
     document.getElementById('group-detail-close').addEventListener('click', closeInventoryGroupDetail);
     document.getElementById('group-detail-backdrop').addEventListener('click', closeInventoryGroupDetail);
@@ -9533,6 +10197,7 @@
 
     let _editingItemId = null;
     let _editingExpiryType = 'SELL-BY';
+    let _editingGroupCommonIds = [];
 
     function setEditExpiryType(type) {
       _editingExpiryType = type === 'NONE' ? 'NONE' : 'SELL-BY';
@@ -9544,14 +10209,19 @@
       if (_editingExpiryType === 'NONE') date.value = '';
     }
 
-    function openItemEditSheet(id, focus = 'qty') {
+    function openItemEditSheet(id, focus = 'qty', options = {}) {
       const item = items.find(i => i.id === id);
       if (!item) return;
 
       _editingItemId = id;
-      document.getElementById('item-edit-title').textContent = item.name;
-      document.getElementById('item-edit-subtitle').textContent =
-        `${item.category || '미분류'} · 현재 ${item.quantity}${item.unit || '개'}`;
+      _editingGroupCommonIds = Array.isArray(options.commonIds) ? options.commonIds.filter(Boolean) : [];
+      const isGroupCommonEdit = options.mode === 'group-common' && _editingGroupCommonIds.length > 0;
+      document.getElementById('item-edit-title').textContent = isGroupCommonEdit
+        ? `${options.groupName || item.name} 공통 정보 수정`
+        : item.name;
+      document.getElementById('item-edit-subtitle').textContent = isGroupCommonEdit
+        ? `${_editingGroupCommonIds.length}개 재고에 같은 품목 정보를 적용해요. 수량과 유통기한은 바뀌지 않아요.`
+        : `${item.category || '미분류'} · 현재 ${item.quantity}${item.unit || '개'}`;
       document.getElementById('edit-name-input').value = item.name || '';
       document.getElementById('edit-qty-input').value = item.quantity;
       document.getElementById('edit-min-qty-input').value = minQuantityFieldValue(item.min_quantity);
@@ -9564,6 +10234,7 @@
       setEditExpiryType(item.expiry_type);
 
       const sheet = document.getElementById('item-edit-sheet');
+      sheet.dataset.editMode = isGroupCommonEdit ? 'group-common' : 'item';
       sheet.classList.add('open');
       sheet.setAttribute('aria-hidden', 'false');
       setTimeout(() => {
@@ -9578,7 +10249,9 @@
       const sheet = document.getElementById('item-edit-sheet');
       sheet.classList.remove('open');
       sheet.setAttribute('aria-hidden', 'true');
+      sheet.dataset.editMode = 'item';
       _editingItemId = null;
+      _editingGroupCommonIds = [];
       restoreManagerReturnContext();
     }
 
@@ -9618,16 +10291,47 @@
         minQtyInput.focus();
         return;
       }
+      const nextUnit = String(document.getElementById('edit-unit').value || '').trim() || '개';
+      const nextCategory = String(document.getElementById('edit-category').value || '').trim();
+      const nextStorage = String(document.getElementById('edit-storage').value || '').trim();
+      const nextOrigin = String(document.getElementById('edit-origin').value || '').trim();
+      if (_editingGroupCommonIds.length) {
+        const targetSet = new Set(_editingGroupCommonIds);
+        const matched = items.filter(row => targetSet.has(row.id));
+        if (!matched.length) return;
+        const previousNames = [...new Set(matched.map(row => row.name).filter(Boolean))];
+        const now = new Date().toISOString();
+        matched.forEach(row => {
+          row.name = nextName;
+          row.min_quantity = minQty;
+          row.unit = nextUnit;
+          row.category = nextCategory;
+          row.storage_method = nextStorage;
+          row.origin = nextOrigin;
+          row.updated_at = now;
+          rememberMinQuantityForItem(row, { clearWhenNull: true });
+        });
+        saveCustomPickerOption('edit-category', nextCategory);
+        saveCustomPickerOption('edit-origin', nextOrigin);
+        saveData(items);
+        refreshAll();
+        closeItemEditSheet();
+        const previousLabel = previousNames.length === 1 ? previousNames[0] : '묶음';
+        showToast(previousLabel === nextName
+          ? `[${nextName}] 공통 정보가 수정됐습니다.`
+          : `[${previousLabel}] → [${nextName}] 공통 정보가 수정됐습니다.`);
+        return;
+      }
       const managerEditBeforeTask = buildManagerBriefingTasks().find(task => task.item.id === item.id) || null;
       const previousName = item.name;
       const previousQuantity = Number(item.quantity) || 0;
       item.name = nextName;
       item.quantity = qty;
       item.min_quantity = minQty;
-      item.unit = String(document.getElementById('edit-unit').value || '').trim() || '개';
-      item.category = String(document.getElementById('edit-category').value || '').trim();
-      item.storage_method = String(document.getElementById('edit-storage').value || '').trim();
-      item.origin = String(document.getElementById('edit-origin').value || '').trim();
+      item.unit = nextUnit;
+      item.category = nextCategory;
+      item.storage_method = nextStorage;
+      item.origin = nextOrigin;
       item.expiry_type = _editingExpiryType;
       item.expiry_date = _editingExpiryType === 'NONE' ? null : document.getElementById('edit-expiry-date').value || null;
       item.updated_at  = new Date().toISOString();
@@ -9753,6 +10457,30 @@
       });
     });
     syncInventoryViewToggle();
+
+    const inventoryStatusHelpToggle = document.getElementById('inventory-status-help-toggle');
+    const inventoryStatusHelp = document.getElementById('inventory-status-help');
+
+    function closeInventoryStatusHelp() {
+      if (!inventoryStatusHelp || !inventoryStatusHelpToggle) return;
+      inventoryStatusHelp.hidden = true;
+      inventoryStatusHelpToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    inventoryStatusHelpToggle?.addEventListener('click', e => {
+      e.stopPropagation();
+      bumpFeedback(inventoryStatusHelpToggle);
+      const willOpen = inventoryStatusHelp?.hidden !== false;
+      if (inventoryStatusHelp) inventoryStatusHelp.hidden = !willOpen;
+      inventoryStatusHelpToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+
+    inventoryStatusHelp?.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', e => {
+      if (!inventoryStatusHelp || inventoryStatusHelp.hidden) return;
+      if (e.target.closest('#inventory-status-help-toggle, #inventory-status-help')) return;
+      closeInventoryStatusHelp();
+    });
 
     const CATEGORY_GROUPS = [
       {
@@ -9956,16 +10684,17 @@
         clearTimeout(_toastTimer);
         _toastTimer = null;
       }
-      el?.classList.remove('show');
+      el?.classList.remove('show', 'has-undo');
       if (el) el.innerHTML = '';
     }
 
     function showToast(msg, durationMs = 2200) {
       const el = document.getElementById('toast');
       el.textContent = msg;
+      el.classList.remove('has-undo');
       el.classList.add('show');
       if (_toastTimer) clearTimeout(_toastTimer);
-      _toastTimer = setTimeout(() => el.classList.remove('show'), durationMs);
+      _toastTimer = setTimeout(() => el.classList.remove('show', 'has-undo'), durationMs);
     }
 
     function showUndoToast(msg, durationMs = 4200) {
@@ -9976,10 +10705,10 @@
         e.stopPropagation();
         restoreQuickDecrease();
       }, { once: true });
-      el.classList.add('show');
+      el.classList.add('show', 'has-undo');
       if (_toastTimer) clearTimeout(_toastTimer);
       _toastTimer = setTimeout(() => {
-        el.classList.remove('show');
+        el.classList.remove('show', 'has-undo');
         _lastQuickDecreaseUndo = null;
       }, durationMs);
     }
@@ -10741,6 +11470,13 @@
         || null;
     }
 
+    function inventoryNameForUnitInference(name) {
+      return String(name || '')
+        .replace(/(^|\s)\d+(?:[.,]\d+)?\s*(ml|mL|ML|l|L|리터|kg|g|㎏|그램|oz|온스)\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
     function addNameRulePrediction(name) {
       const text = String(name || '').trim();
       const rules = [
@@ -10749,7 +11485,7 @@
         { re: /(딸기|바나나|레몬|라임|망고|블루베리|퓨레|토핑|과일)/i, fields: { unit: '팩', category: '과일/토핑', min_quantity: '2', storage_method: '냉장', origin: '국내산' } },
         { re: /(화이트\s*청크|청크|초콜릿|초코칩|초코\s*청크|chocolate|chunk)/i, fields: { unit: '봉', category: '과일/토핑', min_quantity: '2', storage_method: '상온', origin: '' } },
         { re: /(시럽|소스|드레싱|잼|초코|카라멜|바닐라|syrup|sauce|jam)/i, fields: { unit: '병', category: '시럽/소스', min_quantity: '2', storage_method: '상온', origin: '' } },
-        { re: /(레몬청|자몽청|유자청|청귤청|생강청|과일청|베이스|베이스액)/i, fields: { unit: '병', category: '청/베이스', min_quantity: '1', storage_method: '냉장', origin: '매장 제조' } },
+        { re: /(수제\s*청|레몬청|자몽청|유자청|청귤청|생강청|과일청|베이스|베이스액)/i, fields: { unit: '병', category: '청/베이스', min_quantity: '1', storage_method: '냉장', origin: '매장 제조' } },
         { re: /(원두|콜드브루|커피|coffee|bean)/i, fields: { unit: '봉', category: '커피', min_quantity: '3', storage_method: '상온', origin: '블렌드' } },
         { re: /(티백|홍차|녹차|얼그레이|티|tea)/i, fields: { unit: '개', category: '티', min_quantity: '12', storage_method: '상온', origin: '영국' } },
         { re: /(티라미수|케이크|디저트|푸딩|무스|마카롱)/i, fields: { unit: '개', category: '디저트', min_quantity: '2', storage_method: '냉장', origin: '매장 제조' } },
@@ -10762,10 +11498,11 @@
     }
 
     function inferAddFieldsFromName(name) {
-      const similar = findSimilarInventoryRecord(name);
-      const fromText = parseInventoryFieldsFromText(name);
-      const rule = addNameRulePrediction(name);
-      const learnedMinQuantity = learnedMinQuantityForName(name);
+      const inferenceName = inventoryNameForUnitInference(name) || name;
+      const similar = findSimilarInventoryRecord(inferenceName);
+      const fromText = parseInventoryFieldsFromText(inferenceName);
+      const rule = addNameRulePrediction(inferenceName);
+      const learnedMinQuantity = learnedMinQuantityForName(inferenceName);
       const similarMinQuantity = minQuantityFieldValue(similar?.min_quantity);
       return {
         unit: similar?.unit || rule.unit || fromText.unit || '',
@@ -14355,6 +15092,7 @@
     installSwipeDownClose('#date-picker-sheet .date-picker-panel', closeDatePicker, { threshold: 56 });
     installSwipeDownClose('#delete-confirm-sheet .delete-confirm-panel', closeDeleteConfirm, { threshold: 56 });
     installSwipeDownClose('#group-delete-sheet .group-delete-panel', closeGroupDeletePicker, { threshold: 56 });
+    installSwipeDownClose('#group-edit-sheet .group-delete-panel', closeGroupEditChoice, { threshold: 56 });
     installSwipeDownClose('#stock-group-sheet .stock-group-panel', closeStockGroupSuggestion, { threshold: 56 });
     installGroupDetailSheetExpansion();
     installSwipeDownClose('#group-detail-sheet .group-detail-panel', () => {
