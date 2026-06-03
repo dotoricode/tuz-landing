@@ -1784,7 +1784,7 @@
       bottom: 4px;
       flex: 0 0 auto;
       display: inline-grid;
-      grid-template-columns: 28px minmax(28px, auto);
+      grid-template-columns: 28px minmax(30px, auto) 28px;
       align-items: center;
       gap: 0;
       margin-left: 4px;
@@ -1798,7 +1798,7 @@
 
     .inv-quick-actions.has-plus {
       right: 7px;
-      grid-template-columns: 28px minmax(28px, auto) 28px;
+      grid-template-columns: 28px minmax(30px, auto) 28px;
       margin-right: 0;
     }
 
@@ -1827,8 +1827,16 @@
     }
 
     .inv-quick-btn.is-plus {
-      color: var(--manager-accent, var(--red));
+      color: var(--safe-fg);
       background: transparent;
+    }
+
+    .inv-quick-btn:disabled,
+    .inv-quick-btn.is-disabled {
+      color: var(--g2);
+      opacity: .55;
+      cursor: default;
+      transform: none;
     }
 
     .inv-quick-btn.is-date-add {
@@ -1848,7 +1856,14 @@
 
     .inv-quick-qty {
       min-width: 30px;
+      min-height: 30px;
       padding: 0 1px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 999px;
+      background: rgba(255,255,255,.86);
       color: var(--manager-ink, var(--ink));
       font-size: .78rem;
       font-weight: 950;
@@ -2604,10 +2619,57 @@
       touch-action: pan-y;
     }
 
+    #item-edit-sheet .add-sheet-panel {
+      padding: 6px 20px max(18px, env(safe-area-inset-bottom));
+      max-height: 86vh;
+    }
+
+    #item-edit-sheet .add-sheet-handle {
+      margin: 10px auto 10px;
+    }
+
+    #item-edit-sheet .add-sheet-title {
+      margin-bottom: 8px;
+    }
+
+    #item-edit-form {
+      gap: 8px;
+    }
+
+    #item-edit-sheet .edit-sheet-subtitle {
+      margin: -4px 0 0;
+      font-size: .78rem;
+      line-height: 1.25;
+    }
+
+    #item-edit-sheet .field-label {
+      margin: 0 0 4px;
+      font-size: .72rem;
+    }
+
+    #item-edit-sheet .form-input,
+    #item-edit-sheet .form-select,
+    #item-edit-sheet .qty-stepper button {
+      height: 42px;
+      border-radius: 11px;
+    }
+
+    #item-edit-sheet .qty-stepper {
+      grid-template-columns: 42px 1fr 42px;
+      gap: 7px;
+    }
+
+    #item-edit-sheet .edit-type-btn {
+      min-height: 36px;
+    }
+
+    #item-edit-sheet .edit-sheet-actions {
+      margin-top: 2px;
+    }
+
     #item-edit-sheet[data-edit-mode="group-common"] .edit-field-qty,
     #item-edit-sheet[data-edit-mode="group-common"] .edit-field-expiry-type,
-    #item-edit-sheet[data-edit-mode="group-common"] .edit-field-expiry-date,
-    #item-edit-sheet[data-edit-mode="group-common"] #item-edit-delete {
+    #item-edit-sheet[data-edit-mode="group-common"] .edit-field-expiry-date {
       display: none;
     }
 
@@ -2696,22 +2758,6 @@
       grid-template-columns: 1fr 1fr;
       gap: 8px;
       margin-top: 4px;
-    }
-
-    .edit-delete-btn {
-      min-height: 42px;
-      border: 1px solid #fecaca;
-      border-radius: 14px;
-      background: #fff7f7;
-      color: var(--red);
-      font-family: inherit;
-      font-size: .86rem;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .edit-delete-btn:active {
-      transform: scale(.98);
     }
 
     .delete-confirm-sheet {
@@ -6140,7 +6186,6 @@
           <span class="field-label">기한 날짜</span>
           <input type="text" id="edit-expiry-date" class="form-input" placeholder="연도-월-일" readonly inputmode="none" aria-haspopup="dialog">
         </label>
-        <button type="button" class="edit-delete-btn" id="item-edit-delete">이 재고 삭제</button>
         <div class="edit-sheet-actions">
           <button type="button" class="dlg-secondary" id="item-edit-cancel">취소</button>
           <button type="submit" class="dlg-primary">저장</button>
@@ -9335,12 +9380,12 @@
                   </div>
               </div>
             </button>
-            <div class="inv-quick-actions${showQuickIncrease ? ' has-plus' : ''}" aria-label="${escHtml(item.name)} 수량 빠른 조절">
+            <div class="inv-quick-actions has-plus" aria-label="${escHtml(item.name)} 수량 빠른 조절">
               <button type="button" class="inv-quick-btn is-minus" data-quick-adjust="decrease-group" data-quick-group-id="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 수량 1 줄이기">−</button>
               <span class="inv-quick-qty" aria-label="현재 수량 ${escHtml(quickQtyText)}">${escHtml(quickQtyText)}</span>
               ${showQuickIncrease
                 ? `<button type="button" class="inv-quick-btn is-plus" data-quick-adjust="increase-group" data-quick-group-id="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 수량 1 늘리기">+</button>`
-                : ''}
+                : `<button type="button" class="inv-quick-btn is-plus is-disabled" disabled aria-disabled="true" aria-label="${escHtml(item.name)} 수량 빠른 추가 비활성화">+</button>`}
             </div>
             <div class="inv-card-menu" data-group-menu-root>
               <button type="button" class="inv-card-menu-btn" data-group-menu="${escAttr(groupId)}" aria-label="${escHtml(item.name)} 관리 메뉴 열기" aria-expanded="false">⋯</button>
@@ -10356,12 +10401,6 @@
 
     document.getElementById('item-edit-backdrop').addEventListener('click', closeItemEditSheet);
     document.getElementById('item-edit-cancel').addEventListener('click', closeItemEditSheet);
-    document.getElementById('item-edit-delete').addEventListener('click', () => {
-      if (!_editingItemId) return;
-      const id = _editingItemId;
-      closeItemEditSheet();
-      openDeleteConfirm(id);
-    });
     document.getElementById('item-edit-form').addEventListener('submit', e => {
       e.preventDefault();
       saveItemEdit();

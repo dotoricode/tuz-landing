@@ -107,7 +107,7 @@ assert(!html.includes('function markInventoryLotOpened'), 'Inventory open action
 
 const quickIncreaseGate = functionBody('canQuickIncreaseStock');
 assert(quickIncreaseGate.includes('lots.every'), 'Quick plus must be limited by stock lots');
-assert(quickIncreaseGate.includes('inventoryLotHasExpiryInput'), 'Quick plus must be hidden for expiry-date stock');
+assert(quickIncreaseGate.includes('inventoryLotHasExpiryInput'), 'Quick plus must be disabled for expiry-date stock');
 
 const quickAdjust = functionBody('handleInventoryQuickAdjust');
 assert(quickAdjust.includes('captureQuickAdjustOrder'), 'Quick +/- must lock the current visible order before refreshing');
@@ -118,11 +118,13 @@ const renderList = functionBody('renderList');
 assert(renderList.includes('inv-quick-qty'), 'Grouped quick controls must show current quantity');
 assert(renderList.indexOf('is-minus') < renderList.indexOf('inv-quick-qty'), 'Grouped quick controls must show the minus action before the quantity');
 assert(renderList.includes('increase-group'), 'Grouped quick controls must include plus action');
-assert(renderList.includes('canQuickIncreaseStock'), 'Grouped plus action must render only when expiry is missing');
+assert(renderList.includes('canQuickIncreaseStock'), 'Grouped plus action must only be enabled when expiry is missing');
 assert(renderList.includes('compactStockExpiryDateLabel(stock)'), 'Grouped item summary must show the nearest expiry D-day');
 assert(renderList.includes('`최소 ${quantityLabel(stock.minQuantity, unit)}`'), 'Grouped item summary must use the compact minimum-stock label');
 assert(renderList.includes("`${minText || '최소 없음'}, 기한 ${compactStockExpiryDateLabel(stock)}`"), 'Grouped item summary must separate minimum stock and D-day with a comma and label');
-assert(renderList.includes("inv-quick-actions${showQuickIncrease ? ' has-plus' : ''}"), 'Grouped quick controls must only reserve plus space when plus is visible');
+assert(renderList.includes('inv-quick-actions has-plus'), 'Grouped quick controls must reserve plus space for enabled and disabled plus states');
+assert(renderList.includes('is-plus is-disabled'), 'Grouped quick controls must show a disabled plus for expiry-date stock');
+assert(renderList.includes('disabled aria-disabled="true"'), 'Disabled grouped plus must not be actionable');
 assert(!renderList.includes('inv-quick-spacer'), 'Grouped quick controls must not render empty spacer slots');
 assert(renderList.includes('data-group-menu'), 'Grouped cards must expose a top-right management menu');
 assert(renderList.includes('data-group-menu-action="restock"'), 'Grouped card menu must include restock');
@@ -186,8 +188,8 @@ assert.match(html, /\.inv-quick-btn\.is-plus\s*\{[^}]*background:\s*transparent/
 assert.match(html, /#toast\s*\{[^}]*box-shadow:\s*0 18px 44px/s, 'Toast must be visually prominent enough for quick inventory actions');
 assert(html.includes('#toast.has-undo'), 'Undo toast must have a dedicated visual state');
 assert(html.includes("el.classList.add('show', 'has-undo')"), 'Undo toast must activate its dedicated visual state');
-assert(html.includes('grid-template-columns: 28px minmax(28px, auto)'), 'Grouped quick controls must keep the compact minus/quantity layout');
-assert(html.includes('grid-template-columns: 28px minmax(28px, auto) 28px'), 'Grouped quick controls with plus must stay compact');
+assert(html.includes('grid-template-columns: 28px minmax(30px, auto) 28px'), 'Grouped quick controls must keep a compact minus/quantity/plus layout');
+assert(html.includes('border-radius: 999px'), 'Grouped quick quantity must use a circular outline');
 assert.match(html, /\.inv-card\.group-card \.inv-card-main\s*\{[^}]*padding-right:\s*30px/s, 'Grouped card body must keep its original compact text spacing');
 assert.match(html, /\.inv-quick-actions\s*\{[^}]*position:\s*absolute[^}]*right:\s*17px[^}]*bottom:\s*4px/s, 'Grouped quick controls must sit low enough for the quantity text to match expanded card quantity');
 assert.match(html, /\.inv-quick-actions\.has-plus\s*\{[^}]*right:\s*7px/s, 'Grouped quick controls with plus must sit closer to the card edge');
