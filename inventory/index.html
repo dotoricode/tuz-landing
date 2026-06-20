@@ -137,7 +137,7 @@
       max-width: 100%;
       overflow-x: hidden;
       font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--manager-hero, var(--red));
+      background: var(--manager-sheet, #fff);
       color: var(--manager-ink, var(--ink));
       -webkit-font-smoothing: antialiased;
       overscroll-behavior: none;
@@ -393,7 +393,20 @@
       overflow-x: hidden;
       width: 100%;
       max-width: 100vw;
+      background: var(--manager-sheet, #fff);
       overscroll-behavior-x: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: max(20px, env(safe-area-inset-bottom));
+      background: var(--manager-sheet, #fff);
+      pointer-events: none;
+      z-index: 2147483601;
     }
 
     .inventory-dev-badge {
@@ -2368,13 +2381,12 @@
     /* ── BOTTOM BAR ───────────────────────────────────────────── */
     .rh-bottom-bar {
       position: fixed;
-      bottom: 0;
+      bottom: -24px;
       left: 0;
       right: 0;
-      padding: 12px 16px max(20px, env(safe-area-inset-bottom));
-      background: linear-gradient(to top, var(--manager-bottom-solid, rgba(255,255,255,.97)) 55%, var(--manager-bottom-clear, rgba(255,255,255,0)));
-      backdrop-filter: blur(14px) saturate(150%);
-      -webkit-backdrop-filter: blur(14px) saturate(150%);
+      padding: 12px 16px max(44px, env(safe-area-inset-bottom) + 24px);
+      background: var(--manager-sheet, #fff);
+      isolation: isolate;
       display: grid;
       grid-template-columns: minmax(74px, .92fr) minmax(128px, 1.38fr) minmax(92px, 1.05fr);
       gap: 8px;
@@ -2382,7 +2394,21 @@
       z-index: 100;
     }
 
+    .rh-bottom-bar::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -2px;
+      height: max(34px, env(safe-area-inset-bottom) + 20px);
+      background: var(--manager-sheet, #fff);
+      pointer-events: none;
+      z-index: 0;
+    }
+
     .rh-bottom-action {
+      position: relative;
+      z-index: 1;
       height: 64px;
       border-radius: 18px;
       border: 1.5px solid var(--manager-border, var(--g3));
@@ -2395,7 +2421,7 @@
       gap: 5px;
       min-width: 0;
       padding: 0 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      box-shadow: none;
       font-family: inherit;
       cursor: pointer;
       transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
@@ -2433,7 +2459,7 @@
       background: var(--manager-accent, var(--red));
       border: none;
       color: #fff;
-      box-shadow: 0 10px 22px rgba(83,42,25,.18);
+      box-shadow: none;
     }
 
     #rh-add-btn .rh-bottom-action-icon {
@@ -2441,6 +2467,11 @@
       color: #fff;
       font-size: 1.15rem;
       font-weight: 950;
+    }
+
+    #app[data-manager="cookie"] #rh-add-btn.rh-bottom-action {
+      background: var(--red);
+      box-shadow: none;
     }
 
     #manager-call-btn {
@@ -6563,7 +6594,7 @@
     // CONFIG
     // ──────────────────────────────────────────────────────────────
     const PIN_HASHES = [
-      '95088386144d28ddba4ef6d05a1a43fedfcab43ff21c32cfbd7085e60dc08c95',
+      '03afd86f5563ab156880ecd5c617a3925a1b928325fced5f42f931750b40c2e4', // demo: 1234
     ];
     const PIN_SALT = 'tuz.kr/inventory:v1';
     const AUTH_KEY = 'tuz_inv_auth_v1';
@@ -6583,10 +6614,10 @@
     const INVENTORY_TABLE = 'inventory_items';
     const INVENTORY_EVENT_TABLE = 'inventory_events';
     const SUPABASE_MODULE_URL = '/shared/supabase.js?v=54';
-    const INVENTORY_PRODUCTION_HOSTS = new Set(['tuz.kr', 'www.tuz.kr']);
+    const INVENTORY_PRODUCTION_HOSTS = new Set(['tuz.kr', 'www.tuz.kr', 'tuz-inven-demo.vercel.app']);
     const INVENTORY_REMOTE_SYNC_ENABLED = INVENTORY_PRODUCTION_HOSTS.has(window.location.hostname);
     const INVENTORY_MOCK_DATA_FORCE = !INVENTORY_REMOTE_SYNC_ENABLED && new URLSearchParams(location.search).get('mockData') === '1';
-    const LOCAL_DEV_PIN = '040914';
+    const LOCAL_DEV_PIN = '1234';
     const INVENTORY_STORAGE_SUFFIX = INVENTORY_REMOTE_SYNC_ENABLED ? '' : ':dev';
     const INVENTORY_STORAGE_KEY = `${INV_KEY}${INVENTORY_STORAGE_SUFFIX}`;
     const INVENTORY_EVENT_STORAGE_KEY = `${INVENTORY_EVENT_KEY}${INVENTORY_STORAGE_SUFFIX}`;
