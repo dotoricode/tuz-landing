@@ -37,15 +37,22 @@ assert.equal(count(/function restoreQuickDecrease\s*\(/g), 1, 'restoreQuickDecre
 assert.equal(count(/function decreaseInventoryLot\s*\(/g), 1, 'decreaseInventoryLot should have one event-based implementation');
 assert.equal(count(/function handleInventoryQuickAdjust\s*\(/g), 1, 'quick adjust dispatcher should have one implementation');
 
-assert(!html.includes('today-used-sheet'), 'One-click direct-selection sheet must not ship');
-assert(!html.includes('today-oneclick-sheet'), 'One-click choice sheet must not ship');
-assert(!html.includes('today-ai-result-sheet'), 'One-click AI result sheet must not ship');
-assert(!html.includes('today-use-intro-sheet'), 'One-click intro sheet must not ship');
-assert(!html.includes('한 번에 정리'), 'One-click cleanup copy must not ship');
-assert(!html.includes('quick-use-beta-batch'), 'One-click AI batch deduction must not ship');
-requireMatch(/id="manager-call-btn"[^>]*재고 AI 매니저 호출/, 'Bottom action must remain the manager AI entrypoint');
-requireMatch(/id="manager-call-label">하동 AI<\/span>/, 'Bottom action label must default to manager AI');
-requireMatch(/setElText\('manager-call-label', profile\.aiButtonLabel/, 'Manager profile must set the AI button label');
+requireMatch(/id="today-used-sheet"/, 'One-click direct-selection sheet must ship');
+requireMatch(/id="today-oneclick-sheet"/, 'One-click choice sheet must ship');
+requireMatch(/id="today-ai-result-sheet"/, 'One-click AI result sheet must ship');
+requireMatch(/id="today-use-intro-sheet"/, 'One-click intro sheet must ship');
+assert(html.includes('한 번에 정리'), 'One-click cleanup copy must ship');
+assert(html.includes('quick-use-beta-batch'), 'One-click AI batch deduction must ship');
+requireMatch(/id="manager-call-btn"[^>]*한 번에 정리 열기/, 'Bottom action must open one-click cleanup');
+requireMatch(/id="manager-call-label">한 번에 정리<\/span>/, 'Bottom action label must default to one-click cleanup');
+requireMatch(/setElText\('manager-call-label', '한 번에 정리'\)/, 'Manager profile must keep the one-click cleanup label');
+assert(!html.includes('today-use-intro-list'), 'First-run one-click intro must stay short');
+assert(!html.includes('사용할수록 자주 쓰는 재료'), 'First-run one-click intro must avoid long explanatory copy');
+assert(html.includes('today-use-intro-steps'), 'First-run one-click intro must briefly explain available modes');
+assert(html.includes('<strong>직접 선택</strong>'), 'First-run one-click intro must explain direct selection');
+assert(html.includes('<strong>AI 차감</strong>'), 'First-run one-click intro must explain AI deduction');
+assert(html.includes('추천 후보를 보여주고, 확인 후 차감해요.'), 'AI deduction copy must emphasize review before deduction');
+requireMatch(/id="today-use-intro-accept">바로 정리<\/button>/, 'First-run one-click intro primary action must be short');
 requireMatch(/const INVENTORY_EVENT_TABLE = 'inventory_events'/, 'Inventory event table constant is missing');
 requireMatch(/const INVENTORY_EVENT_STORAGE_KEY = `\$\{INVENTORY_EVENT_KEY\}\$\{INVENTORY_STORAGE_SUFFIX\}`/, 'Event local storage key is missing');
 
@@ -137,7 +144,10 @@ assert(!renderList.includes('>추가</button>'), 'Dated stock quick action must 
 assert(renderList.includes("groupCard?.classList.contains('has-menu-open')"), 'Grouped card body clicks must be ignored while the menu is open');
 assert(renderList.includes("[data-group-menu-root]').forEach"), 'Grouped card menu root must stop click propagation');
 assert(renderList.includes('e.preventDefault()'), 'Grouped card menu clicks must not fall through to card detail actions');
-assert(renderList.includes('sortByQuickAdjustItemOrder'), 'Expanded item view must use grouped-style risk sorting');
+const expandedItemOrder = functionBody('sortByQuickAdjustItemOrder');
+assert(expandedItemOrder.includes('_quickAdjustItemOrder'), 'Expanded quick +/- must reuse the previous visual order');
+assert(expandedItemOrder.includes('inventoryExpandedItemSort'), 'Expanded quick order must fall back to grouped-style risk sorting');
+assert(html.includes('renderExpandedList(sortByQuickAdjustItemOrder(data))'), 'Expanded item view must use grouped-style risk sorting');
 
 const renderExpanded = functionBody('renderExpandedList');
 assert(!renderExpanded.includes('data-quick-adjust'), 'Expanded item view must not expose quick quantity controls');
@@ -280,6 +290,8 @@ assert(expandedSort.includes('lotUrgencyRank'), 'Expanded item sorting must keep
 const clearOrder = functionBody('clearQuickAdjustOrderLock');
 assert(clearOrder.includes('_quickAdjustGroupOrder = null'), 'Quick order lock must be clearable for intentional filter changes');
 assert(clearOrder.includes('_quickAdjustItemOrder = null'), 'Quick item order lock must be clearable for intentional filter changes');
+
+assert.match(html, /\.today-used-sheet-panel\s*\{(?![^}]*position:\s*relative)/s, 'Closed today-used sheet must not override bottom-sheet positioning');
 
 for (const statement of [
   /CREATE TABLE IF NOT EXISTS public\.inventory_events/,

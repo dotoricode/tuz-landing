@@ -26,8 +26,15 @@ inventory/tuz-inven-handoff/
 # Local design audit / preview scratchpads
 .design-audit/
 .design-preview/
+.playwright-mcp/
+.serena/
+supabase/
+session-report-*.html
+regression-*.png
+final-home.png
 
 # Tink runtime state
+.tink/
 .tink/current/
 .tink/runs/
 .tink/cache/

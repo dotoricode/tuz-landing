@@ -1807,10 +1807,10 @@
       height: 36px;
       border: 0;
       border-radius: 50%;
-      background: transparent;
+      background: rgba(255,255,255,.88);
       color: var(--manager-ink, var(--ink));
       font-family: inherit;
-      font-size: .86rem;
+      font-size: 1.05rem;
       font-weight: 900;
       line-height: 1;
       cursor: pointer;
@@ -1819,6 +1819,7 @@
       justify-content: center;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      box-shadow: 0 4px 10px rgba(0,0,0,.06);
     }
 
     .inv-quick-btn.is-minus {
@@ -2830,6 +2831,129 @@
       color: var(--manager-ink, var(--ink));
       font-size: .92rem;
       font-weight: 950;
+    }
+
+    .today-use-intro-panel {
+      padding-bottom: max(18px, env(safe-area-inset-bottom));
+      border: 1px solid var(--today-intro-border, var(--manager-border, var(--bone)));
+      background: var(--today-intro-bg, var(--manager-sheet, #fff));
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+    }
+
+    .today-use-intro-panel .add-sheet-handle {
+      background: color-mix(in srgb, var(--today-intro-accent, var(--manager-accent, var(--red))) 24%, transparent);
+    }
+
+    .today-use-intro-panel .delete-confirm-icon {
+      background: var(--today-intro-soft, var(--manager-soft, var(--red-tint)));
+      color: var(--today-intro-accent, var(--manager-accent, var(--red)));
+    }
+
+    .today-use-intro-panel .delete-confirm-title {
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+    }
+
+    .today-use-intro-panel .delete-confirm-text {
+      color: var(--today-intro-muted, var(--manager-muted, var(--g1)));
+    }
+
+    .today-use-intro-panel .delete-confirm-cancel {
+      background: color-mix(in srgb, var(--today-intro-soft, var(--manager-soft, var(--bone))) 72%, #fff);
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+    }
+
+    .today-use-intro-panel .delete-confirm-accept {
+      background: var(--today-intro-accent, var(--manager-accent, var(--red)));
+      color: #fff;
+    }
+
+    .today-use-intro-manager {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 14px;
+      padding: 14px 12px;
+      border: 1px solid var(--today-intro-border, var(--manager-border, var(--bone)));
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--today-intro-card, #fff) 82%, var(--today-intro-soft, var(--manager-soft, #fff7ed)));
+    }
+
+    .today-use-intro-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      flex: 0 0 auto;
+      object-fit: contain;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    }
+
+    .today-use-intro-manager strong,
+    .today-use-intro-manager span {
+      display: block;
+      line-height: 1.28;
+    }
+
+    .today-use-intro-manager strong {
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+      font-size: 1rem;
+      font-weight: 950;
+    }
+
+    .today-use-intro-manager span {
+      margin-top: 5px;
+      color: var(--today-intro-muted, var(--manager-muted, var(--g1)));
+      font-size: .82rem;
+      font-weight: 750;
+    }
+
+    .today-use-intro-steps {
+      display: grid;
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+
+    .today-use-intro-step {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      padding: 10px 11px;
+      border: 1px solid var(--today-intro-border, var(--manager-border, var(--bone)));
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--today-intro-card, #fff) 90%, var(--today-intro-soft, var(--manager-soft, #fff7ed)));
+    }
+
+    .today-use-intro-step-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--today-intro-soft, var(--manager-soft, var(--red-tint)));
+      color: var(--today-intro-accent, var(--manager-accent, var(--red)));
+      font-size: .98rem;
+      font-weight: 950;
+    }
+
+    .today-use-intro-step strong,
+    .today-use-intro-step span {
+      display: block;
+      line-height: 1.3;
+    }
+
+    .today-use-intro-step strong {
+      color: var(--today-intro-ink, var(--manager-ink, var(--ink)));
+      font-size: .84rem;
+      font-weight: 950;
+    }
+
+    .today-use-intro-step span {
+      margin-top: 2px;
+      color: var(--today-intro-muted, var(--manager-muted, var(--g1)));
+      font-size: .72rem;
+      font-weight: 750;
     }
 
     .group-delete-panel {
@@ -5454,6 +5578,207 @@
 
     .disposal-actions { display: flex; gap: 8px; }
 
+    .today-used-panel {
+      padding: 0 0 max(2px, env(safe-area-inset-bottom));
+      color: var(--manager-ink, var(--ink));
+    }
+
+    .today-used-sheet-panel {
+      max-height: min(88vh, 720px);
+      overflow-y: auto;
+      background: var(--manager-sheet, #fff);
+    }
+
+    .today-used-panel.is-focused {
+      outline: 3px solid color-mix(in srgb, var(--manager-accent, var(--red)) 34%, transparent);
+      outline-offset: 3px;
+    }
+
+    .today-used-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 42px 12px 2px;
+      border-bottom: 1px solid var(--manager-border, var(--bone));
+      margin-bottom: 2px;
+    }
+
+    .today-used-title {
+      font-size: .92rem;
+      font-weight: 900;
+      color: var(--manager-ink, var(--ink));
+      line-height: 1.2;
+    }
+
+    .today-used-caption {
+      margin-top: 2px;
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--manager-muted, var(--g1));
+      line-height: 1.25;
+    }
+
+    .today-used-count {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      color: var(--manager-muted, var(--g1));
+      font-size: .66rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .today-used-header-tools {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .today-used-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 3;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      background: transparent;
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 950;
+      cursor: pointer;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .today-oneclick-panel,
+    .today-ai-result-panel {
+      border: 1px solid var(--manager-border, var(--bone));
+      background: var(--manager-sheet, #fff);
+      color: var(--manager-ink, var(--ink));
+    }
+
+    .today-oneclick-head,
+    .today-ai-result-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-right: 42px;
+    }
+
+    .today-oneclick-title,
+    .today-ai-result-title {
+      color: var(--manager-ink, var(--ink));
+      font-size: 1.02rem;
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .today-oneclick-copy,
+    .today-ai-result-copy {
+      margin-top: 4px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .74rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .today-oneclick-close,
+    .today-ai-result-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 3;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      border: 0;
+      background: transparent;
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      font-size: .95rem;
+      font-weight: 950;
+      cursor: pointer;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      pointer-events: auto;
+    }
+
+    .today-oneclick-options {
+      display: grid;
+      gap: 8px;
+    }
+
+    .today-oneclick-option {
+      width: 100%;
+      min-height: 82px;
+      padding: 13px 14px;
+      border: 1px solid var(--manager-border, var(--bone));
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--manager-card, #fff) 88%, var(--manager-soft, var(--cream)));
+      color: var(--manager-ink, var(--ink));
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .today-oneclick-option:active {
+      transform: scale(.985);
+    }
+
+    .today-oneclick-option strong,
+    .today-oneclick-option span {
+      display: block;
+    }
+
+    .today-oneclick-option strong {
+      font-size: .9rem;
+      font-weight: 950;
+      line-height: 1.22;
+    }
+
+    .today-oneclick-option span {
+      margin-top: 5px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .72rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .today-oneclick-option small {
+      margin-left: 5px;
+      color: var(--manager-accent, var(--red));
+      font-size: .58rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      vertical-align: 1px;
+    }
+
+    .today-oneclick-option.is-ai {
+      border-color: color-mix(in srgb, var(--manager-accent, var(--red)) 34%, var(--manager-border, var(--bone)));
+      background: color-mix(in srgb, var(--manager-soft, var(--red-tint)) 54%, #fff);
+    }
+
+    .today-oneclick-note {
+      margin-top: 10px;
+      color: var(--manager-muted, var(--g1));
+      font-size: .66rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
     .today-used-section {
       margin-top: 12px;
       padding: 12px;
@@ -6045,6 +6370,8 @@
         <!-- Hidden dday tiles (IDs referenced by refreshDashboard) -->
         <div id="dday-tiles" style="display:none"></div>
 
+        <div id="today-used-anchor" hidden></div>
+
         <!-- Crisis alert -->
         <div id="crisis-alert" hidden>
           <div id="crisis-message"></div>
@@ -6069,11 +6396,9 @@
         <span class="rh-bottom-action-icon" aria-hidden="true">+</span>
         <span class="rh-bottom-action-label">직접 추가</span>
       </button>
-      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="재고 AI 매니저 호출">
-        <span class="rh-bottom-manager-avatar" aria-hidden="true">
-          <img id="manager-bottom-img" src="assets/mascot-poodle.png" alt="">
-        </span>
-        <span class="rh-bottom-action-label" id="manager-call-label">하동 AI</span>
+      <button type="button" id="manager-call-btn" class="rh-bottom-action" aria-label="한 번에 정리 열기">
+        <span class="rh-bottom-manager-avatar rh-bottom-today-icon" id="today-used-bottom-icon" aria-hidden="true">👆🏻</span>
+        <span class="rh-bottom-action-label" id="manager-call-label">한 번에 정리</span>
       </button>
     </div>
 
@@ -6249,6 +6574,92 @@
       <div class="delete-confirm-actions">
         <button type="button" class="delete-confirm-cancel" id="stock-group-cancel">따로 관리</button>
         <button type="button" class="delete-confirm-accept" id="stock-group-accept">같은 재고로 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="today-use-intro-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-use-intro-backdrop"></div>
+    <div class="delete-confirm-panel today-use-intro-panel" role="dialog" aria-modal="true" aria-labelledby="today-use-intro-title">
+      <div class="add-sheet-handle"></div>
+      <div class="today-use-intro-manager">
+        <img class="today-use-intro-avatar" id="today-use-intro-avatar" src="assets/mascot-poodle.png" alt="">
+        <div>
+          <strong id="today-use-intro-title">오늘 쓴 재료 정리할까요?</strong>
+          <span id="today-use-intro-text">기한 가까운 재고부터 바로 차감해요.</span>
+        </div>
+      </div>
+      <div class="today-use-intro-steps" aria-label="정리 방식 안내">
+        <div class="today-use-intro-step">
+          <span class="today-use-intro-step-icon" aria-hidden="true">1</span>
+          <div>
+            <strong>직접 선택</strong>
+            <span>쓴 재료를 눌러 1개씩 차감해요.</span>
+          </div>
+        </div>
+        <div class="today-use-intro-step">
+          <span class="today-use-intro-step-icon" aria-hidden="true">AI</span>
+          <div>
+            <strong>AI 차감</strong>
+            <span>추천 후보를 보여주고, 확인 후 차감해요.</span>
+          </div>
+        </div>
+      </div>
+      <div class="delete-confirm-actions">
+        <button type="button" class="delete-confirm-cancel" id="today-use-intro-cancel">나중에</button>
+        <button type="button" class="delete-confirm-accept" id="today-use-intro-accept">바로 정리</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="today-oneclick-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-oneclick-backdrop"></div>
+    <div class="delete-confirm-panel today-oneclick-panel" role="dialog" aria-modal="true" aria-labelledby="today-oneclick-title">
+      <div class="add-sheet-handle"></div>
+      <div class="today-oneclick-head">
+        <div>
+          <div class="today-oneclick-title" id="today-oneclick-title">한 번에 정리</div>
+          <div class="today-oneclick-copy" id="today-oneclick-copy">오늘 쓴 재료를 어떻게 차감할지 골라주세요.</div>
+        </div>
+        <button type="button" class="today-oneclick-close" id="today-oneclick-close" aria-label="한 번에 정리 닫기">×</button>
+      </div>
+      <div class="today-oneclick-options">
+        <button type="button" class="today-oneclick-option" id="today-oneclick-direct">
+          <strong>직접 선택</strong>
+          <span>재료를 직접 눌러 먼저 써야 하는 재고에서 1개씩 차감해요.</span>
+        </button>
+        <button type="button" class="today-oneclick-option is-ai" id="today-oneclick-ai">
+          <strong>AI 차감 <small>Beta</small></strong>
+          <span>사용 패턴이 쌓일수록 더 정확해져요. 지금은 추천 후보를 확인하고 최대 4개만 차감해요.</span>
+        </button>
+      </div>
+      <div class="today-oneclick-note" id="today-oneclick-note"></div>
+    </div>
+  </div>
+
+  <div id="today-used-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-used-backdrop"></div>
+    <div class="delete-confirm-panel today-used-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="today-used-sheet-title">
+      <div class="add-sheet-handle"></div>
+      <section id="today-used-panel" class="today-used-panel" aria-label="직접 선택 차감"></section>
+    </div>
+  </div>
+
+  <div id="today-ai-result-sheet" class="delete-confirm-sheet" aria-hidden="true">
+    <div class="delete-confirm-backdrop" id="today-ai-result-backdrop"></div>
+    <div class="delete-confirm-panel today-ai-result-panel" role="dialog" aria-modal="true" aria-labelledby="today-ai-result-title">
+      <div class="add-sheet-handle"></div>
+      <div class="today-ai-result-head">
+        <div>
+          <div class="today-ai-result-title" id="today-ai-result-title">AI 차감 결과</div>
+          <div class="today-ai-result-copy" id="today-ai-result-copy"></div>
+        </div>
+        <button type="button" class="today-ai-result-close" id="today-ai-result-close" aria-label="AI 차감 결과 닫기">×</button>
+      </div>
+      <div class="today-ai-result-list" id="today-ai-result-list"></div>
+      <div class="today-ai-result-actions">
+        <button type="button" class="today-ai-result-secondary" id="today-ai-result-direct">직접 더 보기</button>
+        <button type="button" class="today-ai-result-primary" id="today-ai-result-done">완료</button>
       </div>
     </div>
   </div>
@@ -6579,6 +6990,7 @@
     const INVENTORY_TUTORIAL_HIDDEN_UNTIL_KEY = 'tuz_inv_tutorial_hidden_until_v1';
     const INVENTORY_TUTORIAL_SESSION_KEY = 'tuz_inv_tutorial_closed_session_v1';
     const INVENTORY_TUTORIAL_SEEN_KEY = 'tuz_inv_tutorial_seen_v1';
+    const TODAY_USE_INTRO_SEEN_KEY = 'tuz_inv_today_use_intro_seen_v1';
     const INVENTORY_TUTORIAL_FORCE = new URLSearchParams(location.search).get('tutorial') === '1';
     const INVENTORY_TABLE = 'inventory_items';
     const INVENTORY_EVENT_TABLE = 'inventory_events';
@@ -6592,6 +7004,7 @@
     const INVENTORY_EVENT_STORAGE_KEY = `${INVENTORY_EVENT_KEY}${INVENTORY_STORAGE_SUFFIX}`;
     const INVENTORY_DEMO_KEY = `${DEMO_KEY}${INVENTORY_STORAGE_SUFFIX}`;
     const INVENTORY_REMOTE_READY_STORAGE_KEY = `${INVENTORY_REMOTE_READY_KEY}${INVENTORY_STORAGE_SUFFIX}`;
+    const TODAY_USE_INTRO_SEEN_STORAGE_KEY = `${TODAY_USE_INTRO_SEEN_KEY}${INVENTORY_STORAGE_SUFFIX}`;
     const MANAGER_PROFILES = {
       hadong: {
         id: 'hadong',
@@ -6763,9 +7176,9 @@
       setElText('hadong-header-title', '재고 AI');
       setElText('hadong-header-subtitle', profile.headerSubtitle);
       setElText('ai-sheet-title', `${profile.name} 상세 점검`);
-      setElText('manager-call-label', profile.aiButtonLabel || `${profile.name} AI`);
+      setElText('manager-call-label', '한 번에 정리');
       const managerCallBtn = document.getElementById('manager-call-btn');
-      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', `${profile.aiButtonLabel || `${profile.name} AI`} 호출`);
+      if (managerCallBtn) managerCallBtn.setAttribute('aria-label', '한 번에 정리 열기');
       setManagerDetailTabLabels(profile);
       const input = document.getElementById('hadong-input');
       if (input) input.placeholder = '예: 라떼 재료, 부족한 시럽, 우유 상태';
@@ -6773,6 +7186,7 @@
         btn.classList.toggle('is-selected', btn.dataset.managerChoice === profile.id);
       });
       refreshAiModelPanel();
+      applyTodayUseIntroTheme();
       return profile;
     }
 
@@ -6868,16 +7282,16 @@
         image: '',
         liveFocus: true,
         focus: {
-          targetSelectors: ['#manager-call-btn'],
+          targetSelectors: ['#today-oneclick-sheet .today-oneclick-panel', '#manager-call-btn'],
           padding: 8,
           radius: 18,
           labelPlacement: 'before',
-          label: '하단 매니저 AI 버튼을 눌러 재고 AI를 열어요'
+          label: '한 번에 정리에서 방식을 골라요'
         },
         cardPlacement: 'top',
-        setup: 'aiSearch',
-        title: '매니저 AI로 재고 AI 열기',
-        copy: '하동이나 쿠키가 재고 상태를 같이 보고 부족한 품목, 기한 임박 재료, 오늘 처리할 일을 알려줍니다.'
+        setup: 'todayUse',
+        title: '한 번에 정리로 빠르게 차감',
+        copy: '직접 선택은 재료를 눌러 1개씩 차감하고, AI 차감은 사용 패턴이 쌓인 재료를 한 번에 정리합니다.'
       },
       {
         image: '',
@@ -7000,6 +7414,10 @@
       document.getElementById('hadong-sheet')?.classList.remove('open');
       document.getElementById('ai-overlay')?.classList.remove('open');
       document.getElementById('ai-sheet')?.classList.remove('open');
+      closeTodayUseIntro?.();
+      closeTodayOneClickChoice?.();
+      closeTodayUsedPanel?.();
+      closeTodayAiResult?.();
       closeManagerSelectSheet?.({ force: true });
       clearInventoryTutorialDemoMessages();
     }
@@ -7014,6 +7432,9 @@
         window.scrollTo(0, 0);
       } else if (step.setup === 'add') {
         window.scrollTo(0, 0);
+      } else if (step.setup === 'todayUse') {
+        window.scrollTo(0, 0);
+        openTodayOneClickChoice?.();
       } else if (step.setup === 'aiDetail') {
         openHadongChat();
         const box = document.getElementById('hadong-messages');
@@ -7322,10 +7743,48 @@
 
     document.getElementById('manager-call-btn')?.addEventListener('click', e => {
       bumpFeedback(e.currentTarget);
-      openHadongChat();
-      setHadongView('chat');
-      requestAnimationFrame(() => document.getElementById('hadong-input')?.focus());
+      toggleTodayUsedPanel();
     });
+    document.getElementById('today-use-intro-accept')?.addEventListener('click', acceptTodayUseIntro);
+    document.getElementById('today-use-intro-cancel')?.addEventListener('click', closeTodayUseIntro);
+    document.getElementById('today-use-intro-backdrop')?.addEventListener('click', closeTodayUseIntro);
+    document.getElementById('today-oneclick-backdrop')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-oneclick-close')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-oneclick-sheet')?.addEventListener('click', e => {
+      if (!e.target.closest('#today-oneclick-close, #today-oneclick-backdrop')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeTodayOneClickStack();
+    }, true);
+    document.getElementById('today-oneclick-direct')?.addEventListener('click', () => {
+      closeTodayOneClickChoice();
+      focusTodayUsedPanel();
+    });
+    document.getElementById('today-oneclick-ai')?.addEventListener('click', () => {
+      useTodayRecommendedBatchBeta();
+    });
+    document.getElementById('today-used-backdrop')?.addEventListener('click', closeTodayUsedPanel);
+    document.getElementById('today-ai-result-backdrop')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-ai-result-close')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-ai-result-sheet')?.addEventListener('click', e => {
+      if (!e.target.closest('#today-ai-result-close, #today-ai-result-backdrop')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeTodayOneClickStack();
+    }, true);
+    document.getElementById('today-ai-result-done')?.addEventListener('click', closeTodayOneClickStack);
+    document.getElementById('today-ai-result-direct')?.addEventListener('click', () => {
+      closeTodayAiResult();
+      focusTodayUsedPanel();
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest(
+        '#today-oneclick-close, #today-oneclick-backdrop, #today-ai-result-close, #today-ai-result-backdrop, #today-ai-result-done'
+      )) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeTodayOneClickStack();
+    }, true);
 
     // ──────────────────────────────────────────────────────────────
     // ADD SHEET
@@ -7748,7 +8207,6 @@
     let currentExpiryType = 'ALL';
 
     function setGlobalExpiryType(type) {
-      clearQuickAdjustOrderLock();
       currentExpiryType = type === 'NONE' ? 'NONE' : type === 'SELL-BY' ? 'SELL-BY' : 'ALL';
       document.querySelectorAll('.rh-toggle-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.type === currentExpiryType);
@@ -8782,6 +9240,7 @@
     function refreshAll() {
       refreshDashboard(getVisibleItems());
       refreshCategories();
+      renderTodayUsedPanel();
       renderList(getFiltered());
       if (document.getElementById('hadong-sheet')?.classList.contains('open')) {
         renderHadongOverview();
@@ -8851,9 +9310,8 @@
     // ──────────────────────────────────────────────────────────────
     const listEl = document.getElementById('inventory-list');
     let _inventoryGroupCards = new Map();
-    let _quickAdjustGroupOrder = null;
-    let _quickAdjustItemOrder = null;
     let _openGroupDetailKey = '';
+    let _todayUsedPanelOpen = false;
     let _inventoryViewMode = (() => {
       try {
         return localStorage.getItem('tuz_inventory_view_mode') === 'expanded' ? 'expanded' : 'grouped';
@@ -9108,7 +9566,7 @@
     function makeInventoryGroupCards(data) {
       const visibleItems = getVisibleItems();
       const seen = new Set();
-      const cards = (data || [])
+      return (data || [])
         .map(item => {
           const key = inventoryStockKey(item);
           if (seen.has(key)) return null;
@@ -9118,8 +9576,15 @@
           const profile = stockRiskProfile(stock);
           return { key, item: stock.item || item, stock, profile };
         })
-        .filter(Boolean);
-      return sortByQuickAdjustGroupOrder(cards);
+        .filter(Boolean)
+        .sort((a, b) => {
+          const rank = { expired: 0, today: 1, tomorrow: 2, low: 3, watch: 4, week: 5, safe: 6 };
+          const ar = (rank[a.profile.status] ?? 6) - (a.profile.recentlyUpdated && a.profile.status === 'safe' ? 0.5 : 0);
+          const br = (rank[b.profile.status] ?? 6) - (b.profile.recentlyUpdated && b.profile.status === 'safe' ? 0.5 : 0);
+          return ar - br ||
+            inventorySortOrder(a.item) - inventorySortOrder(b.item) ||
+            String(a.item.name || '').localeCompare(String(b.item.name || ''), 'ko');
+        });
     }
 
     function cardClassForProfile(profile) {
@@ -9234,6 +9699,185 @@
       return `<span class="group-lot-date">${escHtml(dateText)}</span><span class="group-lot-dday ${detailStatusClass(lotStatus.status)}">${escHtml(ddayText)}</span>`;
     }
 
+    function recentUseStatsByStockKey() {
+      const now = Date.now();
+      const dayMs = 24 * 60 * 60 * 1000;
+      const stats = new Map();
+      inventoryEvents.forEach(event => {
+        if (!event || event.type !== 'use' || !event.stock_key || event.undone_at) return;
+        const time = new Date(event.created_at).getTime();
+        if (!Number.isFinite(time)) return;
+        const age = now - time;
+        if (age < 0 || age > 30 * dayMs) return;
+        const row = stats.get(event.stock_key) || { seven: 0, thirty: 0, today: 0 };
+        row.thirty += 1;
+        if (age <= 7 * dayMs) row.seven += 1;
+        if (new Date(time).toDateString() === new Date(now).toDateString()) row.today += 1;
+        stats.set(event.stock_key, row);
+      });
+      return stats;
+    }
+
+    function todayUsedRecommendationSignals({ stock, lot, eventStats, favorite, preferredRank }) {
+      const dday = lotDday(lot);
+      const total = Number(stock?.totalQuantity) || 0;
+      const min = stock?.minQuantity;
+      const hasMin = min !== null && min !== undefined && Number.isFinite(Number(min));
+      const nearMinimum = hasMin && total > 0 && total <= Math.max(Number(min) + 1, Number(min) * 1.25);
+      const expiryUrgency =
+        dday !== null && dday < 0 ? 260 :
+        dday === 0 ? 220 :
+        dday === 1 ? 180 :
+        dday !== null && dday <= 3 ? 130 :
+        dday !== null && dday <= 6 ? 70 :
+        0;
+      const alreadyUsedToday = Number(eventStats?.today) > 0;
+      const aiRecommended = Boolean(
+        (expiryUrgency >= 130 && total > 0) ||
+        nearMinimum ||
+        (Number(eventStats?.seven) >= 2 && !alreadyUsedToday) ||
+        (favorite && preferredRank >= 0)
+      );
+      const reasons = [];
+      if (alreadyUsedToday) reasons.push({ key: 'today', label: '오늘 사용' });
+      if (expiryUrgency >= 130) reasons.push({ key: 'expiry', label: '기한 임박' });
+      if (nearMinimum) reasons.push({ key: 'minimum', label: '최소재고 근처' });
+      if (aiRecommended) reasons.push({ key: 'ai', label: 'AI 추천' });
+      return {
+        alreadyUsedToday,
+        expiryUrgency,
+        nearMinimum,
+        aiRecommended,
+        reasons
+      };
+    }
+
+    function todayUsedCandidates() {
+      const visible = getVisibleItems().filter(item => Number(item.quantity) > 0);
+      const stats = recentUseStatsByStockKey();
+      const preferredNames = [/우유|milk/i, /바닐라|시럽|syrup/i, /딸기|퓨레/i, /휘핑|크림|cream/i];
+      const seen = new Set();
+      const rows = visible
+        .map(item => {
+          const key = inventoryStockKey(item);
+          if (seen.has(key)) return null;
+          seen.add(key);
+          const stock = inventoryStockSummary(item, items);
+          const activeLots = sortedLots((stock.lots || []).filter(lot => Number(lot.quantity) > 0));
+          const lot = activeLots[0];
+          if (!lot) return null;
+          const eventStats = stats.get(key) || { seven: 0, thirty: 0, today: 0 };
+          const favorite = stock.lots.some(row => row.is_favorite);
+          const preferredRank = preferredNames.findIndex(re => re.test(item.name || ''));
+          const signals = todayUsedRecommendationSignals({ stock, lot, eventStats, favorite, preferredRank });
+          const score =
+            (favorite ? 1000 : 0) +
+            (signals.alreadyUsedToday ? 170 : 0) +
+            signals.expiryUrgency +
+            (signals.nearMinimum ? 120 : 0) +
+            (signals.aiRecommended ? 90 : 0) +
+            eventStats.seven * 20 +
+            eventStats.thirty * 4 +
+            (preferredRank >= 0 ? 80 - preferredRank : 0);
+          return { key, item, stock, lot, eventStats, favorite, signals, score };
+        })
+        .filter(Boolean)
+        .sort((a, b) =>
+          b.score - a.score ||
+          b.signals.expiryUrgency - a.signals.expiryUrgency ||
+          Number(!a.favorite) - Number(!b.favorite) ||
+          inventorySortOrder(a.lot) - inventorySortOrder(b.lot) ||
+          String(a.item.name || '').localeCompare(String(b.item.name || ''), 'ko')
+        );
+      return rows.slice(0, 6);
+    }
+
+    function todayUsedBatchCandidates() {
+      return todayUsedCandidates()
+        .filter(row => row.signals.aiRecommended || row.signals.expiryUrgency >= 130 || row.signals.nearMinimum || row.signals.alreadyUsedToday)
+        .slice(0, 4);
+    }
+
+    function focusTodayUsedPanel() {
+      const panel = document.getElementById('today-used-panel');
+      if (!panel) return;
+      _todayUsedPanelOpen = true;
+      renderTodayUsedPanel();
+      if (panel.hidden) {
+        showToast('빠른 차감할 재료가 없어요. 재고를 먼저 추가해주세요.');
+        return;
+      }
+      const sheet = document.getElementById('today-used-sheet');
+      sheet?.classList.add('open');
+      sheet?.setAttribute('aria-hidden', 'false');
+      panel.classList.add('is-focused');
+      setTimeout(() => panel.classList.remove('is-focused'), 1300);
+      const firstButton = panel.querySelector('[data-today-use-key]');
+      requestAnimationFrame(() => firstButton?.focus({ preventScroll: true }));
+    }
+
+    function hasSeenTodayUseIntro() {
+      try {
+        return localStorage.getItem(TODAY_USE_INTRO_SEEN_STORAGE_KEY) === '1';
+      } catch (_) {
+        return true;
+      }
+    }
+
+    function rememberTodayUseIntroSeen() {
+      try {
+        localStorage.setItem(TODAY_USE_INTRO_SEEN_STORAGE_KEY, '1');
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    function todayUseIntroCopy(profile = getManagerProfile()) {
+      const name = profile.id === 'cookie' ? '쿠키' : '하동이';
+      return {
+        title: '오늘 쓴 재료 정리할까요?',
+        text: `${name}가 기한 가까운 재고부터 골라드릴게요.`
+      };
+    }
+
+    function applyTodayUseIntroTheme() {
+      const profile = getManagerProfile();
+      const copy = todayUseIntroCopy(profile);
+      setElText('today-use-intro-title', copy.title);
+      setElText('today-use-intro-text', copy.text);
+      setElImage('today-use-intro-avatar', profile.avatar, profile.alt);
+    }
+
+    function openTodayUseIntro() {
+      const sheet = document.getElementById('today-use-intro-sheet');
+      if (!sheet) {
+        focusTodayUsedPanel();
+        return;
+      }
+      applyTodayUseIntroTheme();
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => document.getElementById('today-use-intro-accept')?.focus());
+    }
+
+    function closeTodayUseIntro() {
+      const sheet = document.getElementById('today-use-intro-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
+    }
+
+    function acceptTodayUseIntro() {
+      rememberTodayUseIntroSeen();
+      closeTodayUseIntro();
+      openTodayOneClickChoice();
+    }
+
+    function oneClickChoiceCopy(profile = getManagerProfile()) {
+      const name = profile.name || '매니저';
+      return `${name}가 오늘 쓴 재료를 정리할 방법을 골라드릴게요.`;
+    }
+
     function resetSheetMotion(sheet) {
       sheet?.querySelectorAll('.delete-confirm-panel').forEach(panel => {
         panel.classList.remove('sheet-dragging');
@@ -9242,10 +9886,368 @@
       });
     }
 
+    function openTodayOneClickChoice() {
+      closeTodayUsedPanel();
+      closeTodayAiResult();
+      const sheet = document.getElementById('today-oneclick-sheet');
+      if (!sheet) {
+        focusTodayUsedPanel();
+        return;
+      }
+      setElText('today-oneclick-copy', oneClickChoiceCopy());
+      const batchCount = todayUsedBatchCandidates().length;
+      setElText(
+        'today-oneclick-note',
+        batchCount
+          ? `AI 차감 후보 ${batchCount}개가 있어요. 차감 뒤 바로 되돌릴 수 있어요.`
+          : 'AI 차감은 사용 기록이 쌓일수록 좋아져요. 지금은 직접 선택을 먼저 사용해보세요.'
+      );
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => document.getElementById('today-oneclick-direct')?.focus());
+    }
+
+    function closeTodayOneClickChoice() {
+      const sheet = document.getElementById('today-oneclick-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
+    }
+
+    function closeTodayOneClickStack() {
+      closeTodayOneClickChoice();
+      closeTodayAiResult();
+      closeTodayUsedPanel();
+    }
+
+    function closeTodayUsedPanel() {
+      _todayUsedPanelOpen = false;
+      const sheet = document.getElementById('today-used-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
+      const panel = document.getElementById('today-used-panel');
+      if (panel) {
+        panel.classList.remove('is-focused');
+        panel.innerHTML = '';
+        panel.hidden = true;
+      }
+    }
+
+    function toggleTodayUsedPanel() {
+      const choiceSheet = document.getElementById('today-oneclick-sheet');
+      const resultSheet = document.getElementById('today-ai-result-sheet');
+      if (
+        _todayUsedPanelOpen ||
+        choiceSheet?.classList.contains('open') ||
+        resultSheet?.classList.contains('open')
+      ) {
+        closeTodayOneClickStack();
+        return;
+      }
+      if (!hasSeenTodayUseIntro()) {
+        openTodayUseIntro();
+        return;
+      }
+      openTodayOneClickChoice();
+    }
+
+    function closeTodayAiResult() {
+      const sheet = document.getElementById('today-ai-result-sheet');
+      sheet?.classList.remove('open');
+      sheet?.setAttribute('aria-hidden', 'true');
+      resetSheetMotion(sheet);
+    }
+
+    function openTodayAiResult(results) {
+      closeTodayOneClickChoice();
+      closeTodayUsedPanel();
+      const sheet = document.getElementById('today-ai-result-sheet');
+      const list = document.getElementById('today-ai-result-list');
+      if (!sheet || !list) {
+        showToast(`AI가 ${results.length}개 재료를 차감했어요.`);
+        return;
+      }
+      const profile = getManagerProfile();
+      setElText('today-ai-result-copy', `${profile.name}가 아래 재료를 먼저 써야 하는 재고에서 차감했어요.`);
+      list.innerHTML = results.map(result => `
+        <div class="today-ai-result-row">
+          <span>
+            <span class="today-ai-result-name">${escHtml(result.name)}</span>
+            <span class="today-ai-result-meta">-${escHtml(quantityLabel(result.amount, result.unit))}${result.nextQty <= 0 ? ' · 소진' : ` · 남은 ${escHtml(quantityLabel(result.nextQty, result.unit))}`}</span>
+          </span>
+          <button type="button" class="today-ai-result-undo" data-ai-result-undo="${escAttr(result.eventId)}">되돌리기</button>
+        </div>
+      `).join('');
+      list.querySelectorAll('[data-ai-result-undo]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ok = undoInventoryEvent(btn.dataset.aiResultUndo, { successMessage: 'AI 차감을 되돌렸어요.' });
+          if (ok) {
+            btn.disabled = true;
+            btn.textContent = '완료';
+          }
+        });
+      });
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => document.getElementById('today-ai-result-done')?.focus());
+    }
+
+    function useTodayRecommendedBatchBeta() {
+      const rows = todayUsedBatchCandidates();
+      if (!rows.length) {
+        showToast('AI 차감할 추천 재료가 아직 없어요.');
+        return;
+      }
+      const results = [];
+      rows.forEach(row => {
+        const lot = sortedLots(items.filter(item => inventoryStockKey(item) === row.key && Number(item.quantity) > 0))[0];
+        if (!lot) return;
+        const qty = Number(lot.quantity) || 0;
+        if (qty <= 0) return;
+        const amount = Math.max(0, Math.min(1, qty));
+        if (!amount) return;
+        const nextQty = Number((qty - amount).toFixed(3));
+        const event = recordInventoryEvent('use', {
+          item: lot,
+          lot,
+          quantity_delta: -amount,
+          reason: 'quick-use-beta-batch',
+          undo_until: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          metadata: {
+            before_quantity: qty,
+            after_quantity: nextQty,
+            source: 'quick-use-beta-batch',
+            snapshot: inventoryEventItemSnapshot(lot)
+          }
+        });
+        lot.quantity = nextQty;
+        lot.updated_at = new Date().toISOString();
+        results.push({
+          eventId: event.id,
+          name: lot.name,
+          amount,
+          unit: lot.unit || '개',
+          nextQty
+        });
+      });
+      if (!results.length) {
+        showToast('차감할 수 있는 재료가 없어요.');
+        return;
+      }
+      closeTodayOneClickChoice();
+      saveData(items);
+      refreshAll();
+      openTodayAiResult(results);
+    }
+
+    function inventoryEventTypeLabel(type) {
+      return ({
+        use: '사용',
+        discard: '폐기',
+        open: '개봉',
+        restock: '입고',
+        adjust: '조정'
+      })[type] || '기록';
+    }
+
     function inventoryEventItemName(event) {
       const metadata = event?.metadata || {};
       const live = items.find(item => item.id === event?.lot_id || item.id === event?.item_id);
       return live?.name || metadata.item_name || metadata.snapshot?.name || '재료';
+    }
+
+    function inventoryEventUnit(event) {
+      const metadata = event?.metadata || {};
+      const live = items.find(item => item.id === event?.lot_id || item.id === event?.item_id);
+      return live?.unit || metadata.unit || metadata.snapshot?.unit || '개';
+    }
+
+    function inventoryEventTimeLabel(event) {
+      const time = new Date(event?.created_at || 0).getTime();
+      if (!Number.isFinite(time)) return '';
+      const diffMs = Date.now() - time;
+      const minuteMs = 60 * 1000;
+      const hourMs = 60 * minuteMs;
+      if (diffMs < minuteMs) return '방금';
+      if (diffMs < hourMs) return `${Math.floor(diffMs / minuteMs)}분 전`;
+      if (diffMs < 24 * hourMs) return `${Math.floor(diffMs / hourMs)}시간 전`;
+      return new Date(time).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+    }
+
+    function canUndoInventoryEvent(event) {
+      if (!event || event.undone_at || event.reverses_event_id) return false;
+      if (event.undo_until && new Date(event.undo_until).getTime() < Date.now()) return false;
+      if (event.type === 'open') return true;
+      if (event.type === 'use' || event.type === 'discard') return Number(event.quantity_delta) < 0;
+      if (event.type === 'restock') return Number(event.quantity_delta) > 0;
+      if (event.type === 'adjust') return Number.isFinite(Number(event.quantity_delta));
+      return false;
+    }
+
+    function recentInventoryEvents(limit = 5) {
+      return [...inventoryEvents]
+        .filter(event => event && !event.reverses_event_id)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, limit);
+    }
+
+    function inventoryEventLogRows() {
+      const events = recentInventoryEvents(4);
+      if (!events.length) return '';
+      return `
+        <div class="today-used-log" aria-label="최근 재고 이벤트">
+          <div class="today-used-log-title">최근 기록</div>
+          ${events.map(event => {
+            const unit = inventoryEventUnit(event);
+            const delta = Number(event.quantity_delta) || 0;
+            const amountText = delta
+              ? `${delta > 0 ? '+' : ''}${quantityLabel(delta, unit)}`
+              : '';
+            const meta = [
+              inventoryEventTimeLabel(event),
+              amountText,
+              event.undone_at ? '되돌림 완료' : ''
+            ].filter(Boolean).join(' · ');
+            return `
+              <div class="today-used-log-row">
+                <span class="today-used-log-copy">
+                  <span class="today-used-log-main">${escHtml(inventoryEventTypeLabel(event.type))} · ${escHtml(inventoryEventItemName(event))}</span>
+                  <span class="today-used-log-meta">${escHtml(meta)}</span>
+                </span>
+                ${canUndoInventoryEvent(event)
+                  ? `<button type="button" class="today-used-log-action" data-inventory-event-undo="${escAttr(event.id)}">되돌리기</button>`
+                  : ''}
+              </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    function renderTodayUsedPanel() {
+      const panel = document.getElementById('today-used-panel');
+      if (!panel) return;
+      if (!_todayUsedPanelOpen) {
+        panel.innerHTML = '';
+        panel.hidden = true;
+        return;
+      }
+      const candidates = todayUsedCandidates();
+      const eventRows = inventoryEventLogRows();
+      if (!candidates.length && !eventRows) {
+        panel.innerHTML = '';
+        panel.hidden = true;
+        return;
+      }
+      panel.hidden = false;
+      const usedToday = inventoryEvents.filter(event =>
+        event.type === 'use' &&
+        !event.undone_at &&
+        new Date(event.created_at).toDateString() === new Date().toDateString()
+      ).length;
+      const aiRows = candidates.filter(row => row.signals.aiRecommended);
+      const directRows = candidates.filter(row => !row.signals.aiRecommended);
+      const renderRows = rows => rows.map(row => {
+        const unit = row.stock.unit || row.item.unit || '개';
+        const meta = [
+          `남은 ${quantityLabel(row.stock.totalQuantity, unit)}`,
+          row.eventStats.today ? `오늘 ${row.eventStats.today}회` : '',
+          row.eventStats.seven ? `7일 ${row.eventStats.seven}회` : '',
+          row.lot.expiry_date ? row.lot.expiry_date : ''
+        ].filter(Boolean).join(' · ');
+        const reasons = row.signals.reasons
+          .filter(reason => reason.key !== 'ai')
+          .slice(0, 3)
+          .map(reason => `<span class="today-used-reason ${escAttr(reason.key)}">${escHtml(reason.label)}</span>`)
+          .join('');
+        return `
+          <div class="today-used-action">
+            <button type="button" class="today-used-btn" data-today-use-key="${escHtml(encodeURIComponent(row.key))}">
+              <span class="today-used-main">
+                <span class="today-used-name">${escHtml(row.item.name)}</span>
+                <span class="today-used-meta">${escHtml(meta)}</span>
+                ${reasons ? `<span class="today-used-reasons">${reasons}</span>` : ''}
+              </span>
+              <span class="today-used-use-chip">차감하기</span>
+            </button>
+            <button type="button" class="today-used-favorite${row.favorite ? ' is-active' : ''}" data-today-favorite-key="${escHtml(encodeURIComponent(row.key))}" aria-label="${escHtml(row.item.name)} 다음부터 우선 표시">${row.favorite ? '우선 표시 중' : '자주 보여줘'}</button>
+          </div>`;
+      }).join('');
+      panel.innerHTML = `
+        <div class="today-used-header">
+          <div>
+            <div class="today-used-title" id="today-used-sheet-title">직접 선택 차감</div>
+            <div class="today-used-caption">재료를 직접 눌러 먼저 써야 하는 재고에서 1개씩 차감해요.</div>
+          </div>
+          <div class="today-used-header-tools">
+            <div class="today-used-count">오늘 ${escHtml(usedToday)}건</div>
+            <button type="button" class="today-used-close" id="today-used-close" aria-label="직접 선택 닫기">×</button>
+          </div>
+        </div>
+        <div class="today-used-actions">
+          ${aiRows.length ? `
+            <div class="today-used-section">
+              <div class="today-used-section-head">
+                <div>
+                  <span class="today-used-section-kicker">먼저 쓸 재료</span>
+                  <div class="today-used-section-title">AI 추천 차감</div>
+                </div>
+                <div class="today-used-count">${escHtml(aiRows.length)}개</div>
+              </div>
+              <div class="today-used-section-caption">기한과 최소재고, 사용 기록을 보고 먼저 차감할 후보를 모았어요.</div>
+              ${renderRows(aiRows)}
+            </div>` : ''}
+          ${directRows.length ? `
+            <div class="today-used-section">
+              <div class="today-used-section-head">
+                <div>
+                  <span class="today-used-section-kicker">사장님 선택</span>
+                  <div class="today-used-section-title">직접 골라 차감</div>
+                </div>
+                <div class="today-used-count">${escHtml(directRows.length)}개</div>
+              </div>
+              <div class="today-used-section-caption">자주 보여달라고 표시한 재료와 최근 자주 쓴 재료를 모았어요.</div>
+              ${renderRows(directRows)}
+            </div>` : ''}
+          <div class="today-used-section">
+            <div class="today-used-section-head">
+              <div>
+                <span class="today-used-section-kicker">목록에 없을 때</span>
+                <div class="today-used-section-title">재료 직접 찾기</div>
+              </div>
+            </div>
+            <button type="button" class="today-used-direct" id="today-used-direct">검색해서 차감하기</button>
+          </div>
+        </div>
+        ${eventRows}`;
+
+      panel.querySelectorAll('[data-today-use-key]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          bumpFeedback(btn);
+          useTodayIngredient(decodeURIComponent(btn.dataset.todayUseKey || ''));
+        });
+      });
+      panel.querySelectorAll('[data-today-favorite-key]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          bumpFeedback(btn);
+          toggleInventoryFavorite(decodeURIComponent(btn.dataset.todayFavoriteKey || ''));
+        });
+      });
+      panel.querySelector('#today-used-direct')?.addEventListener('click', () => {
+        closeTodayUsedPanel();
+        const input = document.getElementById('search-input');
+        input?.focus();
+        input?.select?.();
+      });
+      panel.querySelector('#today-used-close')?.addEventListener('click', () => {
+        closeTodayUsedPanel();
+      });
+      panel.querySelectorAll('[data-inventory-event-undo]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          bumpFeedback(btn);
+          undoInventoryEvent(btn.dataset.inventoryEventUndo);
+        });
+      });
     }
 
     let _expandedMenuCloseCleanup = null;
@@ -9754,6 +10756,27 @@
       } else {
         showToast(`[${lot.name}] ${quantityLabel(addAmount, unit)} 더했어요.`);
       }
+    }
+
+    function useTodayIngredient(stockKey) {
+      if (!stockKey) return;
+      const lots = sortedLots(items.filter(row => inventoryStockKey(row) === stockKey && Number(row.quantity) > 0));
+      decreaseInventoryLot(lots[0]);
+    }
+
+    function toggleInventoryFavorite(stockKey) {
+      if (!stockKey) return;
+      const matched = items.filter(row => inventoryStockKey(row) === stockKey);
+      if (!matched.length) return;
+      const next = !matched.some(row => row.is_favorite);
+      const now = new Date().toISOString();
+      matched.forEach(row => {
+        row.is_favorite = next;
+        row.updated_at = now;
+      });
+      saveData(items);
+      refreshAll();
+      showToast(next ? '다음부터 위쪽에 더 자주 보여드릴게요.' : '우선 표시를 해제했어요.');
     }
 
     function handleInventoryQuickAdjust(action, refId) {
@@ -10482,7 +11505,6 @@
     }
 
     function setInventoryViewMode(mode) {
-      clearQuickAdjustOrderLock();
       _inventoryViewMode = mode === 'expanded' ? 'expanded' : 'grouped';
       try { localStorage.setItem('tuz_inventory_view_mode', _inventoryViewMode); } catch (_) { /* ignore */ }
       syncInventoryViewToggle();
@@ -10612,14 +11634,8 @@
       updateFilterCriteriaNote();
     }
 
-    searchInput.addEventListener('input', () => {
-      clearQuickAdjustOrderLock();
-      refreshFilteredList();
-    });
-    categoryFilter.addEventListener('change', () => {
-      clearQuickAdjustOrderLock();
-      renderList(getFiltered());
-    });
+    searchInput.addEventListener('input', refreshFilteredList);
+    categoryFilter.addEventListener('change', () => renderList(getFiltered()));
 
     function syncStatFilterButtons() {
       const activeFilter = expiryFilter.value || '';
@@ -10643,7 +11659,6 @@
     }
 
     function applyExpiryFilter(nextFilter, { scroll = false } = {}) {
-      clearQuickAdjustOrderLock();
       expiryFilter.value = nextFilter || '';
       syncStatFilterButtons();
       refreshFilteredList();
@@ -10670,7 +11685,6 @@
     });
 
     function setCategoryFilter(cat) {
-      clearQuickAdjustOrderLock();
       categoryFilter.value = cat;
       renderList(getFiltered());
       document.querySelectorAll('#category-chips .chip').forEach(c => {
@@ -15130,6 +16144,9 @@
     installSwipeDownClose('#photo-source-sheet .picker-panel', closePhotoSourceSheet, { threshold: 56 });
     installSwipeDownClose('#date-picker-sheet .date-picker-panel', closeDatePicker, { threshold: 56 });
     installSwipeDownClose('#delete-confirm-sheet .delete-confirm-panel', closeDeleteConfirm, { threshold: 56 });
+    installSwipeDownClose('#today-oneclick-sheet .today-oneclick-panel', closeTodayOneClickChoice, { threshold: 56 });
+    installSwipeDownClose('#today-used-sheet .today-used-sheet-panel', closeTodayUsedPanel, { threshold: 56 });
+    installSwipeDownClose('#today-ai-result-sheet .today-ai-result-panel', closeTodayAiResult, { threshold: 56 });
     installSwipeDownClose('#group-delete-sheet .group-delete-panel', closeGroupDeletePicker, { threshold: 56 });
     installSwipeDownClose('#group-edit-sheet .group-delete-panel', closeGroupEditChoice, { threshold: 56 });
     installSwipeDownClose('#stock-group-sheet .stock-group-panel', closeStockGroupSuggestion, { threshold: 56 });
