@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+<meta name="theme-color" content="#a52a1a"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>TUZ · 해시태그 만들기</title>
+<meta name="description" content="TUZ 인스타그램 게시글용 해시태그 생성기"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a52a1a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Georgia,serif' font-size='28' font-weight='600' fill='%23f4ecda'%3ETUZ%3C/text%3E%3C/svg%3E"/>
+<link rel="stylesheet" href="../styles.css?v=55"/>
+<style>
+  body { background: var(--ivory-2); overscroll-behavior-y: auto; }
+  .hash-shell {
+    width: 100%;
+    max-width: 760px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    background: var(--paper);
+  }
+  @media (min-width: 720px) {
+    body { padding: 28px 0; }
+    .hash-shell {
+      min-height: auto;
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+  }
+  .hash-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+    background: rgba(255, 255, 255, 0.94);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+  }
+  .hash-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 7px 8px;
+    border-radius: var(--r-sm);
+  }
+  .hash-home:hover { background: var(--tuz-red-soft); color: var(--tuz-red); }
+  .hash-brand {
+    font-family: 'Puradak Gentle Gothic', var(--font-display);
+    color: var(--tuz-red);
+    font-size: 18px;
+  }
+  .hash-main { padding: 24px 18px 44px; }
+  .hash-hero {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .hash-kicker {
+    margin: 0;
+    color: var(--tuz-red);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .hash-title {
+    margin: 0;
+    color: var(--ink);
+    font-size: clamp(28px, 6vw, 42px);
+    line-height: 1.15;
+    font-weight: 650;
+    letter-spacing: 0;
+  }
+  .hash-sub {
+    margin: 0;
+    color: var(--ink-3);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .hash-layout {
+    display: grid;
+    gap: 16px;
+  }
+  @media (min-width: 720px) {
+    .hash-layout { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); align-items: start; }
+  }
+  .hash-panel {
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+  }
+  .hash-panel h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    letter-spacing: 0;
+    font-weight: 650;
+  }
+  .hash-field {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .hash-field label {
+    font-size: 13px;
+    color: var(--ink-2);
+    font-weight: 650;
+  }
+  .hash-field textarea {
+    min-height: 102px;
+    resize: vertical;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-sm);
+    padding: 12px;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .hash-field textarea:focus {
+    outline: none;
+    border-color: var(--tuz-red);
+    box-shadow: 0 0 0 3px var(--tuz-red-soft);
+  }
+  .hash-help {
+    margin: 0;
+    color: var(--ink-3);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .hash-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hash-choice {
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink-2);
+    padding: 9px 12px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .hash-choice[aria-pressed="true"] {
+    border-color: var(--tuz-red);
+    background: var(--tuz-red);
+    color: #fff;
+  }
+  .hash-checks {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .hash-check {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ink-2);
+    font-size: 13px;
+  }
+  .hash-check input { accent-color: var(--tuz-red); width: 16px; height: 16px; }
+  .hash-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .hash-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    border: 0;
+    border-radius: var(--r-sm);
+    padding: 10px 14px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .hash-btn--primary {
+    flex: 1;
+    background: var(--tuz-red);
+    color: #fff;
+  }
+  .hash-btn--primary:hover { background: var(--tuz-red-deep); }
+  .hash-btn--ghost {
+    background: var(--tuz-red-soft);
+    color: var(--tuz-red);
+  }
+  .hash-btn:disabled { opacity: 0.65; cursor: wait; }
+  .hash-result-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .hash-result-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 650;
+  }
+  .hash-result-sub {
+    margin: 5px 0 0;
+    color: var(--ink-3);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .hash-copybox {
+    width: 100%;
+    min-height: 92px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--ivory-2);
+    color: var(--ink);
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.65;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  .hash-groups {
+    display: grid;
+    gap: 13px;
+    margin-top: 16px;
+  }
+  .hash-group h3 {
+    margin: 0 0 8px;
+    color: var(--ink-3);
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hash-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .hash-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink-2);
+    padding: 7px 9px 7px 10px;
+    font-size: 13px;
+  }
+  .hash-tag button {
+    border: 0;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    background: var(--tuz-red-soft);
+    color: var(--tuz-red);
+    cursor: pointer;
+    line-height: 18px;
+    padding: 0;
+  }
+  .hash-empty {
+    display: grid;
+    place-items: center;
+    min-height: 280px;
+    color: var(--ink-3);
+    text-align: center;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-md);
+    background: var(--ivory-2);
+    padding: 24px;
+    line-height: 1.55;
+  }
+  .hash-status {
+    min-height: 20px;
+    margin: 12px 0 0;
+    color: var(--tuz-red-deep);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+  <main class="hash-shell">
+    <nav class="hash-topbar" aria-label="페이지 이동">
+      <a class="hash-home" href="../">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>
+        홈
+      </a>
+      <div class="hash-brand" aria-label="Tuz">Tuz</div>
+    </nav>
+
+    <section class="hash-main">
+      <header class="hash-hero">
+        <p class="hash-kicker">Instagram Helper</p>
+        <h1 class="hash-title">해시태그 만들기</h1>
+        <p class="hash-sub">인스타그램 글 쓰기 전에 상황만 고르고 복사해서 붙여넣을 태그를 만들어요.</p>
+      </header>
+
+      <div class="hash-layout">
+        <section class="hash-panel" aria-labelledby="hashInputTitle">
+          <h2 id="hashInputTitle">어떤 글인가요?</h2>
+          <div class="hash-options" id="postTypeOptions" role="group" aria-label="글 종류">
+            <button class="hash-choice" type="button" data-type="new_menu" aria-pressed="false">신메뉴</button>
+            <button class="hash-choice" type="button" data-type="today_pick" aria-pressed="false">오늘의 추천</button>
+            <button class="hash-choice" type="button" data-type="notice" aria-pressed="false">이벤트/공지</button>
+            <button class="hash-choice" type="button" data-type="mood" aria-pressed="false">매장 분위기</button>
+            <button class="hash-choice" type="button" data-type="menu_photo" aria-pressed="false">메뉴 사진</button>
+            <button class="hash-choice" type="button" data-type="drink_dessert" aria-pressed="false">디저트/음료</button>
+          </div>
+
+          <div class="hash-field">
+            <label for="memo">오늘 올릴 내용</label>
+            <textarea id="memo" maxlength="220" placeholder="예: 크림라떼, 조용한 오후, 신메뉴, 쿠폰 이벤트"></textarea>
+            <p class="hash-help">본문을 다 쓰지 않아도 괜찮아요. 메뉴나 분위기만 적어도 됩니다. <span id="memoCount">0자</span></p>
+          </div>
+
+          <div class="hash-checks">
+            <label class="hash-check"><input id="includeLocalTags" type="checkbox" checked/> 울산/성남동 태그 포함</label>
+            <label class="hash-check"><input id="includeBrandTags" type="checkbox" checked/> TUZ 고정태그 포함</label>
+          </div>
+
+          <div class="hash-actions">
+            <button class="hash-btn hash-btn--primary" id="generateBtn" type="button">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg>
+              해시태그 만들기
+            </button>
+            <button class="hash-btn hash-btn--ghost" id="resetBtn" type="button">초기화</button>
+          </div>
+          <p class="hash-status" id="status" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="hash-panel" aria-labelledby="hashResultTitle">
+          <div id="emptyState" class="hash-empty">
+            글 종류를 고르고 해시태그를 만들면 여기에 복사용 태그가 나옵니다.
+          </div>
+          <div id="resultState" hidden>
+            <div class="hash-result-head">
+              <div>
+                <h2 class="hash-result-title" id="hashResultTitle">복사해서 붙여넣기</h2>
+                <p class="hash-result-sub" id="summary">인스타그램에 붙여넣을 태그를 골랐어요.</p>
+              </div>
+              <button class="hash-btn hash-btn--ghost" id="copyBtn" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>
+                전체 복사
+              </button>
+            </div>
+            <div class="hash-copybox" id="copyText"></div>
+            <div class="hash-groups" id="tagGroups"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+<script type="module">
+import { supabase } from '../shared/supabase.js?v=54';
+
+const POST_TYPES = {
+  new_menu: { label: '신메뉴', tags: ['#신메뉴', '#카페신메뉴', '#오늘의메뉴'] },
+  today_pick: { label: '오늘의 추천', tags: ['#오늘의추천', '#카페추천', '#오늘마실커피'] },
+  notice: { label: '이벤트/공지', tags: ['#카페이벤트', '#카페공지', '#이벤트'] },
+  mood: { label: '매장 분위기', tags: ['#카페분위기', '#조용한카페', '#감성카페'] },
+  menu_photo: { label: '메뉴 사진', tags: ['#메뉴사진', '#카페메뉴', '#디저트사진'] },
+  drink_dessert: { label: '디저트/음료', tags: ['#디저트카페', '#커피스타그램', '#음료추천'] }
+};
+
+const FALLBACK_CONTEXT = {
+  brandTags: ['#TUZ', '#투즈', '#tuzz2026', '#울산카페', '#울산중구카페'],
+  localTags: ['#울산', '#울산중구', '#성남동', '#성남동카페', '#울산카페추천'],
+  baseTags: ['#카페', '#카페스타그램', '#커피', '#디저트', '#카페투어', '#일상', '#맛집추천']
+};
+
+const state = {
+  postType: '',
+  groups: [],
+  context: FALLBACK_CONTEXT
+};
+
+const $ = (selector) => document.querySelector(selector);
+const options = $('#postTypeOptions');
+const memo = $('#memo');
+const memoCount = $('#memoCount');
+const status = $('#status');
+const generateBtn = $('#generateBtn');
+const resetBtn = $('#resetBtn');
+const emptyState = $('#emptyState');
+const resultState = $('#resultState');
+const copyText = $('#copyText');
+const tagGroups = $('#tagGroups');
+const summary = $('#summary');
+const copyBtn = $('#copyBtn');
+
+function normalizeTag(value) {
+  const cleaned = String(value || '')
+    .trim()
+    .replace(/[,\s]+/g, '')
+    .replace(/^#+/, '')
+    .replace(/[^0-9A-Za-z_가-힣]/g, '');
+  if (!cleaned) return '';
+  return `#${cleaned}`;
+}
+
+function uniqTags(tags) {
+  const seen = new Set();
+  return tags.map(normalizeTag).filter(tag => {
+    const key = tag.toLowerCase();
+    if (!tag || /^#test\d*$/i.test(tag) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function limitGroups(groups, maxTags = 24) {
+  let remaining = maxTags;
+  return groups.map(group => {
+    const tags = group.tags.slice(0, remaining);
+    remaining -= tags.length;
+    return { ...group, tags };
+  }).filter(group => group.tags.length);
+}
+
+function keywordTags(text) {
+  const source = String(text || '').toLowerCase();
+  const pairs = [
+    ['크림', '#크림라떼'],
+    ['라떼', '#라떼'],
+    ['아메리카노', '#아메리카노'],
+    ['커피', '#커피맛집'],
+    ['디저트', '#디저트맛집'],
+    ['쿠폰', '#쿠폰이벤트'],
+    ['이벤트', '#이벤트중'],
+    ['조용', '#조용한카페'],
+    ['오후', '#오후카페'],
+    ['신메뉴', '#신메뉴출시'],
+    ['말차', '#말차라떼'],
+    ['초코', '#초코디저트'],
+    ['딸기', '#딸기디저트']
+  ];
+  return pairs.filter(([keyword]) => source.includes(keyword)).map(([, tag]) => tag);
+}
+
+function formatCopyText(groups) {
+  return groups.flatMap(group => group.tags).join(' ');
+}
+
+function buildFallbackTags({ postType, memoText, includeLocalTags, includeBrandTags, context }) {
+  const typeTags = POST_TYPES[postType]?.tags || ['#카페게시물', '#오늘의카페'];
+  const memoTags = keywordTags(memoText);
+  const menuTags = Array.isArray(context.menuTags) ? context.menuTags.slice(0, 5) : [];
+  const groups = [
+    { key: 'recommended', label: '복사 추천', tags: uniqTags([...typeTags, ...memoTags, ...FALLBACK_CONTEXT.baseTags]).slice(0, 12) },
+    { key: 'menu', label: '메뉴', tags: uniqTags(menuTags).slice(0, 6) }
+  ];
+  if (includeLocalTags) groups.push({ key: 'local', label: '지역', tags: uniqTags(context.localTags || FALLBACK_CONTEXT.localTags).slice(0, 6) });
+  if (includeBrandTags) groups.push({ key: 'brand', label: 'TUZ 고정', tags: uniqTags(context.brandTags || FALLBACK_CONTEXT.brandTags).slice(0, 6) });
+  return limitGroups(groups.filter(group => group.tags.length));
+}
+
+async function loadCafeContext() {
+  try {
+    const [{ data: menu }, { data: picks }] = await Promise.all([
+      supabase.from('menu').select('name, category').order('sort_order', { ascending: true }).limit(20),
+      supabase.from('pick').select('name, menu:menu_id(name)').order('sort_order', { ascending: true }).limit(4)
+    ]);
+    const menuNames = (menu || []).map(item => item.name).filter(Boolean);
+    const pickNames = (picks || []).map(item => item.menu?.name || item.name).filter(Boolean);
+    const menuTags = uniqTags([...pickNames, ...menuNames].slice(0, 10).map(name => `#${name}`));
+    state.context = { ...FALLBACK_CONTEXT, menuTags };
+  } catch (err) {
+    console.warn('[hashtag-gen] cafe context fallback:', err?.message || err);
+  }
+}
+
+function renderGroups(groups) {
+  state.groups = limitGroups(groups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length));
+  copyText.textContent = formatCopyText(state.groups);
+  tagGroups.innerHTML = state.groups.map(group => `
+    <section class="hash-group" data-group="${group.key}">
+      <h3>${group.label}</h3>
+      <div class="hash-tags">
+        ${group.tags.map(tag => `
+          <span class="hash-tag">${tag}<button type="button" aria-label="${tag} 제거" data-remove-tag="${tag}">×</button></span>
+        `).join('')}
+      </div>
+    </section>
+  `).join('');
+  summary.textContent = `인스타그램에 붙여넣을 태그 ${state.groups.flatMap(group => group.tags).length}개를 골랐어요.`;
+  emptyState.hidden = true;
+  resultState.hidden = false;
+}
+
+async function requestTags() {
+  const includeLocalTags = $('#includeLocalTags').checked;
+  const includeBrandTags = $('#includeBrandTags').checked;
+  const memoText = memo.value.trim();
+  const payload = {
+    postType: state.postType,
+    memo: memoText,
+    includeLocalTags,
+    includeBrandTags
+  };
+
+  try {
+    const response = await fetch('/api/hashtag-gen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error(`API ${response.status}`);
+    const data = await response.json();
+    if (!Array.isArray(data.tags) || !data.tags.length) throw new Error('empty result');
+    return data.tags;
+  } catch (err) {
+    console.info('[hashtag-gen] api fallback:', err?.message || err);
+    return buildFallbackTags({ ...payload, context: state.context });
+  }
+}
+
+options.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-type]');
+  if (!button) return;
+  state.postType = button.dataset.type;
+  options.querySelectorAll('[data-type]').forEach(item => {
+    item.setAttribute('aria-pressed', String(item === button));
+  });
+  status.textContent = '';
+});
+
+memo.addEventListener('input', () => {
+  memoCount.textContent = `${memo.value.length}자`;
+});
+
+generateBtn.addEventListener('click', async () => {
+  if (!state.postType) {
+    status.textContent = '어떤 글인지 하나만 골라주세요.';
+    return;
+  }
+  status.textContent = '해시태그를 고르는 중입니다.';
+  generateBtn.disabled = true;
+  try {
+    const groups = await requestTags();
+    renderGroups(groups);
+    status.textContent = '복사해서 인스타그램에 붙여넣어 주세요.';
+  } catch (err) {
+    status.textContent = '잠시 연결이 불안정해요. 선택한 내용은 그대로 두었으니 다시 눌러주세요.';
+  } finally {
+    generateBtn.disabled = false;
+  }
+});
+
+resetBtn.addEventListener('click', () => {
+  state.postType = '';
+  state.groups = [];
+  options.querySelectorAll('[data-type]').forEach(item => item.setAttribute('aria-pressed', 'false'));
+  memo.value = '';
+  memoCount.textContent = '0자';
+  status.textContent = '';
+  tagGroups.innerHTML = '';
+  copyText.textContent = '';
+  resultState.hidden = true;
+  emptyState.hidden = false;
+});
+
+tagGroups.addEventListener('click', (event) => {
+  const remove = event.target.closest('[data-remove-tag]');
+  if (!remove) return;
+  const tag = remove.dataset.removeTag;
+  const nextGroups = state.groups.map(group => ({
+    ...group,
+    tags: group.tags.filter(item => item !== tag)
+  })).filter(group => group.tags.length);
+  renderGroups(nextGroups);
+});
+
+copyBtn.addEventListener('click', async () => {
+  const text = formatCopyText(state.groups);
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    status.textContent = '복사했어요. 인스타그램에 붙여넣어 주세요.';
+  } catch {
+    status.textContent = '복사가 막혀 있어요. 태그 박스를 길게 눌러 복사해 주세요.';
+  }
+});
+
+loadCafeContext();
+</script>
+</body>
+</html>

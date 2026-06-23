@@ -278,6 +278,46 @@ DROP POLICY IF EXISTS "public_write_inventory_events" on public.inventory_events
 CREATE POLICY "public_read_inventory_events" on public.inventory_events for select using (true);
 CREATE POLICY "public_write_inventory_events" on public.inventory_events for all using (true) with check (true);
 
+-- ─── 2026-06 hashtag generator MVP ────────────────
+CREATE TABLE IF NOT EXISTS public.hashtag_settings (
+  id int primary key default 1 check (id = 1),
+  fixed_tags text[] not null default array['#TUZ', '#투즈', '#tuzz2026', '#울산카페', '#울산중구카페'],
+  local_tags text[] not null default array['#울산', '#울산중구', '#성남동', '#성남동카페', '#울산카페추천'],
+  blocked_tags text[] not null default '{}'::text[],
+  default_tag_count int not null default 24 check (default_tag_count between 6 and 30),
+  criteria_version text not null default 'mvp-static-2026-06-23',
+  updated_at timestamptz not null default now()
+);
+
+INSERT INTO public.hashtag_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS public.hashtag_generations (
+  id uuid primary key default gen_random_uuid(),
+  post_type text not null,
+  memo_summary text,
+  generated_tags text[] not null default '{}'::text[],
+  copied_tags text[],
+  criteria_version text not null default 'mvp-static-2026-06-23',
+  created_at timestamptz not null default now()
+);
+
+ALTER TABLE public.hashtag_settings enable row level security;
+ALTER TABLE public.hashtag_generations enable row level security;
+
+DROP POLICY IF EXISTS "public_read_hashtag_settings" on public.hashtag_settings;
+DROP POLICY IF EXISTS "auth_write_hashtag_settings" on public.hashtag_settings;
+DROP POLICY IF EXISTS "auth_read_hashtag_generations" on public.hashtag_generations;
+DROP POLICY IF EXISTS "auth_write_hashtag_generations" on public.hashtag_generations;
+
+CREATE POLICY "public_read_hashtag_settings" on public.hashtag_settings for select using (true);
+CREATE POLICY "auth_write_hashtag_settings" on public.hashtag_settings for all to authenticated using (true) with check (true);
+CREATE POLICY "auth_read_hashtag_generations" on public.hashtag_generations for select to authenticated using (true);
+CREATE POLICY "auth_write_hashtag_generations" on public.hashtag_generations for insert to authenticated with check (true);
+
+DROP TRIGGER IF EXISTS trg_hashtag_settings_updated on public.hashtag_settings;
+CREATE TRIGGER trg_hashtag_settings_updated before update on public.hashtag_settings
+  for each row execute function public.tz_touch_updated_at();
+
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1
