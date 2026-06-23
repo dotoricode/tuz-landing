@@ -2,10 +2,10 @@
 
 ## Product Brief
 
-`/hashtag-gen` is an owner-facing tool for Tuz cafe owners to turn an Instagram post draft into practical hashtag sets. The first version should feel like a quiet work tool, not a marketing landing page.
+`/hashtag-gen` is an owner-facing tool for Tuz cafe owners to quickly create an Instagram hashtag block before writing or publishing a caption. The first version should feel like a quiet copy-and-paste work tool, not a marketing landing page.
 
 - User: non-developer cafe owners writing Instagram captions for Tuz.
-- Core task: paste or type an Instagram post, generate relevant Korean and local cafe hashtags, copy the final set.
+- Core task: choose the posting situation, optionally add a short memo, generate relevant Korean/local cafe hashtags, and copy the final set.
 - Deployment: same static Vercel project.
 - Data/context: same Supabase project, with Tuz cafe profile and cafe-owned reference data available to the generator.
 - Future learning: hashtag generation criteria will be analyzed and trained separately, so the UI and API should isolate criteria/config from the screen.
@@ -34,12 +34,14 @@ This should follow the existing `/trend/` pattern: a separate static page using 
 ## Primary Flow
 
 1. Owner opens `/hashtag-gen`.
-2. Page shows a simple input area: "오늘 올릴 게시글을 붙여넣어 주세요".
-3. Owner optionally selects intent:
+2. Page shows quick situation buttons and a short optional memo field.
+3. Owner selects the post situation:
    - 신메뉴
    - 오늘의 추천
    - 이벤트/공지
    - 매장 분위기
+   - 메뉴 사진
+   - 디저트/음료
    - 직접 선택 안 함
 4. Owner taps "해시태그 만들기".
 5. Result returns grouped tags:
@@ -62,14 +64,15 @@ This should follow the existing `/trend/` pattern: a separate static page using 
 
 Recommended copy:
 
-- Label: "게시글 내용"
-- Placeholder: "예: 오늘은 고소한 크림라떼가 잘 나왔어요. 점심 지나고 조용한 시간에 들르기 좋아요."
-- Helper text: "메뉴 이름, 분위기, 이벤트 내용을 넣으면 더 잘 맞춰드려요."
-- Character counter: owner-facing, simple: "312자"
+- Label: "오늘 올릴 내용"
+- Placeholder: "예: 크림라떼, 조용한 오후, 신메뉴, 쿠폰 이벤트"
+- Helper text: "본문을 다 쓰지 않아도 괜찮아요. 메뉴나 분위기만 적어도 됩니다."
+- Character counter: owner-facing, simple: "38자"
 
 Controls:
 
-- Segmented control for post type.
+- Situation buttons for post type.
+- Optional short memo textarea, not a required full caption.
 - Optional checkbox: "울산/성남동 태그 포함".
 - Optional checkbox: "TUZ 고정태그 포함".
 - Primary button: "해시태그 만들기".
@@ -78,7 +81,7 @@ Controls:
 
 Result summary:
 
-- "게시글에 맞춰 24개를 골랐어요."
+- "인스타그램에 붙여넣을 태그를 골랐어요."
 - "복사해서 인스타그램 맨 아래에 붙여넣으면 됩니다."
 
 Tag display:
@@ -103,14 +106,15 @@ Copy success:
 
 ### Empty And Error States
 
-- Empty input: "게시글 내용을 먼저 넣어주세요."
-- Too short: "조금만 더 적어주시면 더 정확하게 골라드릴 수 있어요."
-- API error: "잠시 연결이 불안정해요. 방금 쓴 글은 그대로 두었으니 다시 눌러주세요."
+- No situation selected: "어떤 글인지 하나만 골라주세요."
+- Empty memo: allowed when a situation is selected.
+- Too little context: "기본 TUZ 태그로 먼저 만들어드릴게요."
+- API error: "잠시 연결이 불안정해요. 선택한 내용은 그대로 두었으니 다시 눌러주세요."
 - No result: "이번 글에는 고정태그 위주로 먼저 제안할게요."
 
 ## Cafe Context The Generator Should Know
 
-The generator should not rely only on the pasted post. It should receive a compact Tuz profile with:
+The generator should not require a completed caption. It should receive a compact Tuz profile with:
 
 - Brand: Tuz / 투즈
 - Location: 울산 중구, 성남동 context if confirmed in production data
@@ -153,7 +157,7 @@ Candidate endpoint:
 
 Request body:
 
-- `postText`
+- `memo`
 - `postType`
 - `includeLocalTags`
 - `includeBrandTags`
@@ -173,7 +177,7 @@ The API should:
 - Load cafe context from Supabase.
 - Apply future hashtag criteria/config before calling the model.
 - Return stable JSON only.
-- Avoid storing raw full post text unless the owner explicitly approves logging.
+- Avoid storing raw owner memo text unless the owner explicitly approves logging.
 
 ## Generation Criteria Integration
 
@@ -182,7 +186,7 @@ The upcoming hashtag analysis should become a versioned criteria module, not scr
 Recommended boundaries:
 
 - `hashtagCriteriaVersion`: stored in settings/logs.
-- `buildHashtagPrompt(context, post, options)`: server-only.
+- `buildHashtagPrompt(context, memo, options)`: server-only.
 - `normalizeHashtags(tags)`: removes duplicates, enforces `#`, filters blocked tags.
 - `rankHashtags(tags, context)`: keeps a balanced mix of local/menu/occasion/brand tags.
 - `formatCopyText(groups)`: UI-independent output formatting.
@@ -198,7 +202,7 @@ Use practical owner language:
 - "이 태그 빼기"
 - "지역 태그 포함"
 - "TUZ 고정태그 포함"
-- "게시글에 맞춰 골랐어요"
+- "인스타그램에 붙여넣을 태그를 골랐어요"
 
 Avoid:
 
@@ -213,7 +217,7 @@ Avoid:
 MVP should include:
 
 - Standalone `/hashtag-gen` page.
-- Post input and post type selector.
+- Situation selector and optional short memo.
 - Generate/copy/remove/regenerate interactions.
 - Vercel API endpoint.
 - Supabase cafe context read.
@@ -231,7 +235,7 @@ Defer:
 ## Acceptance Criteria
 
 - Page works on mobile and desktop without horizontal scrolling.
-- Input text remains intact after failed generation.
+- Selected situation and memo remain intact after failed generation.
 - Owners can copy tags in one tap.
 - Result never includes tags without `#`.
 - Duplicate tags are removed.
