@@ -228,9 +228,12 @@ ALTER TABLE pick ALTER COLUMN name DROP NOT NULL;
 DO $$ BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'news' AND column_name = 'is_today'
+    WHERE table_schema = 'public' AND table_name = 'news' AND column_name = 'is_today'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'news' AND column_name = 'is_pinned'
   ) THEN
-    ALTER TABLE news RENAME COLUMN is_today TO is_pinned;
+    ALTER TABLE public.news RENAME COLUMN is_today TO is_pinned;
   END IF;
 END $$;
 -- is_signature 제거 (카테고리로 통일 — ADR-0003)

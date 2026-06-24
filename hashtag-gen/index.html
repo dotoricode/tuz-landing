@@ -483,6 +483,37 @@
     box-shadow: 0 5px 12px rgba(122, 29, 16, 0.18);
   }
 
+  .action-cluster {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-self: center;
+  }
+
+  .tune-button {
+    min-width: 76px;
+    height: 40px;
+    border: 1px solid rgba(26, 22, 18, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 253, 249, 0.92);
+    color: var(--hash-ink);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 760;
+    cursor: pointer;
+    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+  }
+
+  .tune-button:active {
+    transform: scale(0.97);
+    background: rgba(208, 95, 69, 0.12);
+    border-color: rgba(122, 29, 16, 0.22);
+  }
+
+  .tune-button[hidden] {
+    display: none;
+  }
+
   .status {
     min-height: 18px;
     color: var(--hash-red-deep);
@@ -581,7 +612,10 @@
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 7v5l3 2"/><path d="M4.2 7.5A9 9 0 1112 21"/><path d="M4 4v4h4"/></svg>
             <span id="memoCount">0자</span>
           </span>
-          <button class="answer-button" id="generateBtn" type="button">Generate</button>
+          <div class="action-cluster">
+            <button class="tune-button" id="tuneBtn" type="button" hidden>Tune</button>
+            <button class="answer-button" id="generateBtn" type="button">Generate</button>
+          </div>
           <button class="info-button" id="resetBtn" type="button" aria-label="초기화">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
           </button>
@@ -604,11 +638,14 @@ const FALLBACK_CONTEXT = {
 
 const SUPABASE_URL = 'https://lwgissxdvemamuybxmxz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z2lzc3hkdmVtYW11eWJ4bXh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MjMxNjgsImV4cCI6MjA5MjA5OTE2OH0.bslx3DGC2KPKleWo9KejERD10e92OeBEUoQHg2_jPOo';
+const ADMIN_MODE = new URLSearchParams(window.location.search).get('admin') === '1';
 
 const state = {
   postType: 'post_body',
   groups: [],
-  context: FALLBACK_CONTEXT
+  context: FALLBACK_CONTEXT,
+  adminMode: ADMIN_MODE,
+  researchKey: ''
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -618,12 +655,15 @@ const memoCount = $('#memoCount');
 const tagCountMeta = $('#tagCountMeta');
 const status = $('#status');
 const generateBtn = $('#generateBtn');
+const tuneBtn = $('#tuneBtn');
 const resetBtn = $('#resetBtn');
 const resultState = $('#resultState');
 const copyText = $('#copyText');
 const tagGroups = $('#tagGroups');
 const summary = $('#summary');
 const copyBtn = $('#copyBtn');
+
+if (tuneBtn) tuneBtn.hidden = !state.adminMode;
 
 function normalizeTag(value) {
   const cleaned = String(value || '')
@@ -693,6 +733,15 @@ function keywordTags(text) {
 
 function formatCopyText(groups) {
   return groups.flatMap(group => group.tags).join(' ');
+}
+
+function buildResearchTags(memoText) {
+  return uniqTags([
+    ...keywordTags(memoText),
+    ...((state.context.menuTags || []).slice(0, 4)),
+    ...((state.context.localTags || []).slice(0, 2)),
+    ...((state.context.brandTags || []).slice(0, 2))
+  ]).slice(0, 12);
 }
 
 function buildFallbackTags({ memoText, context }) {
@@ -768,6 +817,37 @@ async function requestTags() {
   }
 }
 
+function ensureResearchKey() {
+  if (state.researchKey) return state.researchKey;
+  const entered = window.prompt('관리자용 튜닝 키를 입력해 주세요.');
+  const key = String(entered || '').trim();
+  if (!key) throw new Error('튜닝 키 입력이 필요해요.');
+  state.researchKey = key;
+  return key;
+}
+
+async function requestResearchRefresh() {
+  const response = await fetch('/api/hashtag-research', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-hashtag-research-key': ensureResearchKey()
+    },
+    body: JSON.stringify({
+      tags: buildResearchTags(memo.value.trim()),
+      includeBrandTags: true,
+      includeLocalTags: true,
+      includeMenuTags: true
+    })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401) state.researchKey = '';
+    throw new Error(data.error || '튜닝 호출에 실패했어요.');
+  }
+  return data;
+}
+
 function startSplash() {
   if (splash.classList.contains('is-loading')) return;
   splash.classList.add('is-loading');
@@ -805,6 +885,29 @@ generateBtn.addEventListener('click', async () => {
     generateBtn.disabled = false;
   }
 });
+
+if (tuneBtn) {
+  tuneBtn.addEventListener('click', async () => {
+    status.textContent = '관련 해시태그 데이터를 갱신하는 중입니다.';
+    tuneBtn.disabled = true;
+    generateBtn.disabled = true;
+    try {
+      await requestResearchRefresh();
+      if (memo.value.trim()) {
+        const result = await requestTags();
+        renderGroups(result.tags, `${result.reasonSummary} 리서치 캐시도 갱신했어요.`);
+        status.textContent = '튜닝 후 현재 본문 기준 태그를 다시 골랐어요.';
+      } else {
+        status.textContent = '리서치 캐시를 갱신했어요. 이제 본문을 넣고 Generate를 눌러 주세요.';
+      }
+    } catch (err) {
+      status.textContent = err?.message || '튜닝 중 오류가 발생했습니다.';
+    } finally {
+      tuneBtn.disabled = false;
+      generateBtn.disabled = false;
+    }
+  });
+}
 
 resetBtn.addEventListener('click', () => {
   state.groups = [];
