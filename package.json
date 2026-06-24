@@ -7,6 +7,7 @@
     "backup:inventory": "node scripts/backup-inventory.cjs",
     "restore:inventory": "node scripts/restore-inventory.cjs",
     "test:syntax": "node --input-type=module --check < app.js && node --check admin.js",
+    "test:hashtag-gen": "node scripts/verify-hashtag-gen.cjs",
     "test:inventory-manager": "node scripts/verify-inventory-manager-actions.cjs",
     "test:inventory-stock": "node scripts/verify-inventory-stock-groups.cjs",
     "test:inventory-events": "node scripts/verify-inventory-event-mvp.cjs"

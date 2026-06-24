@@ -291,6 +291,39 @@ CREATE TABLE IF NOT EXISTS public.hashtag_settings (
 
 INSERT INTO public.hashtag_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
+ALTER TABLE public.hashtag_settings
+  ADD COLUMN IF NOT EXISTS target_count int not null default 5 check (target_count between 3 and 5),
+  ADD COLUMN IF NOT EXISTS min_post_count int not null default 500 check (min_post_count >= 0),
+  ADD COLUMN IF NOT EXISTS max_post_count int not null default 500000 check (max_post_count > 0),
+  ADD COLUMN IF NOT EXISTS stale_after_days int not null default 14 check (stale_after_days between 1 and 90),
+  ADD COLUMN IF NOT EXISTS required_brand_tags text[] not null default array['#tuzz2026', '#투즈', '#TUZ'],
+  ADD COLUMN IF NOT EXISTS required_local_tags text[] not null default array['#울산카페', '#성남동카페', '#울산중구카페'];
+
+UPDATE public.hashtag_settings
+SET
+  target_count = 5,
+  min_post_count = 500,
+  max_post_count = 500000,
+  stale_after_days = 14,
+  required_brand_tags = array['#tuzz2026', '#투즈', '#TUZ'],
+  required_local_tags = array['#울산카페', '#성남동카페', '#울산중구카페'],
+  criteria_version = 'hashtag-ranking-2026-06-24'
+WHERE id = 1;
+
+CREATE TABLE IF NOT EXISTS public.hashtag_research_cache (
+  tag text primary key,
+  post_count int not null check (post_count >= 0),
+  sampled_at timestamptz not null default now(),
+  source text not null default 'apify',
+  related_terms text[] not null default '{}'::text[],
+  quality_flags text[] not null default '{}'::text[],
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hashtag_research_cache_sampled_at
+  ON public.hashtag_research_cache (sampled_at DESC);
+
 CREATE TABLE IF NOT EXISTS public.hashtag_generations (
   id uuid primary key default gen_random_uuid(),
   post_type text not null,
@@ -301,21 +334,35 @@ CREATE TABLE IF NOT EXISTS public.hashtag_generations (
   created_at timestamptz not null default now()
 );
 
+ALTER TABLE public.hashtag_generations
+  ADD COLUMN IF NOT EXISTS request_id text,
+  ADD COLUMN IF NOT EXISTS memo_hash text,
+  ADD COLUMN IF NOT EXISTS selected_tags text[] not null default '{}'::text[];
+
 ALTER TABLE public.hashtag_settings enable row level security;
+ALTER TABLE public.hashtag_research_cache enable row level security;
 ALTER TABLE public.hashtag_generations enable row level security;
 
 DROP POLICY IF EXISTS "public_read_hashtag_settings" on public.hashtag_settings;
 DROP POLICY IF EXISTS "auth_write_hashtag_settings" on public.hashtag_settings;
+DROP POLICY IF EXISTS "public_read_hashtag_research_cache" on public.hashtag_research_cache;
+DROP POLICY IF EXISTS "auth_write_hashtag_research_cache" on public.hashtag_research_cache;
 DROP POLICY IF EXISTS "auth_read_hashtag_generations" on public.hashtag_generations;
 DROP POLICY IF EXISTS "auth_write_hashtag_generations" on public.hashtag_generations;
 
 CREATE POLICY "public_read_hashtag_settings" on public.hashtag_settings for select using (true);
 CREATE POLICY "auth_write_hashtag_settings" on public.hashtag_settings for all to authenticated using (true) with check (true);
+CREATE POLICY "public_read_hashtag_research_cache" on public.hashtag_research_cache for select using (true);
+CREATE POLICY "auth_write_hashtag_research_cache" on public.hashtag_research_cache for all to authenticated using (true) with check (true);
 CREATE POLICY "auth_read_hashtag_generations" on public.hashtag_generations for select to authenticated using (true);
 CREATE POLICY "auth_write_hashtag_generations" on public.hashtag_generations for insert to authenticated with check (true);
 
 DROP TRIGGER IF EXISTS trg_hashtag_settings_updated on public.hashtag_settings;
 CREATE TRIGGER trg_hashtag_settings_updated before update on public.hashtag_settings
+  for each row execute function public.tz_touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_hashtag_research_cache_updated on public.hashtag_research_cache;
+CREATE TRIGGER trg_hashtag_research_cache_updated before update on public.hashtag_research_cache
   for each row execute function public.tz_touch_updated_at();
 
 DO $$ BEGIN

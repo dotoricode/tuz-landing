@@ -729,14 +729,14 @@ async function loadCafeContext() {
   }
 }
 
-function renderGroups(groups) {
+function renderGroups(groups, reasonSummary = '') {
   state.groups = limitGroups(dedupeGroups(groups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length)));
   const total = state.groups.flatMap(group => group.tags).length;
   copyText.textContent = formatCopyText(state.groups);
   tagGroups.innerHTML = state.groups.flatMap(group => group.tags).map(tag => `
     <span class="tag-chip">${tag}<button type="button" aria-label="${tag} 제거" data-remove-tag="${tag}">×</button></span>
   `).join('');
-  summary.textContent = `${total}개`;
+  summary.textContent = reasonSummary || `${total}개 추천`;
   tagCountMeta.textContent = String(total);
   resultState.hidden = false;
 }
@@ -756,13 +756,15 @@ async function requestTags() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if (!response.ok) throw new Error(`API ${response.status}`);
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || '해시태그 데이터 연결이 필요해요.');
+    }
     if (!Array.isArray(data.tags) || !data.tags.length) throw new Error('empty result');
-    return data.tags;
+    return data;
   } catch (err) {
-    console.info('[hashtag-gen] api fallback:', err?.message || err);
-    return buildFallbackTags({ memoText, context: state.context });
+    console.info('[hashtag-gen] api error:', err?.message || err);
+    throw err;
   }
 }
 
@@ -794,11 +796,11 @@ generateBtn.addEventListener('click', async () => {
   status.textContent = '본문과 어울리는 태그를 고르는 중입니다.';
   generateBtn.disabled = true;
   try {
-    const groups = await requestTags();
-    renderGroups(groups);
+    const result = await requestTags();
+    renderGroups(result.tags, result.reasonSummary);
     status.textContent = '복사해서 인스타그램에 붙여넣어 주세요.';
-  } catch {
-    status.textContent = '잠시 연결이 불안정해요. 본문은 그대로 두었으니 다시 눌러주세요.';
+  } catch (err) {
+    status.textContent = err?.message || '해시태그 데이터 연결이 필요해요. 잠시 후 다시 눌러주세요.';
   } finally {
     generateBtn.disabled = false;
   }
