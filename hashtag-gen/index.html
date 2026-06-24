@@ -477,6 +477,105 @@
     display: none;
   }
 
+  /* ── TUNE PANEL ─────────────────────────────────────────────── */
+  .tune-panel {
+    border: 1px solid var(--hash-soft-line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    background: rgba(255, 252, 248, 0.9);
+    display: grid;
+    gap: 10px;
+  }
+
+  .tune-panel[hidden] { display: none; }
+
+  .tune-steps {
+    display: grid;
+    gap: 8px;
+  }
+
+  .tune-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--hash-ink);
+  }
+
+  .tune-step-icon {
+    flex: 0 0 18px;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .tune-step.ts-pending .tune-step-icon::before { content: '⏳'; }
+  .tune-step.ts-done    .tune-step-icon::before { content: '✓'; }
+  .tune-step.ts-error   .tune-step-icon::before { content: '✕'; }
+
+  .tune-step.ts-done  { color: #2a8c4a; }
+  .tune-step.ts-error { color: #c0392b; }
+
+  .tune-diff[hidden] { display: none; }
+
+  .tune-diff {
+    display: grid;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hash-soft-line);
+  }
+
+  .tune-diff-label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--hash-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  .tune-ba {
+    display: grid;
+    grid-template-columns: 1fr 18px 1fr;
+    gap: 6px 2px;
+    align-items: start;
+  }
+
+  .tune-ba-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .tune-ba-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--hash-muted);
+    margin-bottom: 2px;
+  }
+
+  .tune-ba-arrow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 22px;
+    color: var(--hash-muted);
+    font-size: 12px;
+  }
+
+  .tune-tag {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(26, 22, 18, .07);
+    color: var(--hash-ink);
+    word-break: break-all;
+  }
+
+  .tune-tag.t-added   { background: rgba(42, 140, 74, .14); color: #1b6b3a; }
+  .tune-tag.t-removed { background: rgba(192, 57, 43, .09); color: #a52a1a; text-decoration: line-through; }
+
   .admin-field {
     display: grid;
     gap: 6px;
@@ -677,6 +776,14 @@
               <span id="extraSummary">눌러서 바로 교체돼요.</span>
             </div>
             <div class="tag-groups" id="extraTagGroups"></div>
+          </div>
+        </section>
+
+        <section class="tune-panel" id="tunePanel" hidden aria-live="polite">
+          <div class="tune-steps" id="tuneSteps"></div>
+          <div class="tune-diff" id="tuneDiff" hidden>
+            <p class="tune-diff-label">태그 변경 내역</p>
+            <div class="tune-ba" id="tuneBaWrap"></div>
           </div>
         </section>
 
@@ -1098,22 +1205,79 @@ generateBtn.addEventListener('click', async () => {
   }
 });
 
+const tunePanelEl = document.getElementById('tunePanel');
+const tuneStepsEl = document.getElementById('tuneSteps');
+const tuneDiffEl  = document.getElementById('tuneDiff');
+const tuneBaWrap  = document.getElementById('tuneBaWrap');
+
+function setTuneStep(id, state, text) {
+  let el = tuneStepsEl.querySelector(`[data-step="${id}"]`);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'tune-step';
+    el.dataset.step = id;
+    el.innerHTML = '<span class="tune-step-icon" aria-hidden="true"></span><span></span>';
+    tuneStepsEl.appendChild(el);
+  }
+  el.className = `tune-step ts-${state}`;
+  el.querySelector('span:last-child').textContent = text;
+}
+
+function renderTuneDiff(beforeTags, afterTags) {
+  const bSet = new Set(beforeTags);
+  const aSet = new Set(afterTags);
+  const hasChange = afterTags.some(t => !bSet.has(t)) || beforeTags.some(t => !aSet.has(t));
+  if (!hasChange) { tuneDiffEl.hidden = true; return; }
+
+  const beforeItems = beforeTags.map(t => ({ tag: t, cls: aSet.has(t) ? '' : 't-removed' }));
+  const afterItems  = afterTags.map(t  => ({ tag: t, cls: bSet.has(t) ? '' : 't-added'   }));
+
+  const mkCol = (header, items) => {
+    const col = document.createElement('div');
+    col.className = 'tune-ba-col';
+    col.innerHTML = `<span class="tune-ba-header">${header}</span>` +
+      items.map(({ tag, cls }) => `<span class="tune-tag ${cls}">${tag}</span>`).join('');
+    return col;
+  };
+
+  tuneBaWrap.innerHTML = '';
+  tuneBaWrap.appendChild(mkCol('Before', beforeItems));
+  const arrow = document.createElement('div');
+  arrow.className = 'tune-ba-arrow';
+  arrow.textContent = '→';
+  tuneBaWrap.appendChild(arrow);
+  tuneBaWrap.appendChild(mkCol('After', afterItems));
+  tuneDiffEl.hidden = false;
+}
+
 if (tuneBtn) {
   tuneBtn.addEventListener('click', async () => {
-    status.textContent = '관련 해시태그 데이터를 갱신하는 중입니다.';
+    const beforeTags = state.groups.flatMap(g => g.tags);
+    tunePanelEl.hidden = false;
+    tuneDiffEl.hidden  = true;
+    tuneStepsEl.innerHTML = '';
+    status.textContent = '';
     tuneBtn.disabled = true;
     generateBtn.disabled = true;
+
+    setTuneStep('collect', 'pending', 'Instagram 게시글 수 수집 중...');
     try {
-      await requestResearchRefresh();
+      const refreshResult = await requestResearchRefresh();
+      const count = refreshResult?.refreshedCount ?? '?';
+      setTuneStep('collect', 'done', `데이터 수집 완료 — ${count}개 태그 갱신`);
+
       if (memo.value.trim()) {
+        setTuneStep('regen', 'pending', '추천 태그 재계산 중...');
         const result = await requestTags();
         renderGroups(result.tags, result.extraTags || [], `${result.reasonSummary} 리서치 캐시도 갱신했어요.`);
-        status.textContent = '튜닝 후 현재 본문 기준 태그를 다시 골랐어요.';
+        setTuneStep('regen', 'done', '추천 태그 재구성 완료');
+        renderTuneDiff(beforeTags, state.groups.flatMap(g => g.tags));
+        status.textContent = '튜닝 완료';
       } else {
         status.textContent = '리서치 캐시를 갱신했어요. 이제 본문을 넣고 Generate를 눌러 주세요.';
       }
     } catch (err) {
-      status.textContent = err?.message || '튜닝 중 오류가 발생했습니다.';
+      setTuneStep('error', 'error', err?.message || '튜닝 중 오류가 발생했습니다.');
     } finally {
       tuneBtn.disabled = false;
       generateBtn.disabled = false;
@@ -1133,6 +1297,7 @@ resetBtn.addEventListener('click', () => {
   copyText.textContent = '';
   extraState.hidden = true;
   resultState.hidden = true;
+  if (tunePanelEl) tunePanelEl.hidden = true;
   memo.focus();
 });
 
