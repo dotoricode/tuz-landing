@@ -10,6 +10,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 const POST_TYPES = {
+  post_body: { label: '본문 기반', tags: ['#인스타그램', '#카페게시물', '#오늘의카페'] },
   new_menu: { label: '신메뉴', tags: ['#신메뉴', '#카페신메뉴', '#신메뉴출시', '#오늘의메뉴'] },
   today_pick: { label: '오늘의 추천', tags: ['#오늘의추천', '#카페추천', '#오늘마실커피', '#오늘의카페'] },
   notice: { label: '이벤트/공지', tags: ['#카페이벤트', '#카페공지', '#이벤트', '#쿠폰이벤트'] },
@@ -93,6 +94,19 @@ function limitGroups(groups, maxTags = 24) {
   }).filter(group => group.tags.length);
 }
 
+function dedupeGroups(groups) {
+  const seen = new Set();
+  return groups.map(group => {
+    const tags = group.tags.filter(tag => {
+      const key = tag.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return { ...group, tags };
+  }).filter(group => group.tags.length);
+}
+
 function keywordTags(text) {
   const source = String(text || '').toLowerCase();
   const pairs = [
@@ -160,7 +174,7 @@ function buildTags({ postType, memo, includeLocalTags, includeBrandTags, context
   if (includeLocalTags) groups.push({ key: 'local', label: '지역', tags: uniqTags(context.localTags).slice(0, 6) });
   if (includeBrandTags) groups.push({ key: 'brand', label: 'TUZ 고정', tags: uniqTags(context.brandTags).slice(0, 6) });
 
-  return limitGroups(groups.filter(group => group.tags.length));
+  return limitGroups(dedupeGroups(groups.filter(group => group.tags.length)));
 }
 
 function formatCopyText(groups) {
