@@ -16,8 +16,8 @@ function cache(rows) {
 const settings = {
   ...api.DEFAULT_SETTINGS,
   targetCount: 5,
-  requiredBrandTags: ['#tuzz2026', '#투즈'],
-  requiredLocalTags: ['#울산카페', '#성남동카페'],
+  requiredBrandTags: ['#카페튜즈', '#TUZ'],
+  requiredLocalTags: ['#울산카페', '#반구동카페'],
   blockedTags: ['#맞팔']
 };
 
@@ -25,27 +25,33 @@ assert.equal(api.normalizeTag('  ##울산 카페!! '), '#울산카페');
 assert.deepEqual(api.uniqTags(['#Cafe', ' cafe ', '#카페', '#카페']), ['#Cafe', '#카페']);
 
 const context = {
-  menuNames: ['크림라떼', '바스크 치즈케이크'],
-  menuTags: ['#크림라떼', '#바스크치즈케이크']
+  menuNames: ['크림라떼', '바스크 치즈케이크', '레몬에이드'],
+  menuTags: ['#크림라떼', '#바스크치즈케이크', '#레몬에이드'],
+  menuEntries: [
+    { tag: '#크림라떼', plain: '크림라떼' },
+    { tag: '#바스크치즈케이크', plain: '바스크치즈케이크' },
+    { tag: '#레몬에이드', plain: '레몬에이드' }
+  ]
 };
-const memo = '오늘은 크림라떼와 바스크 치즈케이크가 잘 나왔어요. 조용한 오후에 울산 성남동에서 작업하기 좋아요.';
+const memo = '오늘은 크림라떼와 바스크 치즈케이크가 잘 나왔어요. 조용한 오후에 울산 반구동에서 작업하기 좋아요.';
 const candidates = api.buildCandidatePool({
   memo,
   postType: 'post_body',
   context,
   settings,
-  aiCandidates: { tags: ['#작업하기좋은카페', '#맞팔', '#울산핫플'] },
+  aiCandidates: { tags: ['#작업하기좋은카페', '#맞팔', '#울산핫플', '#레몬에이드'], keywords: ['크림라떼', '반구동'] },
   includeLocalTags: true,
   includeBrandTags: true
 });
 assert.ok(candidates.some(item => item.tag === '#크림라떼'));
 assert.ok(!candidates.some(item => item.tag === '#맞팔'));
+assert.ok(!candidates.some(item => item.tag === '#레몬에이드'));
 
 const researchCache = cache([
-  { tag: '#tuzz2026', post_count: 1400 },
-  { tag: '#투즈', post_count: 800 },
+  { tag: '#카페튜즈', post_count: 1400 },
+  { tag: '#TUZ', post_count: 900 },
   { tag: '#울산카페', post_count: 180000 },
-  { tag: '#성남동카페', post_count: 28000 },
+  { tag: '#반구동카페', post_count: 28000 },
   { tag: '#크림라떼', post_count: 42000 },
   { tag: '#바스크치즈케이크', post_count: 65000 },
   { tag: '#작업하기좋은카페', post_count: 12000 },
@@ -71,40 +77,52 @@ assert.equal(selected.filter(item => item.category === 'brand').length, 1);
 assert.equal(selected.filter(item => item.category === 'local').length, 1);
 assert.ok(selected.filter(item => item.category === 'content').length >= 2);
 assert.ok(selected.filter(item => item.scoreBand === 'too-broad').length <= 1);
+assert.ok(selected.some(item => item.tag === '#반구동카페'));
 
 const groups = api.groupSelectedTags(selected);
 assert.equal(api.formatCopyText(groups).split(' ').length, 5);
 assert.equal(api.researchPayload(selected, settings).length, 5);
+const extraGroups = api.selectAlternativeTags({
+  candidates,
+  researchCache,
+  memo,
+  context,
+  settings,
+  includeLocalTags: true,
+  includeBrandTags: true,
+  selected
+});
+assert.ok(extraGroups.flatMap(group => group.tags).length >= 1);
 
 const researchContext = {
-  brandTags: ['#tuzz2026', '#투즈'],
-  localTags: ['#울산카페', '#성남동카페'],
+  brandTags: ['#카페튜즈', '#TUZ'],
+  localTags: ['#울산카페', '#반구동카페'],
   menuTags: ['#크림라떼', '#바스크치즈케이크'],
   menuNames: ['크림라떼', '바스크 치즈케이크'],
   blockedTags: ['#맞팔'],
   minPostCount: 500
 };
 const researchCandidates = researchApi.buildResearchCandidates({
-  tags: ['#강남맛집', '#울산라떼', '#맞팔', '#TUZ'],
+  tags: ['#강남맛집', '#울산라떼', '#맞팔', '#카페튜즈'],
   includeBrandTags: false,
   includeLocalTags: false,
   includeMenuTags: false
 }, researchContext);
-assert.deepEqual(researchCandidates.tags, ['#울산라떼', '#TUZ']);
+assert.deepEqual(researchCandidates.tags, ['#울산라떼', '#카페튜즈']);
 assert.ok(researchCandidates.rejectedTags.some(item => item.tag === '#강남맛집' && item.reason === 'not_tuz_relevant'));
 assert.ok(researchCandidates.rejectedTags.some(item => item.tag === '#맞팔' && item.reason === 'blocked'));
 
 const apifyRows = researchApi.extractHashtagResearch(['#울산라떼'], [
   {
     hashtag: '울산라떼',
-    caption: '#울산라떼 #성남동카페 #크림라떼',
+    caption: '#울산라떼 #반구동카페 #크림라떼',
     likesCount: 20,
     commentsCount: 2,
     videoPlayCount: 1000
   },
   {
     hashtag: '울산라떼',
-    caption: '#울산라떼 #투즈',
+    caption: '#울산라떼 #카페튜즈',
     likesCount: 40,
     commentsCount: 4,
     videoPlayCount: 2000
@@ -115,7 +133,7 @@ assert.equal(apifyRows[0].tag, '#울산라떼');
 assert.equal(apifyRows[0].sample_size, 2);
 assert.ok(apifyRows[0].post_count >= 500);
 assert.ok(apifyRows[0].quality_flags.includes('post_count_estimated'));
-assert.ok(apifyRows[0].related_terms.includes('#성남동카페'));
+assert.ok(apifyRows[0].related_terms.includes('#반구동카페'));
 
 const noBrandLocal = api.selectRankedTags({
   candidates,
@@ -231,8 +249,9 @@ function jsonResponse(payload, ok = true, status = 200) {
 
 function supabaseMock({ includeResearch = true } = {}) {
   const rows = [
-    { tag: '#tuzz2026', post_count: 1400 },
+    { tag: '#카페튜즈', post_count: 1400 },
     { tag: '#울산카페', post_count: 180000 },
+    { tag: '#반구동카페', post_count: 28000 },
     { tag: '#크림라떼', post_count: 42000 },
     { tag: '#바스크치즈케이크', post_count: 65000 },
     { tag: '#작업하기좋은카페', post_count: 12000 },
@@ -250,8 +269,8 @@ function supabaseMock({ includeResearch = true } = {}) {
       max_post_count: 500000,
       stale_after_days: 14,
       blocked_tags: ['#맞팔'],
-      required_brand_tags: ['#tuzz2026'],
-      required_local_tags: ['#울산카페'],
+      required_brand_tags: ['#카페튜즈'],
+      required_local_tags: ['#울산카페', '#반구동카페'],
       criteria_version: 'hashtag-ranking-2026-06-24'
     }]);
     if (target.includes('/hashtag_research_cache?')) return jsonResponse(includeResearch ? rows : []);
@@ -268,8 +287,8 @@ function researchFetchMock({ apifyItems = [] } = {}) {
       min_post_count: 500,
       max_post_count: 500000,
       blocked_tags: ['#맞팔'],
-      required_brand_tags: ['#tuzz2026'],
-      required_local_tags: ['#울산카페']
+      required_brand_tags: ['#카페튜즈'],
+      required_local_tags: ['#울산카페', '#반구동카페']
     }]);
     if (target.includes('api.apify.com')) {
       assert.equal(options.headers.Authorization, 'Bearer apify_test');
@@ -294,6 +313,7 @@ function researchFetchMock({ apifyItems = [] } = {}) {
   assert.equal(ok.statusCode, 200);
   assert.equal(ok.body.copyText.split(' ').length, 5);
   assert.equal(ok.body.research.length, 5);
+  assert.ok(Array.isArray(ok.body.extraTags));
 
   const missing = await callHandlerWithFetch(supabaseMock({ includeResearch: false }), {
     postType: 'post_body',
@@ -337,7 +357,7 @@ function researchFetchMock({ apifyItems = [] } = {}) {
 
   const refreshed = await callResearchHandlerWithFetch(researchFetchMock({
     apifyItems: [
-      { hashtag: '울산라떼', caption: '#울산라떼 #성남동카페', likesCount: 10, commentsCount: 1 },
+      { hashtag: '울산라떼', caption: '#울산라떼 #반구동카페', likesCount: 10, commentsCount: 1 },
       { hashtag: '울산라떼', caption: '#울산라떼 #크림라떼', likesCount: 30, commentsCount: 3 }
     ]
   }), {

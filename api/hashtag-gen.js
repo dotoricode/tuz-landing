@@ -25,6 +25,12 @@ const POST_TYPES = {
   drink_dessert: { label: '디저트/음료', tags: ['#디저트카페', '#커피스타그램', '#음료추천'] }
 };
 
+const TUZ_BRAND_TAGS = ['#카페튜즈', '#TUZ', '#tuzz2026'];
+const TUZ_LOCAL_TAGS = ['#울산카페', '#반구동카페', '#울산중구카페'];
+const TUZ_LOCAL_CONTEXT_TAGS = [...TUZ_LOCAL_TAGS, '#울산카페추천'];
+const LEGACY_BRAND_TAGS = ['#tuzz2026', '#투즈', '#TUZ'];
+const LEGACY_LOCAL_TAGS = ['#울산카페', '#성남동카페', '#울산중구카페'];
+
 const DEFAULT_SETTINGS = {
   targetCount: 5,
   minPostCount: 500,
@@ -32,14 +38,14 @@ const DEFAULT_SETTINGS = {
   broadPostCount: 500000,
   staleAfterDays: 14,
   blockedTags: ['#맞팔', '#선팔', '#좋아요반사', '#팔로우', '#followforfollow', '#likeforlikes'],
-  requiredBrandTags: ['#tuzz2026', '#투즈', '#TUZ'],
-  requiredLocalTags: ['#울산카페', '#성남동카페', '#울산중구카페'],
+  requiredBrandTags: TUZ_BRAND_TAGS,
+  requiredLocalTags: TUZ_LOCAL_TAGS,
   criteriaVersion: CRITERIA_VERSION
 };
 
 const DEFAULT_CONTEXT = {
-  brandTags: ['#tuzz2026', '#투즈', '#TUZ'],
-  localTags: ['#울산카페', '#성남동카페', '#울산중구카페', '#울산카페추천'],
+  brandTags: TUZ_BRAND_TAGS,
+  localTags: TUZ_LOCAL_CONTEXT_TAGS,
   baseTags: ['#카페', '#카페스타그램', '#커피', '#디저트', '#카페투어']
 };
 
@@ -115,6 +121,18 @@ function toArray(value, fallback = []) {
   return Array.isArray(value) ? value.filter(Boolean) : fallback;
 }
 
+function compactText(value) {
+  return String(value || '').toLowerCase().replace(/\s+/g, '');
+}
+
+function sameTagList(left, right) {
+  return uniqTags(left).join('|').toLowerCase() === uniqTags(right).join('|').toLowerCase();
+}
+
+function replaceLegacyTagList(tags, legacy, nextTags) {
+  return sameTagList(tags, legacy) ? [...nextTags] : uniqTags(tags);
+}
+
 function daysSince(value, now = new Date()) {
   if (!value) return Infinity;
   const sampledAt = new Date(value);
@@ -160,11 +178,16 @@ async function loadCafeContext() {
     const menuNames = (menu || []).map(item => item.name).filter(Boolean);
     const pickNames = (picks || []).map(item => item.menu?.name || item.name).filter(Boolean);
     const menuTags = uniqTags([...pickNames, ...menuNames].slice(0, 20).map(name => `#${name}`));
+    const menuEntries = uniqTags([...pickNames, ...menuNames].slice(0, 20).map(name => `#${name}`)).map(tag => ({
+      tag,
+      plain: compactText(tag.slice(1))
+    }));
     return {
       ...DEFAULT_CONTEXT,
       menuNames,
       pickNames,
-      menuTags
+      menuTags,
+      menuEntries
     };
   } catch (err) {
     console.warn('[hashtag-gen] Supabase cafe context fallback:', err.message || err);
@@ -174,6 +197,8 @@ async function loadCafeContext() {
 
 function mapSettings(row) {
   if (!row) return DEFAULT_SETTINGS;
+  const requiredBrandTags = replaceLegacyTagList(toArray(row.required_brand_tags, DEFAULT_SETTINGS.requiredBrandTags), LEGACY_BRAND_TAGS, TUZ_BRAND_TAGS);
+  const requiredLocalTags = replaceLegacyTagList(toArray(row.required_local_tags, DEFAULT_SETTINGS.requiredLocalTags), LEGACY_LOCAL_TAGS, TUZ_LOCAL_TAGS);
   return {
     targetCount: Number(row.target_count) || DEFAULT_SETTINGS.targetCount,
     minPostCount: Number(row.min_post_count) || DEFAULT_SETTINGS.minPostCount,
@@ -181,8 +206,8 @@ function mapSettings(row) {
     broadPostCount: Number(row.max_post_count) || DEFAULT_SETTINGS.broadPostCount,
     staleAfterDays: Number(row.stale_after_days) || DEFAULT_SETTINGS.staleAfterDays,
     blockedTags: uniqTags(toArray(row.blocked_tags, DEFAULT_SETTINGS.blockedTags)),
-    requiredBrandTags: uniqTags(toArray(row.required_brand_tags, DEFAULT_SETTINGS.requiredBrandTags)),
-    requiredLocalTags: uniqTags(toArray(row.required_local_tags, DEFAULT_SETTINGS.requiredLocalTags)),
+    requiredBrandTags,
+    requiredLocalTags,
     criteriaVersion: row.criteria_version || CRITERIA_VERSION
   };
 }
@@ -214,12 +239,37 @@ function keywordTags(text) {
     ['초코', '#초코디저트'],
     ['딸기', '#딸기디저트'],
     ['케이크', '#케이크맛집'],
-    ['성남동', '#성남동카페'],
+    ['반구동', '#반구동카페'],
     ['울산', '#울산카페'],
     ['작업', '#작업하기좋은카페'],
     ['혼자', '#혼카페']
   ];
   return pairs.filter(([keyword]) => source.includes(keyword)).map(([, tag]) => tag);
+}
+
+function memoMenuTags(memo, context) {
+  const memoText = compactText(memo);
+  return uniqTags((context.menuEntries || [])
+    .filter(entry => entry.plain && memoText.includes(entry.plain))
+    .map(entry => entry.tag));
+}
+
+function memoHasEvidence(tag, memo, context, aiKeywords = []) {
+  const plain = compactText(normalizeTag(tag).slice(1));
+  const memoText = compactText(memo);
+  if (!plain || !memoText) return false;
+  if (memoText.includes(plain)) return true;
+  if (keywordTags(memo).some(item => tagKey(item) === tagKey(tag))) return true;
+  if (memoMenuTags(memo, context).some(item => tagKey(item) === tagKey(tag))) return true;
+  const menuHit = (context.menuNames || []).some(name => {
+    const compactName = compactText(name);
+    return compactName && (plain.includes(compactName) || compactName.includes(plain)) && memoText.includes(compactName);
+  });
+  if (menuHit) return true;
+  return toArray(aiKeywords).some(keyword => {
+    const compactKeyword = compactText(keyword);
+    return compactKeyword && (plain.includes(compactKeyword) || compactKeyword.includes(plain)) && memoText.includes(compactKeyword);
+  });
 }
 
 function parseJsonObject(text) {
@@ -295,11 +345,13 @@ function candidate(tag, category, source, weight = 1) {
 
 function buildCandidatePool({ memo, postType, context, settings, aiCandidates, includeLocalTags, includeBrandTags }) {
   const typeTags = POST_TYPES[postType]?.tags || [];
+  const groundedMenuTags = memoMenuTags(memo, context);
+  const groundedAiTags = toArray(aiCandidates.tags, []).filter(tag => memoHasEvidence(tag, memo, context, aiCandidates.keywords));
   const pool = [
     ...keywordTags(memo).map(tag => candidate(tag, 'content', 'keyword', 1.2)),
     ...typeTags.map(tag => candidate(tag, 'content', 'post_type', 0.8)),
-    ...(context.menuTags || []).map(tag => candidate(tag, 'content', 'menu', 1.1)),
-    ...(aiCandidates.tags || []).map(tag => candidate(tag, 'content', 'gemini', 1)),
+    ...groundedMenuTags.map(tag => candidate(tag, 'content', 'menu', 1.15)),
+    ...groundedAiTags.map(tag => candidate(tag, 'content', 'gemini', 1)),
     ...DEFAULT_CONTEXT.baseTags.map(tag => candidate(tag, 'discovery', 'base', 0.65))
   ];
   if (includeBrandTags) {
@@ -352,11 +404,12 @@ function scoreBand(postCount, settings) {
 function scoreCandidate(item, research, { memo, context, settings }) {
   const plain = item.tag.slice(1).toLowerCase();
   const memoText = String(memo || '').toLowerCase();
-  const menuNames = (context.menuNames || []).map(name => String(name).toLowerCase());
+  const compactMemo = compactText(memo);
+  const menuNames = (context.menuNames || []).map(name => compactText(name));
   let relevance = 8;
   if (memoText.includes(plain)) relevance += 16;
   if (keywordTags(memo).some(tag => tagKey(tag) === tagKey(item.tag))) relevance += 14;
-  if (menuNames.some(name => plain.includes(name) || memoText.includes(name))) relevance += 10;
+  if (menuNames.some(name => name && (compactText(plain).includes(name) || compactMemo.includes(name)))) relevance += 10;
   if (item.source === 'gemini') relevance += 8;
   if (item.source === 'menu') relevance += 8;
   relevance = Math.min(40, Math.round(relevance * item.weight));
@@ -365,24 +418,15 @@ function scoreCandidate(item, research, { memo, context, settings }) {
   const competition = competitionScore(postCount, settings);
   const engagementScore = Number(research?.engagement_score);
   const engagementBoost = Number.isFinite(engagementScore) ? Math.min(5, Math.log10(engagementScore + 1)) : 0;
-  const localIntent = item.category === 'local' || /울산|성남동|중구/.test(item.tag) ? 20 : 0;
-  const brandSafety = item.category === 'brand' || /tuz|투즈/i.test(item.tag) ? 10 : 5;
+  const localIntent = item.category === 'local' || /울산|반구동|중구/.test(item.tag) ? 20 : 0;
+  const brandSafety = item.category === 'brand' || /tuz|카페튜즈|tuzz2026/i.test(item.tag) ? 10 : 5;
   const diversity = 5;
   const freshnessPenalty = daysSince(research?.sampled_at) > settings.staleAfterDays ? 4 : 0;
   return Math.max(0, relevance + competition + engagementBoost + localIntent + brandSafety + diversity - freshnessPenalty);
 }
 
-function pickBest(scored, category, selectedKeys, maxBroad = 1) {
-  const broadAlready = scored.filter(item => selectedKeys.has(tagKey(item.tag)) && item.scoreBand === 'too-broad').length;
-  return scored.find(item => (
-    item.category === category &&
-    !selectedKeys.has(tagKey(item.tag)) &&
-    (item.scoreBand !== 'too-broad' || broadAlready < maxBroad)
-  ));
-}
-
-function selectRankedTags({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags }) {
-  const scored = candidates.map(item => {
+function rankCandidates({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags }) {
+  return candidates.map(item => {
     if (!includeBrandTags && item.category === 'brand') return null;
     if (!includeLocalTags && item.category === 'local') return null;
     const research = researchCache.get(tagKey(item.tag));
@@ -400,7 +444,19 @@ function selectRankedTags({ candidates, researchCache, memo, context, settings, 
       score: scoreCandidate(item, research, { memo, context, settings })
     };
   }).filter(Boolean).sort((a, b) => b.score - a.score);
+}
 
+function pickBest(scored, category, selectedKeys, maxBroad = 1) {
+  const broadAlready = scored.filter(item => selectedKeys.has(tagKey(item.tag)) && item.scoreBand === 'too-broad').length;
+  return scored.find(item => (
+    item.category === category &&
+    !selectedKeys.has(tagKey(item.tag)) &&
+    (item.scoreBand !== 'too-broad' || broadAlready < maxBroad)
+  ));
+}
+
+function selectRankedTags({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags }) {
+  const scored = rankCandidates({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags });
   const selected = [];
   const selectedKeys = new Set();
   const add = (item) => {
@@ -424,6 +480,40 @@ function selectRankedTags({ candidates, researchCache, memo, context, settings, 
   }
 
   return selected.slice(0, settings.targetCount);
+}
+
+function groupAlternativeTags(items) {
+  const labels = {
+    brand: '브랜드 교체',
+    local: '지역 교체',
+    content: '본문 교체',
+    discovery: '탐색 교체'
+  };
+  return ['brand', 'local', 'content', 'discovery'].map(key => ({
+    key,
+    label: labels[key],
+    tags: items.filter(item => item.category === key).map(item => item.tag)
+  })).filter(group => group.tags.length);
+}
+
+function selectAlternativeTags({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags, selected }) {
+  const scored = rankCandidates({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags });
+  const selectedKeys = new Set(selected.map(item => tagKey(item.tag)));
+  const limits = { brand: 1, local: 2, content: 4, discovery: 3 };
+  const counts = { brand: 0, local: 0, content: 0, discovery: 0 };
+  const alternatives = [];
+
+  for (const item of scored) {
+    if (selectedKeys.has(tagKey(item.tag))) continue;
+    if ((counts[item.category] || 0) >= (limits[item.category] || 2)) continue;
+    if (item.qualityFlags.includes('no_sample_match')) continue;
+    if (item.score < 18) continue;
+    counts[item.category] = (counts[item.category] || 0) + 1;
+    alternatives.push(item);
+    if (alternatives.length >= 8) break;
+  }
+
+  return groupAlternativeTags(alternatives);
 }
 
 function groupSelectedTags(selected) {
@@ -540,6 +630,16 @@ async function handler(req, res) {
       includeLocalTags,
       includeBrandTags
     });
+    const extraTags = selectAlternativeTags({
+      candidates,
+      researchCache,
+      memo,
+      context,
+      settings,
+      includeLocalTags,
+      includeBrandTags,
+      selected
+    });
 
     if (selected.length < settings.targetCount) {
       const missingTags = candidates
@@ -554,8 +654,9 @@ async function handler(req, res) {
     await logGeneration({ requestId: id, postType, memo, selected, criteriaVersion: settings.criteriaVersion });
     sendJson(res, 200, {
       tags,
+      extraTags,
       copyText: formatCopyText(tags),
-      reasonSummary: `본문과 TUZ 맥락에 맞춰 해시태그 ${selected.length}개를 골랐어요.`,
+      reasonSummary: `본문과 TUZ 맥락에 맞춰 해시태그 ${selected.length}개를 골랐고, 바꿔볼 후보도 함께 준비했어요.`,
       criteriaVersion: settings.criteriaVersion,
       research: researchPayload(selected, settings),
       requestId: id
@@ -582,8 +683,11 @@ module.exports._test = {
   uniqTags,
   keywordTags,
   buildCandidatePool,
+  rankCandidates,
   selectRankedTags,
+  selectAlternativeTags,
   groupSelectedTags,
+  groupAlternativeTags,
   researchPayload,
   formatCopyText,
   tagKey,
