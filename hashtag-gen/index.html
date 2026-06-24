@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+<meta name="theme-color" content="#f7f5f2"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>TUZ · 해시태그 만들기</title>
+<meta name="description" content="TUZ 인스타그램 게시글 본문 기반 해시태그 생성기"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a52a1a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Georgia,serif' font-size='28' font-weight='600' fill='%23f4ecda'%3ETUZ%3C/text%3E%3C/svg%3E"/>
+<link rel="stylesheet" href="../styles.css?v=55"/>
+<style>
+  :root {
+    --hash-bg: #f6f5f3;
+    --hash-card: #ffffff;
+    --hash-cream: #fbfaf8;
+    --hash-mint: #eef3ef;
+    --hash-coral: #f8f4f1;
+    --hash-lime: #f3f2ea;
+    --hash-red: #a52a1a;
+    --hash-red-deep: #7a1d10;
+    --hash-red-soft: rgba(165, 42, 26, 0.07);
+    --hash-red-line: rgba(165, 42, 26, 0.16);
+    --hash-ink: #171412;
+    --hash-muted: #8c8178;
+    --hash-soft-line: rgba(26, 22, 18, 0.12);
+  }
+
+  * { -webkit-tap-highlight-color: transparent; }
+
+  body {
+    min-height: 100dvh;
+    display: block;
+    background: var(--hash-bg);
+    overscroll-behavior-y: auto;
+  }
+
+  .hash-shell {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    background: var(--hash-bg);
+  }
+
+  .splash {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #f5f4f1;
+    color: #fff;
+    transition: opacity 520ms ease, visibility 520ms ease;
+    pointer-events: none;
+    animation: splashAutoOut 1.55s 0.35s ease forwards;
+  }
+
+  .splash[hidden] { display: none; }
+
+  .splash::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.04)),
+      url("assets/splash-open.png") center / cover no-repeat;
+    transform: scale(1);
+    transition: opacity 420ms ease, transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .splash.is-loading::before {
+    transform: scale(1.018);
+  }
+
+  .splash__message {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    max-width: 280px;
+    color: #171412;
+    font-family: "Marker Felt", "Comic Sans MS", "Chalkboard SE", "Apple SD Gothic Neo", system-ui, sans-serif;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 1.5px;
+    text-align: center;
+    text-shadow:
+      1px 1px 0 rgba(255, 255, 255, 0.92),
+      0 6px 14px rgba(31, 28, 22, 0.08);
+    transform: translateY(-20px) rotate(-4deg);
+  }
+
+  .splash__message span {
+    display: inline-block;
+  }
+
+  .scribble-line--top { transform: translateX(4px) rotate(-1deg); }
+  .scribble-line--bottom { transform: translateX(-3px) rotate(2deg); }
+  .scribble-line--bottom .scribble-word { margin-left: 8px; }
+  .scribble-char:nth-child(1) { transform: translateY(2px) rotate(-7deg); }
+  .scribble-char:nth-child(2) { transform: translateY(-2px) rotate(4deg); }
+  .scribble-char:nth-child(3) { transform: translateY(1px) rotate(-3deg); }
+  .scribble-char:nth-child(4) { transform: translateY(-1px) rotate(5deg); }
+  .scribble-char:nth-child(5) { transform: translateY(2px) rotate(-4deg); }
+  .scribble-char:nth-child(6) { transform: translateY(-2px) rotate(3deg); }
+
+  .splash.is-done {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  @keyframes splashAutoOut {
+    0%, 58% {
+      opacity: 1;
+      visibility: visible;
+    }
+    100% {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  .phone {
+    position: relative;
+    width: min(100vw, 430px);
+    min-height: 100dvh;
+    background: var(--hash-card);
+    color: var(--hash-ink);
+    overflow: hidden;
+  }
+
+  @media (min-width: 520px) {
+    .hash-shell {
+      padding: 24px;
+    }
+
+    .splash__message {
+      font-size: 38px;
+      transform: translateY(-12px) rotate(-4deg);
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 820px;
+      max-height: 900px;
+      border: 12px solid #171412;
+      border-radius: 46px;
+      box-shadow: 0 34px 70px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  .phone__island {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 122px;
+    height: 36px;
+    border-radius: 999px;
+    background: #050505;
+    transform: translateX(-50%);
+    z-index: 3;
+  }
+
+  .phone__status {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 25px 0;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .status-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--hash-ink);
+  }
+
+  .battery {
+    width: 24px;
+    height: 12px;
+    border: 1.8px solid currentColor;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .battery::before {
+    content: "";
+    position: absolute;
+    right: -4px;
+    top: 3px;
+    width: 2px;
+    height: 5px;
+    border-radius: 0 2px 2px 0;
+    background: currentColor;
+  }
+
+  .battery::after {
+    content: "";
+    position: absolute;
+    inset: 2px 3px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+
+  .phone__top {
+    display: grid;
+    grid-template-columns: 34px 1fr 34px;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px 0;
+  }
+
+  .icon-button {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    color: var(--hash-ink);
+    background: transparent;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .app-pill {
+    justify-self: center;
+    min-width: 52px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 1px solid rgba(26, 22, 18, 0.12);
+    border-radius: 13px;
+    color: var(--hash-ink);
+    background: #fff;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(26, 22, 18, 0.04);
+  }
+
+  .composer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 24px 12px;
+    border-bottom: 1px solid rgba(26, 22, 18, 0.08);
+  }
+
+  .composer-head strong {
+    font-size: 17px;
+    font-weight: 750;
+  }
+
+  .composer-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--hash-muted);
+    font-size: 15px;
+    font-weight: 650;
+  }
+
+  .composer-main {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 16px;
+    min-height: calc(100dvh - 170px);
+    padding: 18px 24px calc(env(safe-area-inset-bottom) + 22px);
+  }
+
+  @media (min-width: 520px) {
+    .composer-main {
+      min-height: 650px;
+      padding-bottom: 28px;
+    }
+  }
+
+  .body-card {
+    border: 1px solid rgba(26, 22, 18, 0.12);
+    border-radius: 16px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .post-body {
+    width: 100%;
+    min-height: 255px;
+    display: block;
+    border: 0;
+    resize: vertical;
+    padding: 18px;
+    color: var(--hash-ink);
+    background:
+      radial-gradient(circle at 36% 26%, rgba(165, 42, 26, 0.025), transparent 22%),
+      radial-gradient(circle at 64% 58%, rgba(26, 22, 18, 0.025), transparent 26%),
+      var(--hash-cream);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+
+  .post-body:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 2px rgba(165, 42, 26, 0.14);
+  }
+
+  .post-body::placeholder {
+    color: #9e9389;
+  }
+
+  .composer-tools {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 12px 14px;
+    color: #9c948b;
+    border-top: 1px solid rgba(26, 22, 18, 0.08);
+  }
+
+  .tool-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--hash-red);
+    box-shadow: none;
+  }
+
+  .tool-sep {
+    width: 1px;
+    height: 16px;
+    background: rgba(26, 22, 18, 0.12);
+  }
+
+  .caption-copy {
+    text-align: center;
+    padding: 2px 4px 4px;
+  }
+
+  .caption-copy h1 {
+    margin: 0 0 8px;
+    font-size: 23px;
+    line-height: 1.18;
+    letter-spacing: 0;
+    font-weight: 800;
+  }
+
+  .caption-copy p {
+    margin: 0;
+    color: #30251f;
+    font-size: 17px;
+    line-height: 1.42;
+    font-weight: 650;
+  }
+
+  .caption-copy .muted {
+    display: block;
+    margin-top: 7px;
+    color: var(--hash-muted);
+    font-weight: 650;
+  }
+
+  .result-panel {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid rgba(26, 22, 18, 0.12);
+    border-radius: 17px;
+    background: var(--hash-coral);
+  }
+
+  .result-panel[hidden] { display: none; }
+
+  .result-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .result-head strong {
+    font-size: 15px;
+  }
+
+  .result-head span {
+    color: var(--hash-muted);
+    font-size: 12px;
+  }
+
+  .copy-text {
+    color: var(--hash-ink);
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .tag-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 9px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid rgba(26, 22, 18, 0.1);
+    color: #2f2b27;
+    font-size: 12px;
+  }
+
+  .tag-chip button {
+    width: 17px;
+    height: 17px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--hash-red-soft);
+    color: var(--hash-red);
+    line-height: 17px;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .bottom-bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  .time-left,
+  .info-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--hash-ink);
+    font-size: 14px;
+    font-weight: 750;
+  }
+
+  .info-button {
+    justify-self: end;
+    width: 28px;
+    height: 28px;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .answer-button {
+    min-width: 118px;
+    height: 46px;
+    border: 1px solid var(--hash-ink);
+    border-radius: 999px;
+    background: var(--hash-ink);
+    color: #fffdf9;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 750;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(26, 22, 18, 0.16);
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+
+  .answer-button:active {
+    transform: scale(0.96);
+    background: var(--hash-red-deep);
+    border-color: var(--hash-red-deep);
+    box-shadow: 0 5px 12px rgba(122, 29, 16, 0.18);
+  }
+
+  .action-cluster {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-self: center;
+  }
+
+  .tune-button {
+    min-width: 76px;
+    height: 40px;
+    border: 1px solid rgba(26, 22, 18, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 253, 249, 0.92);
+    color: var(--hash-ink);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 760;
+    cursor: pointer;
+    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+  }
+
+  .tune-button:active {
+    transform: scale(0.97);
+    background: rgba(208, 95, 69, 0.12);
+    border-color: rgba(122, 29, 16, 0.22);
+  }
+
+  .tune-button[hidden] {
+    display: none;
+  }
+
+  .status {
+    min-height: 18px;
+    color: var(--hash-red-deep);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .home-indicator {
+    width: 128px;
+    height: 5px;
+    margin: 6px auto 0;
+    border-radius: 999px;
+    background: var(--hash-ink);
+  }
+</style>
+</head>
+<body>
+  <main class="hash-shell">
+    <section class="splash" id="splash" aria-label="해시태그 생성기 시작">
+      <p class="splash__message" aria-hidden="true">
+        <span class="scribble-line scribble-line--top">
+          <span class="scribble-char">w</span><span class="scribble-char">h</span><span class="scribble-char">a</span><span class="scribble-char">t</span><span class="scribble-char">'</span><span class="scribble-char">s</span>
+        </span><br/>
+        <span class="scribble-line scribble-line--bottom">
+          <span class="scribble-word">
+            <span class="scribble-char">g</span><span class="scribble-char">o</span><span class="scribble-char">i</span><span class="scribble-char">n</span><span class="scribble-char">g</span>
+          </span>
+          <span class="scribble-word">
+            <span class="scribble-char">o</span><span class="scribble-char">n</span><span class="scribble-char">?</span>
+          </span>
+        </span>
+      </p>
+    </section>
+
+    <section class="phone" aria-label="TUZ 해시태그 생성기">
+      <div class="phone__island" aria-hidden="true"></div>
+      <div class="phone__status" aria-hidden="true">
+        <span>12:26</span>
+        <span class="status-icons">
+          <svg width="17" height="12" viewBox="0 0 20 14" fill="none" aria-hidden="true"><path d="M1 5.8C6.1 1 13.9 1 19 5.8M4.3 8.8c3.3-3 8.1-3 11.4 0M8 11.5c1.2-1 2.8-1 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="battery"></span>
+        </span>
+      </div>
+
+      <div class="phone__top">
+        <a class="icon-button" href="../" aria-label="홈으로">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+        <div class="app-pill" aria-label="TUZ hashtag helper">C <span>🪴</span></div>
+        <span></span>
+      </div>
+
+      <header class="composer-head">
+        <strong>from Tuz</strong>
+        <span class="composer-meta"><span>@ tuzz2026</span><span># <b id="tagCountMeta">0</b></span><span>○</span></span>
+      </header>
+
+      <section class="composer-main">
+        <div class="body-card">
+          <textarea class="post-body" id="memo" maxlength="500" aria-label="인스타그램 게시글 본문" placeholder="인스타그램에 올릴 본문을 여기에 작성해 주세요.&#10;&#10;예: 오늘은 크림라떼가 잘 나왔어요. 조용한 오후에 들르기 좋아요."></textarea>
+          <div class="composer-tools" aria-hidden="true">
+            <span class="tool-dot"></span>
+            <span class="tool-sep"></span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 17h16M8 4l8 16M16 4L8 20"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20L20 4M14 4h6v6"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 20V8a6 6 0 0112 0v12M9 13h6"/></svg>
+            <span class="tool-sep"></span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 014 4v0a4 4 0 01-4 4h-1"/></svg>
+          </div>
+        </div>
+
+        <div class="caption-copy">
+          <h1>Hashtag helper</h1>
+          <p>게시글 본문을 기준으로<br/>관련 해시태그를 골라드려요</p>
+          <span class="muted">사진 업로드는 다음 단계에서 추가</span>
+        </div>
+
+        <section class="result-panel" id="resultState" hidden>
+          <div class="result-head">
+            <div>
+              <strong>복사할 태그</strong>
+              <span id="summary">인스타그램에 붙여넣을 태그를 골랐어요.</span>
+            </div>
+            <button class="icon-button" id="copyBtn" type="button" aria-label="전체 복사">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>
+            </button>
+          </div>
+          <div class="copy-text" id="copyText"></div>
+          <div class="tag-groups" id="tagGroups"></div>
+        </section>
+
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+
+        <footer class="bottom-bar">
+          <span class="time-left">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 7v5l3 2"/><path d="M4.2 7.5A9 9 0 1112 21"/><path d="M4 4v4h4"/></svg>
+            <span id="memoCount">0자</span>
+          </span>
+          <div class="action-cluster">
+            <button class="tune-button" id="tuneBtn" type="button" hidden>Tune</button>
+            <button class="answer-button" id="generateBtn" type="button">Generate</button>
+          </div>
+          <button class="info-button" id="resetBtn" type="button" aria-label="초기화">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          </button>
+        </footer>
+        <div class="home-indicator" aria-hidden="true"></div>
+      </section>
+    </section>
+  </main>
+
+<script type="module">
+const POST_TYPES = {
+  post_body: { label: '본문 기반', tags: ['#인스타그램', '#카페게시물', '#오늘의카페'] }
+};
+
+const FALLBACK_CONTEXT = {
+  brandTags: ['#TUZ', '#투즈', '#tuzz2026', '#울산카페', '#울산중구카페'],
+  localTags: ['#울산', '#울산중구', '#성남동', '#성남동카페', '#울산카페추천'],
+  baseTags: ['#카페', '#카페스타그램', '#커피', '#디저트', '#카페투어', '#일상', '#맛집추천']
+};
+
+const SUPABASE_URL = 'https://lwgissxdvemamuybxmxz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z2lzc3hkdmVtYW11eWJ4bXh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MjMxNjgsImV4cCI6MjA5MjA5OTE2OH0.bslx3DGC2KPKleWo9KejERD10e92OeBEUoQHg2_jPOo';
+const ADMIN_MODE = new URLSearchParams(window.location.search).get('admin') === '1';
+
+const state = {
+  postType: 'post_body',
+  groups: [],
+  context: FALLBACK_CONTEXT,
+  adminMode: ADMIN_MODE,
+  researchKey: ''
+};
+
+const $ = (selector) => document.querySelector(selector);
+const splash = $('#splash');
+const memo = $('#memo');
+const memoCount = $('#memoCount');
+const tagCountMeta = $('#tagCountMeta');
+const status = $('#status');
+const generateBtn = $('#generateBtn');
+const tuneBtn = $('#tuneBtn');
+const resetBtn = $('#resetBtn');
+const resultState = $('#resultState');
+const copyText = $('#copyText');
+const tagGroups = $('#tagGroups');
+const summary = $('#summary');
+const copyBtn = $('#copyBtn');
+
+if (tuneBtn) tuneBtn.hidden = !state.adminMode;
+
+function normalizeTag(value) {
+  const cleaned = String(value || '')
+    .trim()
+    .replace(/[,\s]+/g, '')
+    .replace(/^#+/, '')
+    .replace(/[^0-9A-Za-z_가-힣]/g, '');
+  if (!cleaned) return '';
+  return `#${cleaned}`;
+}
+
+function uniqTags(tags) {
+  const seen = new Set();
+  return tags.map(normalizeTag).filter(tag => {
+    const key = tag.toLowerCase();
+    if (!tag || /^#test\d*$/i.test(tag) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function limitGroups(groups, maxTags = 24) {
+  let remaining = maxTags;
+  return groups.map(group => {
+    const tags = group.tags.slice(0, remaining);
+    remaining -= tags.length;
+    return { ...group, tags };
+  }).filter(group => group.tags.length);
+}
+
+function dedupeGroups(groups) {
+  const seen = new Set();
+  return groups.map(group => {
+    const tags = group.tags.filter(tag => {
+      const key = tag.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return { ...group, tags };
+  }).filter(group => group.tags.length);
+}
+
+function keywordTags(text) {
+  const source = String(text || '').toLowerCase();
+  const pairs = [
+    ['크림', '#크림라떼'],
+    ['라떼', '#라떼'],
+    ['아메리카노', '#아메리카노'],
+    ['커피', '#커피맛집'],
+    ['디저트', '#디저트맛집'],
+    ['쿠폰', '#쿠폰이벤트'],
+    ['이벤트', '#이벤트중'],
+    ['조용', '#조용한카페'],
+    ['오후', '#오후카페'],
+    ['신메뉴', '#신메뉴출시'],
+    ['말차', '#말차라떼'],
+    ['초코', '#초코디저트'],
+    ['딸기', '#딸기디저트'],
+    ['말차', '#말차맛집'],
+    ['케이크', '#케이크맛집'],
+    ['성남동', '#성남동카페'],
+    ['울산', '#울산카페']
+  ];
+  return pairs.filter(([keyword]) => source.includes(keyword)).map(([, tag]) => tag);
+}
+
+function formatCopyText(groups) {
+  return groups.flatMap(group => group.tags).join(' ');
+}
+
+function buildResearchTags(memoText) {
+  return uniqTags([
+    ...keywordTags(memoText),
+    ...((state.context.menuTags || []).slice(0, 4)),
+    ...((state.context.localTags || []).slice(0, 2)),
+    ...((state.context.brandTags || []).slice(0, 2))
+  ]).slice(0, 12);
+}
+
+function buildFallbackTags({ memoText, context }) {
+  const memoTags = keywordTags(memoText);
+  const menuTags = Array.isArray(context.menuTags) ? context.menuTags.slice(0, 5) : [];
+  const groups = [
+    { key: 'recommended', label: '추천', tags: uniqTags([...memoTags, ...FALLBACK_CONTEXT.baseTags]).slice(0, 12) },
+    { key: 'menu', label: '메뉴', tags: uniqTags(menuTags).slice(0, 5) },
+    { key: 'local', label: '지역', tags: uniqTags(context.localTags || FALLBACK_CONTEXT.localTags).slice(0, 5) },
+    { key: 'brand', label: 'TUZ', tags: uniqTags(context.brandTags || FALLBACK_CONTEXT.brandTags).slice(0, 5) }
+  ];
+  return limitGroups(dedupeGroups(groups.filter(group => group.tags.length)));
+}
+
+async function loadCafeContext() {
+  try {
+    const headers = {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      Accept: 'application/json'
+    };
+    const [menuResponse, pickResponse] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/menu?select=name,category&order=sort_order.asc&limit=20`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/pick?select=name,menu:menu_id(name)&order=sort_order.asc&limit=4`, { headers })
+    ]);
+    if (!menuResponse.ok || !pickResponse.ok) throw new Error('context fetch failed');
+    const [menu, picks] = await Promise.all([menuResponse.json(), pickResponse.json()]);
+    const menuNames = (menu || []).map(item => item.name).filter(Boolean);
+    const pickNames = (picks || []).map(item => item.menu?.name || item.name).filter(Boolean);
+    const menuTags = uniqTags([...pickNames, ...menuNames].slice(0, 10).map(name => `#${name}`));
+    state.context = { ...FALLBACK_CONTEXT, menuTags };
+  } catch (err) {
+    console.info('[hashtag-gen] cafe context fallback:', err?.message || err);
+  }
+}
+
+function renderGroups(groups, reasonSummary = '') {
+  state.groups = limitGroups(dedupeGroups(groups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length)));
+  const total = state.groups.flatMap(group => group.tags).length;
+  copyText.textContent = formatCopyText(state.groups);
+  tagGroups.innerHTML = state.groups.flatMap(group => group.tags).map(tag => `
+    <span class="tag-chip">${tag}<button type="button" aria-label="${tag} 제거" data-remove-tag="${tag}">×</button></span>
+  `).join('');
+  summary.textContent = reasonSummary || `${total}개 추천`;
+  tagCountMeta.textContent = String(total);
+  resultState.hidden = false;
+}
+
+async function requestTags() {
+  const memoText = memo.value.trim();
+  const payload = {
+    postType: state.postType,
+    memo: memoText,
+    includeLocalTags: true,
+    includeBrandTags: true
+  };
+
+  try {
+    const response = await fetch('/api/hashtag-gen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || '해시태그 데이터 연결이 필요해요.');
+    }
+    if (!Array.isArray(data.tags) || !data.tags.length) throw new Error('empty result');
+    return data;
+  } catch (err) {
+    console.info('[hashtag-gen] api error:', err?.message || err);
+    throw err;
+  }
+}
+
+function ensureResearchKey() {
+  if (state.researchKey) return state.researchKey;
+  const entered = window.prompt('관리자용 튜닝 키를 입력해 주세요.');
+  const key = String(entered || '').trim();
+  if (!key) throw new Error('튜닝 키 입력이 필요해요.');
+  state.researchKey = key;
+  return key;
+}
+
+async function requestResearchRefresh() {
+  const response = await fetch('/api/hashtag-research', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-hashtag-research-key': ensureResearchKey()
+    },
+    body: JSON.stringify({
+      tags: buildResearchTags(memo.value.trim()),
+      includeBrandTags: true,
+      includeLocalTags: true,
+      includeMenuTags: true
+    })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401) state.researchKey = '';
+    throw new Error(data.error || '튜닝 호출에 실패했어요.');
+  }
+  return data;
+}
+
+function startSplash() {
+  if (splash.classList.contains('is-loading')) return;
+  splash.classList.add('is-loading');
+  window.setTimeout(() => {
+    splash.classList.add('is-done');
+  }, 1050);
+  window.setTimeout(() => {
+    splash.hidden = true;
+    memo.focus({ preventScroll: true });
+  }, 1600);
+}
+
+window.setTimeout(startSplash, 450);
+
+memo.addEventListener('input', () => {
+  memoCount.textContent = `${memo.value.length}자`;
+});
+
+generateBtn.addEventListener('click', async () => {
+  const body = memo.value.trim();
+  if (!body) {
+    status.textContent = '인스타그램 게시글 본문을 먼저 입력해 주세요.';
+    memo.focus();
+    return;
+  }
+  status.textContent = '본문과 어울리는 태그를 고르는 중입니다.';
+  generateBtn.disabled = true;
+  try {
+    const result = await requestTags();
+    renderGroups(result.tags, result.reasonSummary);
+    status.textContent = '복사해서 인스타그램에 붙여넣어 주세요.';
+  } catch (err) {
+    status.textContent = err?.message || '해시태그 데이터 연결이 필요해요. 잠시 후 다시 눌러주세요.';
+  } finally {
+    generateBtn.disabled = false;
+  }
+});
+
+if (tuneBtn) {
+  tuneBtn.addEventListener('click', async () => {
+    status.textContent = '관련 해시태그 데이터를 갱신하는 중입니다.';
+    tuneBtn.disabled = true;
+    generateBtn.disabled = true;
+    try {
+      await requestResearchRefresh();
+      if (memo.value.trim()) {
+        const result = await requestTags();
+        renderGroups(result.tags, `${result.reasonSummary} 리서치 캐시도 갱신했어요.`);
+        status.textContent = '튜닝 후 현재 본문 기준 태그를 다시 골랐어요.';
+      } else {
+        status.textContent = '리서치 캐시를 갱신했어요. 이제 본문을 넣고 Generate를 눌러 주세요.';
+      }
+    } catch (err) {
+      status.textContent = err?.message || '튜닝 중 오류가 발생했습니다.';
+    } finally {
+      tuneBtn.disabled = false;
+      generateBtn.disabled = false;
+    }
+  });
+}
+
+resetBtn.addEventListener('click', () => {
+  state.groups = [];
+  memo.value = '';
+  memoCount.textContent = '0자';
+  tagCountMeta.textContent = '0';
+  status.textContent = '';
+  tagGroups.innerHTML = '';
+  copyText.textContent = '';
+  resultState.hidden = true;
+  memo.focus();
+});
+
+tagGroups.addEventListener('click', (event) => {
+  const remove = event.target.closest('[data-remove-tag]');
+  if (!remove) return;
+  const tag = remove.dataset.removeTag;
+  const nextGroups = state.groups.map(group => ({
+    ...group,
+    tags: group.tags.filter(item => item !== tag)
+  })).filter(group => group.tags.length);
+  renderGroups(nextGroups);
+});
+
+copyBtn.addEventListener('click', async () => {
+  const text = formatCopyText(state.groups);
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    status.textContent = '복사했어요. 인스타그램 본문 아래에 붙여넣어 주세요.';
+  } catch {
+    status.textContent = '복사가 막혀 있어요. 태그 영역을 길게 눌러 복사해 주세요.';
+  }
+});
+
+loadCafeContext();
+</script>
+</body>
+</html>

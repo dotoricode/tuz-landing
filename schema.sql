@@ -228,9 +228,12 @@ ALTER TABLE pick ALTER COLUMN name DROP NOT NULL;
 DO $$ BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'news' AND column_name = 'is_today'
+    WHERE table_schema = 'public' AND table_name = 'news' AND column_name = 'is_today'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'news' AND column_name = 'is_pinned'
   ) THEN
-    ALTER TABLE news RENAME COLUMN is_today TO is_pinned;
+    ALTER TABLE public.news RENAME COLUMN is_today TO is_pinned;
   END IF;
 END $$;
 -- is_signature 제거 (카테고리로 통일 — ADR-0003)
@@ -277,6 +280,105 @@ DROP POLICY IF EXISTS "public_write_inventory_events" on public.inventory_events
 
 CREATE POLICY "public_read_inventory_events" on public.inventory_events for select using (true);
 CREATE POLICY "public_write_inventory_events" on public.inventory_events for all using (true) with check (true);
+
+-- ─── 2026-06 hashtag generator MVP ────────────────
+CREATE TABLE IF NOT EXISTS public.hashtag_settings (
+  id int primary key default 1 check (id = 1),
+  fixed_tags text[] not null default array['#TUZ', '#투즈', '#tuzz2026', '#울산카페', '#울산중구카페'],
+  local_tags text[] not null default array['#울산', '#울산중구', '#성남동', '#성남동카페', '#울산카페추천'],
+  blocked_tags text[] not null default '{}'::text[],
+  default_tag_count int not null default 24 check (default_tag_count between 6 and 30),
+  criteria_version text not null default 'mvp-static-2026-06-23',
+  updated_at timestamptz not null default now()
+);
+
+INSERT INTO public.hashtag_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.hashtag_settings
+  ADD COLUMN IF NOT EXISTS target_count int not null default 5 check (target_count between 3 and 5),
+  ADD COLUMN IF NOT EXISTS min_post_count int not null default 500 check (min_post_count >= 0),
+  ADD COLUMN IF NOT EXISTS max_post_count int not null default 500000 check (max_post_count > 0),
+  ADD COLUMN IF NOT EXISTS stale_after_days int not null default 14 check (stale_after_days between 1 and 90),
+  ADD COLUMN IF NOT EXISTS required_brand_tags text[] not null default array['#tuzz2026', '#투즈', '#TUZ'],
+  ADD COLUMN IF NOT EXISTS required_local_tags text[] not null default array['#울산카페', '#성남동카페', '#울산중구카페'];
+
+UPDATE public.hashtag_settings
+SET
+  target_count = 5,
+  min_post_count = 500,
+  max_post_count = 500000,
+  stale_after_days = 14,
+  required_brand_tags = array['#tuzz2026', '#투즈', '#TUZ'],
+  required_local_tags = array['#울산카페', '#성남동카페', '#울산중구카페'],
+  criteria_version = 'hashtag-ranking-2026-06-24'
+WHERE id = 1;
+
+CREATE TABLE IF NOT EXISTS public.hashtag_research_cache (
+  tag text primary key,
+  post_count int not null check (post_count >= 0),
+  sampled_at timestamptz not null default now(),
+  source text not null default 'apify',
+  related_terms text[] not null default '{}'::text[],
+  quality_flags text[] not null default '{}'::text[],
+  sample_size int not null default 0 check (sample_size >= 0),
+  median_likes numeric,
+  median_comments numeric,
+  median_plays numeric,
+  engagement_score numeric,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+ALTER TABLE public.hashtag_research_cache
+  ADD COLUMN IF NOT EXISTS sample_size int not null default 0 check (sample_size >= 0),
+  ADD COLUMN IF NOT EXISTS median_likes numeric,
+  ADD COLUMN IF NOT EXISTS median_comments numeric,
+  ADD COLUMN IF NOT EXISTS median_plays numeric,
+  ADD COLUMN IF NOT EXISTS engagement_score numeric;
+
+CREATE INDEX IF NOT EXISTS idx_hashtag_research_cache_sampled_at
+  ON public.hashtag_research_cache (sampled_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.hashtag_generations (
+  id uuid primary key default gen_random_uuid(),
+  post_type text not null,
+  memo_summary text,
+  generated_tags text[] not null default '{}'::text[],
+  copied_tags text[],
+  criteria_version text not null default 'mvp-static-2026-06-23',
+  created_at timestamptz not null default now()
+);
+
+ALTER TABLE public.hashtag_generations
+  ADD COLUMN IF NOT EXISTS request_id text,
+  ADD COLUMN IF NOT EXISTS memo_hash text,
+  ADD COLUMN IF NOT EXISTS selected_tags text[] not null default '{}'::text[];
+
+ALTER TABLE public.hashtag_settings enable row level security;
+ALTER TABLE public.hashtag_research_cache enable row level security;
+ALTER TABLE public.hashtag_generations enable row level security;
+
+DROP POLICY IF EXISTS "public_read_hashtag_settings" on public.hashtag_settings;
+DROP POLICY IF EXISTS "auth_write_hashtag_settings" on public.hashtag_settings;
+DROP POLICY IF EXISTS "public_read_hashtag_research_cache" on public.hashtag_research_cache;
+DROP POLICY IF EXISTS "auth_write_hashtag_research_cache" on public.hashtag_research_cache;
+DROP POLICY IF EXISTS "auth_read_hashtag_generations" on public.hashtag_generations;
+DROP POLICY IF EXISTS "auth_write_hashtag_generations" on public.hashtag_generations;
+
+CREATE POLICY "public_read_hashtag_settings" on public.hashtag_settings for select using (true);
+CREATE POLICY "auth_write_hashtag_settings" on public.hashtag_settings for all to authenticated using (true) with check (true);
+CREATE POLICY "public_read_hashtag_research_cache" on public.hashtag_research_cache for select using (true);
+CREATE POLICY "auth_write_hashtag_research_cache" on public.hashtag_research_cache for all to authenticated using (true) with check (true);
+CREATE POLICY "auth_read_hashtag_generations" on public.hashtag_generations for select to authenticated using (true);
+CREATE POLICY "auth_write_hashtag_generations" on public.hashtag_generations for insert to authenticated with check (true);
+
+DROP TRIGGER IF EXISTS trg_hashtag_settings_updated on public.hashtag_settings;
+CREATE TRIGGER trg_hashtag_settings_updated before update on public.hashtag_settings
+  for each row execute function public.tz_touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_hashtag_research_cache_updated on public.hashtag_research_cache;
+CREATE TRIGGER trg_hashtag_research_cache_updated before update on public.hashtag_research_cache
+  for each row execute function public.tz_touch_updated_at();
 
 DO $$ BEGIN
   IF NOT EXISTS (

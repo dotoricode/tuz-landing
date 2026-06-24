@@ -9,9 +9,33 @@
     },
     "api/inventory-photo.js": {
       "maxDuration": 15
+    },
+    "api/hashtag-gen.js": {
+      "maxDuration": 10
+    },
+    "api/hashtag-research.js": {
+      "maxDuration": 120
     }
   },
   "headers": [
+    {
+      "source": "/hashtag-gen",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/hashtag-gen/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
     {
       "source": "/inventory",
       "headers": [
@@ -41,6 +65,24 @@
     },
     {
       "source": "/api/inventory-photo",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/api/hashtag-gen",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/api/hashtag-research",
       "headers": [
         {
           "key": "Cache-Control",
