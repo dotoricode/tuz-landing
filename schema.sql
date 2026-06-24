@@ -284,8 +284,8 @@ CREATE POLICY "public_write_inventory_events" on public.inventory_events for all
 -- ─── 2026-06 hashtag generator MVP ────────────────
 CREATE TABLE IF NOT EXISTS public.hashtag_settings (
   id int primary key default 1 check (id = 1),
-  fixed_tags text[] not null default array['#TUZ', '#투즈', '#tuzz2026', '#울산카페', '#울산중구카페'],
-  local_tags text[] not null default array['#울산', '#울산중구', '#성남동', '#성남동카페', '#울산카페추천'],
+  fixed_tags text[] not null default array['#카페튜즈', '#TUZ', '#tuzz2026', '#울산카페', '#반구동카페'],
+  local_tags text[] not null default array['#울산카페', '#반구동카페', '#울산중구카페', '#울산카페추천'],
   blocked_tags text[] not null default '{}'::text[],
   default_tag_count int not null default 24 check (default_tag_count between 6 and 30),
   criteria_version text not null default 'mvp-static-2026-06-23',
@@ -299,8 +299,8 @@ ALTER TABLE public.hashtag_settings
   ADD COLUMN IF NOT EXISTS min_post_count int not null default 500 check (min_post_count >= 0),
   ADD COLUMN IF NOT EXISTS max_post_count int not null default 500000 check (max_post_count > 0),
   ADD COLUMN IF NOT EXISTS stale_after_days int not null default 14 check (stale_after_days between 1 and 90),
-  ADD COLUMN IF NOT EXISTS required_brand_tags text[] not null default array['#tuzz2026', '#투즈', '#TUZ'],
-  ADD COLUMN IF NOT EXISTS required_local_tags text[] not null default array['#울산카페', '#성남동카페', '#울산중구카페'];
+  ADD COLUMN IF NOT EXISTS required_brand_tags text[] not null default array['#카페튜즈', '#TUZ', '#tuzz2026'],
+  ADD COLUMN IF NOT EXISTS required_local_tags text[] not null default array['#울산카페', '#반구동카페', '#울산중구카페'];
 
 UPDATE public.hashtag_settings
 SET
@@ -308,10 +308,32 @@ SET
   min_post_count = 500,
   max_post_count = 500000,
   stale_after_days = 14,
-  required_brand_tags = array['#tuzz2026', '#투즈', '#TUZ'],
-  required_local_tags = array['#울산카페', '#성남동카페', '#울산중구카페'],
   criteria_version = 'hashtag-ranking-2026-06-24'
 WHERE id = 1;
+
+UPDATE public.hashtag_settings
+SET
+  fixed_tags = array['#카페튜즈', '#TUZ', '#tuzz2026', '#울산카페', '#반구동카페']
+WHERE id = 1
+  AND fixed_tags = array['#TUZ', '#투즈', '#tuzz2026', '#울산카페', '#울산중구카페'];
+
+UPDATE public.hashtag_settings
+SET
+  local_tags = array['#울산카페', '#반구동카페', '#울산중구카페', '#울산카페추천']
+WHERE id = 1
+  AND local_tags = array['#울산', '#울산중구', '#성남동', '#성남동카페', '#울산카페추천'];
+
+UPDATE public.hashtag_settings
+SET
+  required_brand_tags = array['#카페튜즈', '#TUZ', '#tuzz2026']
+WHERE id = 1
+  AND required_brand_tags = array['#tuzz2026', '#투즈', '#TUZ'];
+
+UPDATE public.hashtag_settings
+SET
+  required_local_tags = array['#울산카페', '#반구동카페', '#울산중구카페']
+WHERE id = 1
+  AND required_local_tags = array['#울산카페', '#성남동카페', '#울산중구카페'];
 
 CREATE TABLE IF NOT EXISTS public.hashtag_research_cache (
   tag text primary key,

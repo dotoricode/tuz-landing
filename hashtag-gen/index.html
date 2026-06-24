@@ -325,6 +325,12 @@
     font-size: 12px;
   }
 
+  .tag-chip--alt {
+    border-color: rgba(165, 42, 26, 0.18);
+    background: rgba(255, 255, 255, 0.82);
+    cursor: pointer;
+  }
+
   .tag-chip button {
     width: 17px;
     height: 17px;
@@ -335,6 +341,69 @@
     line-height: 17px;
     padding: 0;
     cursor: pointer;
+  }
+
+  .result-subhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 2px;
+  }
+
+  .result-subhead strong {
+    font-size: 13px;
+  }
+
+  .result-subhead span {
+    color: var(--hash-muted);
+    font-size: 12px;
+  }
+
+  .extra-panel[hidden] {
+    display: none;
+  }
+
+  .admin-panel {
+    display: grid;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(26, 22, 18, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 252, 248, 0.92);
+  }
+
+  .admin-panel[hidden] {
+    display: none;
+  }
+
+  .admin-field {
+    display: grid;
+    gap: 6px;
+  }
+
+  .admin-field span {
+    color: #322821;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .admin-field input {
+    width: 100%;
+    height: 38px;
+    border: 1px solid rgba(26, 22, 18, 0.12);
+    border-radius: 12px;
+    padding: 0 12px;
+    color: var(--hash-ink);
+    background: #fff;
+    font: inherit;
+  }
+
+  .admin-note {
+    margin: 0;
+    color: var(--hash-muted);
+    font-size: 12px;
+    line-height: 1.45;
   }
 
   .bottom-bar {
@@ -495,6 +564,21 @@
           </div>
           <div class="copy-text" id="copyText"></div>
           <div class="tag-groups" id="tagGroups"></div>
+          <div class="extra-panel" id="extraState" hidden>
+            <div class="result-subhead">
+              <strong>바꿔볼 후보</strong>
+              <span id="extraSummary">눌러서 바로 교체돼요.</span>
+            </div>
+            <div class="tag-groups" id="extraTagGroups"></div>
+          </div>
+        </section>
+
+        <section class="admin-panel" id="adminPanel" hidden>
+          <label class="admin-field" for="researchKeyInput">
+            <span>관리자 키</span>
+            <input id="researchKeyInput" type="password" inputmode="text" autocomplete="off" placeholder="Tune 실행용 키를 입력해 주세요."/>
+          </label>
+          <p class="admin-note">Tune은 현재 본문과 TUZ 기본 태그의 게시글 수 데이터를 다시 확인합니다. 키는 이 탭에서만 유지됩니다.</p>
         </section>
 
         <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -522,9 +606,16 @@ const POST_TYPES = {
   post_body: { label: '본문 기반', tags: ['#인스타그램', '#카페게시물', '#오늘의카페'] }
 };
 
+const GROUP_LABELS = {
+  brand: 'TUZ',
+  local: '지역',
+  content: '본문',
+  discovery: '탐색'
+};
+
 const FALLBACK_CONTEXT = {
-  brandTags: ['#TUZ', '#투즈', '#tuzz2026', '#울산카페', '#울산중구카페'],
-  localTags: ['#울산', '#울산중구', '#성남동', '#성남동카페', '#울산카페추천'],
+  brandTags: ['#카페튜즈', '#TUZ', '#tuzz2026'],
+  localTags: ['#울산카페', '#반구동카페', '#울산중구카페', '#울산카페추천'],
   baseTags: ['#카페', '#카페스타그램', '#커피', '#디저트', '#카페투어', '#일상', '#맛집추천']
 };
 
@@ -535,9 +626,11 @@ const ADMIN_MODE = new URLSearchParams(window.location.search).get('admin') === 
 const state = {
   postType: 'post_body',
   groups: [],
+  extraGroups: [],
   context: FALLBACK_CONTEXT,
   adminMode: ADMIN_MODE,
-  researchKey: ''
+  researchKey: '',
+  resultSummary: ''
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -551,10 +644,16 @@ const resetBtn = $('#resetBtn');
 const resultState = $('#resultState');
 const copyText = $('#copyText');
 const tagGroups = $('#tagGroups');
+const extraState = $('#extraState');
+const extraTagGroups = $('#extraTagGroups');
+const extraSummary = $('#extraSummary');
 const summary = $('#summary');
 const copyBtn = $('#copyBtn');
+const adminPanel = $('#adminPanel');
+const researchKeyInput = $('#researchKeyInput');
 
 if (tuneBtn) tuneBtn.hidden = !state.adminMode;
+if (adminPanel) adminPanel.hidden = !state.adminMode;
 
 function normalizeTag(value) {
   const cleaned = String(value || '')
@@ -568,12 +667,24 @@ function normalizeTag(value) {
 
 function uniqTags(tags) {
   const seen = new Set();
-  return tags.map(normalizeTag).filter(tag => {
+  return (Array.isArray(tags) ? tags : []).map(normalizeTag).filter(tag => {
     const key = tag.toLowerCase();
     if (!tag || /^#test\d*$/i.test(tag) || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+function compactText(value) {
+  return String(value || '').toLowerCase().replace(/\s+/g, '');
+}
+
+function sameTagList(left, right) {
+  return uniqTags(left).join('|').toLowerCase() === uniqTags(right).join('|').toLowerCase();
+}
+
+function replaceLegacyTagList(tags, legacy, nextTags) {
+  return sameTagList(tags, legacy) ? [...nextTags] : uniqTags(tags);
 }
 
 function limitGroups(groups, maxTags = 24) {
@@ -616,10 +727,19 @@ function keywordTags(text) {
     ['딸기', '#딸기디저트'],
     ['말차', '#말차맛집'],
     ['케이크', '#케이크맛집'],
-    ['성남동', '#성남동카페'],
+    ['반구동', '#반구동카페'],
     ['울산', '#울산카페']
   ];
   return pairs.filter(([keyword]) => source.includes(keyword)).map(([, tag]) => tag);
+}
+
+function menuTagsFromMemo(memoText, context) {
+  const memoCompact = compactText(memoText);
+  const menuTags = Array.isArray(context.menuTags) ? context.menuTags : [];
+  return menuTags.filter(tag => {
+    const plain = compactText(String(tag).replace(/^#/, ''));
+    return plain && memoCompact.includes(plain);
+  });
 }
 
 function formatCopyText(groups) {
@@ -629,7 +749,7 @@ function formatCopyText(groups) {
 function buildResearchTags(memoText) {
   return uniqTags([
     ...keywordTags(memoText),
-    ...((state.context.menuTags || []).slice(0, 4)),
+    ...menuTagsFromMemo(memoText, state.context),
     ...((state.context.localTags || []).slice(0, 2)),
     ...((state.context.brandTags || []).slice(0, 2))
   ]).slice(0, 12);
@@ -654,29 +774,41 @@ async function loadCafeContext() {
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       Accept: 'application/json'
     };
-    const [menuResponse, pickResponse] = await Promise.all([
+    const [menuResponse, pickResponse, settingsResponse] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/menu?select=name,category&order=sort_order.asc&limit=20`, { headers }),
-      fetch(`${SUPABASE_URL}/rest/v1/pick?select=name,menu:menu_id(name)&order=sort_order.asc&limit=4`, { headers })
+      fetch(`${SUPABASE_URL}/rest/v1/pick?select=name,menu:menu_id(name)&order=sort_order.asc&limit=4`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/hashtag_settings?select=required_brand_tags,required_local_tags&id=eq.1&limit=1`, { headers })
     ]);
-    if (!menuResponse.ok || !pickResponse.ok) throw new Error('context fetch failed');
-    const [menu, picks] = await Promise.all([menuResponse.json(), pickResponse.json()]);
+    if (!menuResponse.ok || !pickResponse.ok || !settingsResponse.ok) throw new Error('context fetch failed');
+    const [menu, picks, settingsRows] = await Promise.all([menuResponse.json(), pickResponse.json(), settingsResponse.json()]);
     const menuNames = (menu || []).map(item => item.name).filter(Boolean);
     const pickNames = (picks || []).map(item => item.menu?.name || item.name).filter(Boolean);
     const menuTags = uniqTags([...pickNames, ...menuNames].slice(0, 10).map(name => `#${name}`));
-    state.context = { ...FALLBACK_CONTEXT, menuTags };
+    const settings = settingsRows?.[0] || {};
+    const brandTags = replaceLegacyTagList(settings.required_brand_tags || FALLBACK_CONTEXT.brandTags, ['#tuzz2026', '#투즈', '#TUZ'], FALLBACK_CONTEXT.brandTags);
+    const localTags = replaceLegacyTagList(settings.required_local_tags || FALLBACK_CONTEXT.localTags, ['#울산카페', '#성남동카페', '#울산중구카페'], FALLBACK_CONTEXT.localTags);
+    state.context = { ...FALLBACK_CONTEXT, menuTags, brandTags, localTags };
   } catch (err) {
     console.info('[hashtag-gen] cafe context fallback:', err?.message || err);
   }
 }
 
-function renderGroups(groups, reasonSummary = '') {
-  state.groups = limitGroups(dedupeGroups(groups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length)));
+function renderGroups(groups, extraGroups = [], reasonSummary = '') {
+  state.groups = limitGroups(dedupeGroups(groups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length)), 5);
+  state.extraGroups = limitGroups(dedupeGroups(extraGroups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length)), 12);
+  state.resultSummary = reasonSummary || state.resultSummary;
   const total = state.groups.flatMap(group => group.tags).length;
+  const extraTotal = state.extraGroups.flatMap(group => group.tags).length;
   copyText.textContent = formatCopyText(state.groups);
   tagGroups.innerHTML = state.groups.flatMap(group => group.tags).map(tag => `
     <span class="tag-chip">${tag}<button type="button" aria-label="${tag} 제거" data-remove-tag="${tag}">×</button></span>
   `).join('');
-  summary.textContent = reasonSummary || `${total}개 추천`;
+  extraTagGroups.innerHTML = state.extraGroups.flatMap(group => group.tags).map(tag => `
+    <button class="tag-chip tag-chip--alt" type="button" data-extra-tag="${tag}" data-extra-category="${group.key}" aria-label="${tag}로 교체">${tag}</button>
+  `).join('');
+  extraSummary.textContent = extraTotal ? `${extraTotal}개 후보를 눌러 교체할 수 있어요.` : '';
+  extraState.hidden = !extraTotal;
+  summary.textContent = state.resultSummary || `${total}개 추천`;
   resultState.hidden = false;
 }
 
@@ -708,9 +840,7 @@ async function requestTags() {
 }
 
 function ensureResearchKey() {
-  if (state.researchKey) return state.researchKey;
-  const entered = window.prompt('관리자용 튜닝 키를 입력해 주세요.');
-  const key = String(entered || '').trim();
+  const key = String(researchKeyInput?.value || state.researchKey || '').trim();
   if (!key) throw new Error('튜닝 키 입력이 필요해요.');
   state.researchKey = key;
   return key;
@@ -731,10 +861,11 @@ async function requestResearchRefresh() {
     })
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    if (response.status === 401) state.researchKey = '';
-    throw new Error(data.error || '튜닝 호출에 실패했어요.');
-  }
+    if (!response.ok) {
+      if (response.status === 401) state.researchKey = '';
+      if (response.status === 401 && researchKeyInput) researchKeyInput.value = '';
+      throw new Error(data.error || '튜닝 호출에 실패했어요.');
+    }
   return data;
 }
 
@@ -767,7 +898,7 @@ generateBtn.addEventListener('click', async () => {
   generateBtn.disabled = true;
   try {
     const result = await requestTags();
-    renderGroups(result.tags, result.reasonSummary);
+    renderGroups(result.tags, result.extraTags || [], result.reasonSummary);
     status.textContent = '복사해서 인스타그램에 붙여넣어 주세요.';
   } catch (err) {
     status.textContent = err?.message || '해시태그 데이터 연결이 필요해요. 잠시 후 다시 눌러주세요.';
@@ -785,7 +916,7 @@ if (tuneBtn) {
       await requestResearchRefresh();
       if (memo.value.trim()) {
         const result = await requestTags();
-        renderGroups(result.tags, `${result.reasonSummary} 리서치 캐시도 갱신했어요.`);
+        renderGroups(result.tags, result.extraTags || [], `${result.reasonSummary} 리서치 캐시도 갱신했어요.`);
         status.textContent = '튜닝 후 현재 본문 기준 태그를 다시 골랐어요.';
       } else {
         status.textContent = '리서치 캐시를 갱신했어요. 이제 본문을 넣고 Generate를 눌러 주세요.';
@@ -801,11 +932,15 @@ if (tuneBtn) {
 
 resetBtn.addEventListener('click', () => {
   state.groups = [];
+  state.extraGroups = [];
+  state.resultSummary = '';
   memo.value = '';
   memoCount.textContent = '0자';
   status.textContent = '';
   tagGroups.innerHTML = '';
+  extraTagGroups.innerHTML = '';
   copyText.textContent = '';
+  extraState.hidden = true;
   resultState.hidden = true;
   memo.focus();
 });
@@ -818,7 +953,58 @@ tagGroups.addEventListener('click', (event) => {
     ...group,
     tags: group.tags.filter(item => item !== tag)
   })).filter(group => group.tags.length);
-  renderGroups(nextGroups);
+  renderGroups(nextGroups, state.extraGroups);
+});
+
+function cloneGroups(groups) {
+  return groups.map(group => ({ ...group, tags: [...group.tags] }));
+}
+
+function addTagToGroup(groups, key, tag) {
+  const group = groups.find(item => item.key === key);
+  if (group) {
+    group.tags = uniqTags([tag, ...group.tags]);
+    return;
+  }
+  groups.push({ key, label: GROUP_LABELS[key] || key, tags: [tag] });
+}
+
+extraTagGroups.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-extra-tag]');
+  if (!button) return;
+  const incomingTag = button.dataset.extraTag;
+  const incomingCategory = button.dataset.extraCategory;
+  const nextGroups = cloneGroups(state.groups);
+  const nextExtraGroups = cloneGroups(state.extraGroups);
+  const selectedGroup = nextGroups.find(group => group.key === incomingCategory && group.tags.length);
+  let outgoingTag = '';
+  let outgoingCategory = '';
+
+  if (selectedGroup) {
+    outgoingCategory = selectedGroup.key;
+    outgoingTag = selectedGroup.tags[selectedGroup.tags.length - 1];
+    selectedGroup.tags[selectedGroup.tags.length - 1] = incomingTag;
+  } else {
+    const fallbackGroup = nextGroups[nextGroups.length - 1];
+    if (fallbackGroup?.tags?.length) {
+      outgoingCategory = fallbackGroup.key;
+      outgoingTag = fallbackGroup.tags.pop();
+      if (!fallbackGroup.tags.length) {
+        nextGroups.splice(nextGroups.indexOf(fallbackGroup), 1);
+      }
+    }
+    addTagToGroup(nextGroups, incomingCategory, incomingTag);
+  }
+
+  for (const group of nextExtraGroups) {
+    group.tags = group.tags.filter(tag => tag !== incomingTag);
+  }
+  if (outgoingTag) {
+    addTagToGroup(nextExtraGroups, outgoingCategory || incomingCategory, outgoingTag);
+  }
+
+  renderGroups(nextGroups, nextExtraGroups);
+  status.textContent = `${incomingTag}로 바꿨어요.`;
 });
 
 copyBtn.addEventListener('click', async () => {
@@ -831,6 +1017,12 @@ copyBtn.addEventListener('click', async () => {
     status.textContent = '복사가 막혀 있어요. 태그 영역을 길게 눌러 복사해 주세요.';
   }
 });
+
+if (researchKeyInput) {
+  researchKeyInput.addEventListener('input', () => {
+    state.researchKey = researchKeyInput.value.trim();
+  });
+}
 
 loadCafeContext();
 </script>

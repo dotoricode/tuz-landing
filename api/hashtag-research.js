@@ -6,11 +6,13 @@ const DEFAULT_RESULTS_PER_TAG = 12;
 const DEFAULT_ACTOR_ID = 'apify/instagram-hashtag-scraper';
 const SOURCE = 'apify-hashtag-scraper';
 
-const DEFAULT_BRAND_TAGS = ['#tuzz2026', '#투즈', '#TUZ'];
-const DEFAULT_LOCAL_TAGS = ['#울산카페', '#성남동카페', '#울산중구카페', '#울산카페추천'];
+const DEFAULT_BRAND_TAGS = ['#카페튜즈', '#TUZ', '#tuzz2026'];
+const DEFAULT_LOCAL_TAGS = ['#울산카페', '#반구동카페', '#울산중구카페', '#울산카페추천'];
+const LEGACY_BRAND_TAGS = ['#tuzz2026', '#투즈', '#TUZ'];
+const LEGACY_LOCAL_TAGS = ['#울산카페', '#성남동카페', '#울산중구카페', '#울산카페추천'];
 const DEFAULT_MENU_HINTS = [
   '카페', '커피', '라떼', '아메리카노', '크림', '디저트', '케이크', '말차',
-  '초코', '딸기', '음료', '브런치', '원두', '시그니처', '성남동', '울산', '중구', '투즈', 'tuz'
+  '초코', '딸기', '음료', '브런치', '원두', '시그니처', '반구동', '울산', '중구', '카페튜즈', 'tuz', 'tuzz2026'
 ];
 const BLOCKED_DEFAULT = ['#맞팔', '#선팔', '#좋아요반사', '#팔로우', '#followforfollow', '#likeforlikes'];
 
@@ -69,6 +71,14 @@ function tagText(tag) {
 
 function toArray(value, fallback = []) {
   return Array.isArray(value) ? value.filter(Boolean) : fallback;
+}
+
+function sameTagList(left, right) {
+  return uniqTags(left).join('|').toLowerCase() === uniqTags(right).join('|').toLowerCase();
+}
+
+function replaceLegacyTagList(tags, legacy, nextTags) {
+  return sameTagList(tags, legacy) ? [...nextTags] : uniqTags(tags);
 }
 
 function numberFrom(value) {
@@ -153,8 +163,8 @@ async function loadCafeContext() {
       menuNames,
       pickNames,
       menuTags: uniqTags([...pickNames, ...menuNames].map(name => `#${name}`)),
-      brandTags: uniqTags(toArray(settings.required_brand_tags, DEFAULT_BRAND_TAGS)),
-      localTags: uniqTags(toArray(settings.required_local_tags, DEFAULT_LOCAL_TAGS)),
+      brandTags: replaceLegacyTagList(toArray(settings.required_brand_tags, DEFAULT_BRAND_TAGS), LEGACY_BRAND_TAGS, DEFAULT_BRAND_TAGS),
+      localTags: replaceLegacyTagList(toArray(settings.required_local_tags, DEFAULT_LOCAL_TAGS), LEGACY_LOCAL_TAGS, DEFAULT_LOCAL_TAGS),
       blockedTags: uniqTags([...BLOCKED_DEFAULT, ...toArray(settings.blocked_tags, [])]),
       minPostCount: Number(settings.min_post_count) || 500,
       maxPostCount: Number(settings.max_post_count) || 500000
@@ -177,8 +187,8 @@ async function loadCafeContext() {
 function isTuzRelevant(tag, context) {
   const text = tagText(tag);
   if (!text) return false;
-  if (/tuz|투즈/.test(text)) return true;
-  if (/울산|성남동|중구/.test(text)) return true;
+  if (/tuz|카페튜즈|tuzz2026/.test(text)) return true;
+  if (/울산|반구동|중구/.test(text)) return true;
   if (DEFAULT_MENU_HINTS.some(hint => text.includes(hint.toLowerCase()))) return true;
   if ((context.menuNames || []).some(name => {
     const plain = String(name).replace(/\s+/g, '').toLowerCase();
