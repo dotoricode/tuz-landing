@@ -552,7 +552,7 @@
 
       <header class="composer-head">
         <strong>from Tuz</strong>
-        <span class="composer-meta"><span>@ tuzz2026</span><span># <b id="tagCountMeta">0</b></span><span>○</span></span>
+        <span class="composer-meta">@ tuzz2026</span>
       </header>
 
       <section class="composer-main">
@@ -636,7 +636,6 @@ const $ = (selector) => document.querySelector(selector);
 const splash = $('#splash');
 const memo = $('#memo');
 const memoCount = $('#memoCount');
-const tagCountMeta = $('#tagCountMeta');
 const status = $('#status');
 const generateBtn = $('#generateBtn');
 const tuneBtn = $('#tuneBtn');
@@ -770,7 +769,6 @@ function renderGroups(groups, reasonSummary = '') {
     <span class="tag-chip">${tag}<button type="button" aria-label="${tag} 제거" data-remove-tag="${tag}">×</button></span>
   `).join('');
   summary.textContent = reasonSummary || `${total}개 추천`;
-  tagCountMeta.textContent = String(total);
   resultState.hidden = false;
 }
 
@@ -897,7 +895,6 @@ resetBtn.addEventListener('click', () => {
   state.groups = [];
   memo.value = '';
   memoCount.textContent = '0자';
-  tagCountMeta.textContent = '0';
   status.textContent = '';
   tagGroups.innerHTML = '';
   copyText.textContent = '';
