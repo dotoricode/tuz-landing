@@ -50,9 +50,11 @@
     display: grid;
     place-items: center;
     overflow: hidden;
-    background: #dfe7e8;
+    background: #f5f4f1;
     color: #fff;
     transition: opacity 520ms ease, visibility 520ms ease;
+    pointer-events: none;
+    animation: splashAutoOut 1.55s 0.35s ease forwards;
   }
 
   .splash[hidden] { display: none; }
@@ -62,17 +64,14 @@
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(180deg, rgba(20, 28, 31, 0.02), rgba(0, 0, 0, 0.22)),
-      url("assets/splash-press.png") center / cover no-repeat;
-    transform: scale(1.01);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.04)),
+      url("assets/splash-open.png") center / cover no-repeat;
+    transform: scale(1);
     transition: opacity 420ms ease, transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .splash.is-loading::before {
-    background:
-      linear-gradient(180deg, rgba(20, 28, 31, 0.01), rgba(0, 0, 0, 0.2)),
-      url("assets/splash-progress.png") center 24% / cover no-repeat;
-    transform: scale(1.035);
+    transform: scale(1.018);
   }
 
   .splash.is-done {
@@ -81,131 +80,15 @@
     pointer-events: none;
   }
 
-  .splash__content {
-    position: relative;
-    z-index: 1;
-    width: min(100%, 430px);
-    min-height: 100dvh;
-    display: grid;
-    align-content: center;
-    justify-items: center;
-    padding: 42px 30px 64px;
-    text-align: center;
-  }
-
-  .press-target {
-    position: relative;
-    width: 96px;
-    height: 170px;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    touch-action: manipulation;
-  }
-
-  .press-target::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 74px;
-    height: 74px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.28);
-    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.12);
-    transform: translateX(-50%);
-    transition: transform 280ms ease, background 280ms ease;
-  }
-
-  .press-target::after {
-    content: "";
-    position: absolute;
-    top: 16px;
-    left: 50%;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #fff9f3;
-    transform: translateX(-50%);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-    transition: transform 280ms ease;
-  }
-
-  .press-target span {
-    position: absolute;
-    top: 72px;
-    left: 50%;
-    width: 1px;
-    height: 92px;
-    background: rgba(255, 249, 243, 0.62);
-    transform: translateX(-50%);
-    overflow: hidden;
-    text-indent: -999px;
-  }
-
-  .press-target:active::before,
-  .press-target.is-pressed::before {
-    background: rgba(255, 255, 255, 0.38);
-    transform: translateX(-50%) scale(1.16);
-  }
-
-  .press-target:active::after,
-  .press-target.is-pressed::after {
-    transform: translateX(-50%) scale(0.84);
-  }
-
-  .progress-ring {
-    position: absolute;
-    top: calc(50% - 148px);
-    left: 50%;
-    z-index: 2;
-    width: 196px;
-    height: 196px;
-    border-radius: 50%;
-    border: 7px solid rgba(255, 249, 243, 0.44);
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.88);
-    transition: opacity 240ms ease, transform 420ms ease;
-    pointer-events: none;
-  }
-
-  .progress-ring::before {
-    content: "";
-    position: absolute;
-    inset: -7px;
-    border-radius: 50%;
-    border: 7px solid transparent;
-    border-right-color: rgba(255, 249, 243, 0.96);
-    border-bottom-color: rgba(255, 249, 243, 0.72);
-    animation: ringSpin 1s ease-in-out infinite;
-  }
-
-  .splash.is-loading .progress-ring {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-
-  .splash__hint {
-    position: absolute;
-    bottom: calc(env(safe-area-inset-bottom) + 24px);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 34px;
-    padding: 8px 16px;
-    border: 1px solid rgba(255, 249, 243, 0.34);
-    border-radius: 999px;
-    background: rgba(20, 20, 18, 0.18);
-    color: rgba(255, 249, 243, 0.9);
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-
-  @keyframes ringSpin {
-    to { transform: rotate(360deg); }
+  @keyframes splashAutoOut {
+    0%, 58% {
+      opacity: 1;
+      visibility: visible;
+    }
+    100% {
+      opacity: 0;
+      visibility: hidden;
+    }
   }
 
   .phone {
@@ -582,13 +465,6 @@
 <body>
   <main class="hash-shell">
     <section class="splash" id="splash" aria-label="해시태그 생성기 시작">
-      <div class="progress-ring" aria-hidden="true"></div>
-      <div class="splash__content">
-        <button class="press-target" id="startButton" type="button" aria-label="시작하기">
-          <span>press</span>
-        </button>
-        <div class="splash__hint">click to start</div>
-      </div>
     </section>
 
     <section class="phone" aria-label="TUZ 해시태그 생성기">
@@ -687,7 +563,6 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 const splash = $('#splash');
-const startButton = $('#startButton');
 const memo = $('#memo');
 const memoCount = $('#memoCount');
 const tagCountMeta = $('#tagCountMeta');
@@ -843,18 +718,17 @@ async function requestTags() {
 
 function startSplash() {
   if (splash.classList.contains('is-loading')) return;
-  startButton.classList.add('is-pressed');
   splash.classList.add('is-loading');
   window.setTimeout(() => {
     splash.classList.add('is-done');
-    memo.focus({ preventScroll: true });
-  }, 900);
+  }, 1050);
   window.setTimeout(() => {
     splash.hidden = true;
-  }, 1450);
+    memo.focus({ preventScroll: true });
+  }, 1600);
 }
 
-startButton.addEventListener('click', startSplash);
+window.setTimeout(startSplash, 450);
 
 memo.addEventListener('input', () => {
   memoCount.textContent = `${memo.value.length}자`;
