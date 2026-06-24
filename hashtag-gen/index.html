@@ -73,7 +73,7 @@
     background:
       radial-gradient(circle at 50% 31%, rgba(165, 42, 26, 0.24), transparent 13%),
       linear-gradient(180deg, rgba(20, 28, 31, 0.02), rgba(74, 24, 16, 0.26)),
-      url("assets/splash-progress.png") center / cover no-repeat;
+      url("assets/splash-progress.png") center 24% / cover no-repeat;
     transform: scale(1.035);
   }
 
@@ -187,30 +187,23 @@
     transform: translate(-50%, -50%) scale(1);
   }
 
-  .splash__title {
-    margin: 84px 0 0;
-    font-size: clamp(34px, 9vw, 52px);
-    line-height: 1.08;
-    font-weight: 500;
-    letter-spacing: 0;
-    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-  }
-
-  .splash__copy {
-    margin: 24px 0 0;
-    font-size: 19px;
-    line-height: 1.45;
-    font-weight: 500;
-    text-shadow: 0 8px 26px rgba(0, 0, 0, 0.24);
-  }
-
   .splash__hint {
     position: absolute;
     bottom: calc(env(safe-area-inset-bottom) + 24px);
-    color: rgba(255, 255, 255, 0.82);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 249, 243, 0.34);
+    border-radius: 999px;
+    background: rgba(122, 29, 16, 0.2);
+    color: rgba(255, 249, 243, 0.9);
     font-size: 12px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   @keyframes ringSpin {
@@ -597,8 +590,6 @@
         <button class="press-target" id="startButton" type="button" aria-label="시작하기">
           <span>press</span>
         </button>
-        <h1 class="splash__title">Create Your<br/>Hashtags</h1>
-        <p class="splash__copy">인스타그램 본문을 넣고<br/>어울리는 태그를 바로 복사하세요</p>
         <div class="splash__hint">click to start</div>
       </div>
     </section>
