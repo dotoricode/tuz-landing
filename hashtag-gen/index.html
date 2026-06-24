@@ -1002,9 +1002,9 @@ function renderGroups(groups, extraGroups = [], reasonSummary = '') {
   tagGroups.innerHTML = state.groups.flatMap(group => group.tags).map(tag => `
     <span class="tag-chip">${tag}<button type="button" aria-label="${tag} 제거" data-remove-tag="${tag}">×</button></span>
   `).join('');
-  extraTagGroups.innerHTML = state.extraGroups.flatMap(group => group.tags).map(tag => `
-    <button class="tag-chip tag-chip--alt" type="button" data-extra-tag="${tag}" data-extra-category="${group.key}" aria-label="${tag}로 교체">${tag}</button>
-  `).join('');
+  extraTagGroups.innerHTML = state.extraGroups.flatMap(group =>
+    group.tags.map(tag => `<button class="tag-chip tag-chip--alt" type="button" data-extra-tag="${tag}" data-extra-category="${group.key}" aria-label="${tag}로 교체">${tag}</button>`)
+  ).join('');
   extraSummary.textContent = extraTotal ? `${extraTotal}개 후보를 눌러 교체할 수 있어요.` : '';
   extraState.hidden = !extraTotal;
   summary.textContent = state.resultSummary || `${total}개 추천`;
