@@ -12,6 +12,9 @@
     },
     "api/hashtag-gen.js": {
       "maxDuration": 10
+    },
+    "api/hashtag-research.js": {
+      "maxDuration": 120
     }
   },
   "headers": [
@@ -71,6 +74,15 @@
     },
     {
       "source": "/api/hashtag-gen",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/api/hashtag-research",
       "headers": [
         {
           "key": "Cache-Control",

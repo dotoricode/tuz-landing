@@ -317,9 +317,21 @@ CREATE TABLE IF NOT EXISTS public.hashtag_research_cache (
   source text not null default 'apify',
   related_terms text[] not null default '{}'::text[],
   quality_flags text[] not null default '{}'::text[],
+  sample_size int not null default 0 check (sample_size >= 0),
+  median_likes numeric,
+  median_comments numeric,
+  median_plays numeric,
+  engagement_score numeric,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+ALTER TABLE public.hashtag_research_cache
+  ADD COLUMN IF NOT EXISTS sample_size int not null default 0 check (sample_size >= 0),
+  ADD COLUMN IF NOT EXISTS median_likes numeric,
+  ADD COLUMN IF NOT EXISTS median_comments numeric,
+  ADD COLUMN IF NOT EXISTS median_plays numeric,
+  ADD COLUMN IF NOT EXISTS engagement_score numeric;
 
 CREATE INDEX IF NOT EXISTS idx_hashtag_research_cache_sampled_at
   ON public.hashtag_research_cache (sampled_at DESC);

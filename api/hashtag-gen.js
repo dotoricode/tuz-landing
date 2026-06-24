@@ -329,7 +329,7 @@ async function loadResearchCache(tags) {
   const normalized = uniqTags(tags);
   if (!normalized.length) return new Map();
   const inList = normalized.map(tag => encodeURIComponent(tag)).join(',');
-  const rows = await fetchSupabase(`hashtag_research_cache?select=tag,post_count,sampled_at,source,related_terms,quality_flags&tag=in.(${inList})`);
+  const rows = await fetchSupabase(`hashtag_research_cache?select=tag,post_count,sampled_at,source,related_terms,quality_flags,sample_size,engagement_score&tag=in.(${inList})`);
   return new Map((rows || []).map(row => [tagKey(row.tag), row]));
 }
 
@@ -363,11 +363,13 @@ function scoreCandidate(item, research, { memo, context, settings }) {
 
   const postCount = Number(research?.post_count);
   const competition = competitionScore(postCount, settings);
+  const engagementScore = Number(research?.engagement_score);
+  const engagementBoost = Number.isFinite(engagementScore) ? Math.min(5, Math.log10(engagementScore + 1)) : 0;
   const localIntent = item.category === 'local' || /울산|성남동|중구/.test(item.tag) ? 20 : 0;
   const brandSafety = item.category === 'brand' || /tuz|투즈/i.test(item.tag) ? 10 : 5;
   const diversity = 5;
   const freshnessPenalty = daysSince(research?.sampled_at) > settings.staleAfterDays ? 4 : 0;
-  return Math.max(0, relevance + competition + localIntent + brandSafety + diversity - freshnessPenalty);
+  return Math.max(0, relevance + competition + engagementBoost + localIntent + brandSafety + diversity - freshnessPenalty);
 }
 
 function pickBest(scored, category, selectedKeys, maxBroad = 1) {
@@ -391,6 +393,9 @@ function selectRankedTags({ candidates, researchCache, memo, context, settings, 
       postCount,
       sampledAt: research.sampled_at || null,
       researchSource: research.source || 'apify',
+      sampleSize: Number(research.sample_size) || 0,
+      engagementScore: Number(research.engagement_score) || null,
+      qualityFlags: toArray(research.quality_flags, []),
       scoreBand: scoreBand(postCount, settings),
       score: scoreCandidate(item, research, { memo, context, settings })
     };
@@ -442,7 +447,10 @@ function researchPayload(selected, settings) {
     source: item.researchSource,
     freshness: daysSince(item.sampledAt) <= settings.staleAfterDays ? 'fresh' : 'stale',
     scoreBand: item.scoreBand,
-    score: item.score
+    score: item.score,
+    sampleSize: item.sampleSize,
+    engagementScore: item.engagementScore,
+    qualityFlags: item.qualityFlags
   }));
 }
 

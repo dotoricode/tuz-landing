@@ -1,6 +1,8 @@
 const assert = require('assert/strict');
 const handler = require('../api/hashtag-gen.js');
 const api = handler._test;
+const researchHandler = require('../api/hashtag-research.js');
+const researchApi = researchHandler._test;
 
 function cache(rows) {
   return new Map(rows.map(row => [api.tagKey(row.tag), {
@@ -74,6 +76,47 @@ const groups = api.groupSelectedTags(selected);
 assert.equal(api.formatCopyText(groups).split(' ').length, 5);
 assert.equal(api.researchPayload(selected, settings).length, 5);
 
+const researchContext = {
+  brandTags: ['#tuzz2026', '#투즈'],
+  localTags: ['#울산카페', '#성남동카페'],
+  menuTags: ['#크림라떼', '#바스크치즈케이크'],
+  menuNames: ['크림라떼', '바스크 치즈케이크'],
+  blockedTags: ['#맞팔'],
+  minPostCount: 500
+};
+const researchCandidates = researchApi.buildResearchCandidates({
+  tags: ['#강남맛집', '#울산라떼', '#맞팔', '#TUZ'],
+  includeBrandTags: false,
+  includeLocalTags: false,
+  includeMenuTags: false
+}, researchContext);
+assert.deepEqual(researchCandidates.tags, ['#울산라떼', '#TUZ']);
+assert.ok(researchCandidates.rejectedTags.some(item => item.tag === '#강남맛집' && item.reason === 'not_tuz_relevant'));
+assert.ok(researchCandidates.rejectedTags.some(item => item.tag === '#맞팔' && item.reason === 'blocked'));
+
+const apifyRows = researchApi.extractHashtagResearch(['#울산라떼'], [
+  {
+    hashtag: '울산라떼',
+    caption: '#울산라떼 #성남동카페 #크림라떼',
+    likesCount: 20,
+    commentsCount: 2,
+    videoPlayCount: 1000
+  },
+  {
+    hashtag: '울산라떼',
+    caption: '#울산라떼 #투즈',
+    likesCount: 40,
+    commentsCount: 4,
+    videoPlayCount: 2000
+  }
+], researchContext);
+assert.equal(apifyRows.length, 1);
+assert.equal(apifyRows[0].tag, '#울산라떼');
+assert.equal(apifyRows[0].sample_size, 2);
+assert.ok(apifyRows[0].post_count >= 500);
+assert.ok(apifyRows[0].quality_flags.includes('post_count_estimated'));
+assert.ok(apifyRows[0].related_terms.includes('#성남동카페'));
+
 const noBrandLocal = api.selectRankedTags({
   candidates,
   researchCache,
@@ -138,6 +181,45 @@ async function callHandlerWithFetch(fetchImpl, body) {
   }
 }
 
+async function callResearchHandlerWithFetch(fetchImpl, body, { headers = {}, env = {} } = {}) {
+  const originalFetch = global.fetch;
+  const originalEnv = {};
+  for (const key of ['HASHTAG_RESEARCH_KEY', 'APIFY_KEY', 'APIFY_TOKEN', 'SUPABASE_SERVICE_ROLE_KEY', 'HASHTAG_APIFY_ACTOR_ID']) {
+    originalEnv[key] = process.env[key];
+  }
+  Object.assign(process.env, env);
+  global.fetch = fetchImpl;
+  try {
+    const req = {
+      method: 'POST',
+      headers,
+      body
+    };
+    const chunks = [];
+    const res = {
+      statusCode: 200,
+      headers: {},
+      setHeader(key, value) {
+        this.headers[key.toLowerCase()] = value;
+      },
+      end(value) {
+        chunks.push(value || '');
+      }
+    };
+    await researchHandler(req, res);
+    return {
+      statusCode: res.statusCode,
+      body: JSON.parse(chunks.join('') || '{}')
+    };
+  } finally {
+    global.fetch = originalFetch;
+    for (const [key, value] of Object.entries(originalEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
 function jsonResponse(payload, ok = true, status = 200) {
   return {
     ok,
@@ -177,6 +259,31 @@ function supabaseMock({ includeResearch = true } = {}) {
   };
 }
 
+function researchFetchMock({ apifyItems = [] } = {}) {
+  return async (url, options = {}) => {
+    const target = String(url);
+    if (target.includes('/menu?')) return jsonResponse([{ name: '크림라떼' }, { name: '바스크 치즈케이크' }]);
+    if (target.includes('/pick?')) return jsonResponse([{ menu: { name: '크림라떼' } }]);
+    if (target.includes('/hashtag_settings?')) return jsonResponse([{
+      min_post_count: 500,
+      max_post_count: 500000,
+      blocked_tags: ['#맞팔'],
+      required_brand_tags: ['#tuzz2026'],
+      required_local_tags: ['#울산카페']
+    }]);
+    if (target.includes('api.apify.com')) {
+      assert.equal(options.headers.Authorization, 'Bearer apify_test');
+      return jsonResponse(apifyItems);
+    }
+    if (target.includes('/hashtag_research_cache?on_conflict=tag')) {
+      const rows = JSON.parse(options.body);
+      assert.ok(rows.every(row => row.quality_flags.includes('tuz_scoped')));
+      return jsonResponse(rows);
+    }
+    throw new Error(`unexpected research fetch: ${target}`);
+  };
+}
+
 (async () => {
   const ok = await callHandlerWithFetch(supabaseMock(), {
     postType: 'post_body',
@@ -196,6 +303,60 @@ function supabaseMock({ includeResearch = true } = {}) {
   });
   assert.equal(missing.statusCode, 503);
   assert.equal(missing.body.code, 'HASHTAG_RESEARCH_REQUIRED');
+
+  const noAdminKey = await callResearchHandlerWithFetch(researchFetchMock(), {
+    tags: ['#울산라떼'],
+    dryRun: true
+  });
+  assert.equal(noAdminKey.statusCode, 503);
+  assert.equal(noAdminKey.body.code, 'HASHTAG_RESEARCH_KEY_REQUIRED');
+
+  const wrongAdminKey = await callResearchHandlerWithFetch(researchFetchMock(), {
+    tags: ['#울산라떼'],
+    dryRun: true
+  }, {
+    headers: { 'x-hashtag-research-key': 'wrong' },
+    env: { HASHTAG_RESEARCH_KEY: 'secret' }
+  });
+  assert.equal(wrongAdminKey.statusCode, 401);
+  assert.equal(wrongAdminKey.body.code, 'UNAUTHORIZED_RESEARCH_REFRESH');
+
+  const dryRun = await callResearchHandlerWithFetch(researchFetchMock(), {
+    tags: ['#울산라떼', '#강남맛집'],
+    includeBrandTags: false,
+    includeLocalTags: false,
+    includeMenuTags: false,
+    dryRun: true
+  }, {
+    headers: { 'x-hashtag-research-key': 'secret' },
+    env: { HASHTAG_RESEARCH_KEY: 'secret' }
+  });
+  assert.equal(dryRun.statusCode, 200);
+  assert.deepEqual(dryRun.body.tags, ['#울산라떼']);
+  assert.ok(dryRun.body.rejectedTags.some(item => item.tag === '#강남맛집'));
+
+  const refreshed = await callResearchHandlerWithFetch(researchFetchMock({
+    apifyItems: [
+      { hashtag: '울산라떼', caption: '#울산라떼 #성남동카페', likesCount: 10, commentsCount: 1 },
+      { hashtag: '울산라떼', caption: '#울산라떼 #크림라떼', likesCount: 30, commentsCount: 3 }
+    ]
+  }), {
+    tags: ['#울산라떼'],
+    includeBrandTags: false,
+    includeLocalTags: false,
+    includeMenuTags: false,
+    maxResultsPerTag: 3
+  }, {
+    headers: { 'x-hashtag-research-key': 'secret' },
+    env: {
+      HASHTAG_RESEARCH_KEY: 'secret',
+      APIFY_KEY: 'apify_test',
+      SUPABASE_SERVICE_ROLE_KEY: 'service_test'
+    }
+  });
+  assert.equal(refreshed.statusCode, 200);
+  assert.equal(refreshed.body.refreshedCount, 1);
+  assert.equal(refreshed.body.rows[0].tag, '#울산라떼');
 
   console.log('verify-hashtag-gen passed');
 })().catch((err) => {
