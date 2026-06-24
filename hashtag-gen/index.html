@@ -339,7 +339,7 @@
 
   .bottom-bar {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: minmax(56px, 1fr) auto minmax(28px, 1fr);
     align-items: center;
     gap: 12px;
     margin-top: auto;
@@ -353,6 +353,11 @@
     color: var(--hash-ink);
     font-size: 14px;
     font-weight: 750;
+  }
+
+  .time-left {
+    min-width: 56px;
+    white-space: nowrap;
   }
 
   .info-button {
