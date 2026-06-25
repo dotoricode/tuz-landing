@@ -616,6 +616,158 @@ function researchPayload(selected, settings) {
   }));
 }
 
+function orderedForCopy(items) {
+  const order = {
+    large_region: 1,
+    sub_region: 2,
+    menu: 3,
+    category: 4,
+    intent: 5,
+    brand: 6,
+    content: 7,
+    discovery: 8
+  };
+  return [...items].sort((a, b) => {
+    const left = order[a.strategySlot] || 99;
+    const right = order[b.strategySlot] || 99;
+    if (left !== right) return left - right;
+    return b.score - a.score;
+  });
+}
+
+function estimateWeeklyImpact(items, setIndex = 0) {
+  const averageScore = items.reduce((sum, item) => sum + (Number(item.score) || 0), 0) / Math.max(1, items.length);
+  const localSlots = items.filter(item => ['large_region', 'sub_region'].includes(item.strategySlot)).length;
+  const hasMenu = items.some(item => item.strategySlot === 'menu');
+  const hasIntent = items.some(item => item.strategySlot === 'intent');
+  const brandBoost = items.some(item => item.strategySlot === 'brand') ? 8 : 0;
+  const specificity = localSlots * 8 + (hasMenu ? 9 : 0) + (hasIntent ? 7 : 0) + brandBoost;
+  const base = Math.round(70 + averageScore * 1.35 + specificity + setIndex * 5);
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = index + 1;
+    const curve = 1 + index * (0.1 + setIndex * 0.012);
+    const weekendLift = day >= 5 ? 1.06 : 1;
+    const reach = Math.round(base * curve * weekendLift);
+    const saves = Math.max(4, Math.round(reach * (0.045 + (hasMenu ? 0.012 : 0) + setIndex * 0.002)));
+    const profileVisits = Math.max(3, Math.round(reach * (0.032 + localSlots * 0.004 + (hasIntent ? 0.006 : 0))));
+    return {
+      day,
+      reach,
+      saves,
+      profileVisits,
+      impact: reach + saves * 7 + profileVisits * 5
+    };
+  });
+}
+
+function rationaleForSet({ title, items, memo, aiIntent }) {
+  const slots = new Set(items.map(item => item.strategySlot));
+  const reasons = [];
+  if (slots.has('large_region')) reasons.push('울산 단위의 넓은 지역 검색 신호를 포함했습니다.');
+  if (slots.has('sub_region')) reasons.push('중구/반구동처럼 실제 방문 가능한 세부 지역 신호를 포함했습니다.');
+  if (slots.has('menu')) reasons.push('본문에 드러난 메뉴 키워드를 검색 가능한 태그로 연결했습니다.');
+  if (slots.has('category')) reasons.push('디저트나 신메뉴처럼 게시물 성격을 분류하는 태그를 보강했습니다.');
+  if (slots.has('intent')) reasons.push('데이트, 카페투어, 대관, 모임처럼 방문 목적을 반영했습니다.');
+  if (slots.has('brand')) reasons.push('재검색과 후기 축적을 위해 TUZ 브랜드 태그를 유지했습니다.');
+  if (aiIntent && !['no_ai_key', 'ai_error'].includes(aiIntent)) {
+    reasons.push(`AI 후보 생성 intent: ${aiIntent}`);
+  }
+  return {
+    title,
+    summary: `${items.length}개 태그를 본문, 지역, 메뉴/목적, 브랜드 근거로 조합했습니다.`,
+    evidence: reasons,
+    memoBasis: String(memo || '').slice(0, 160)
+  };
+}
+
+function uniqueSetKey(items) {
+  return items.map(item => tagKey(item.tag)).join('|');
+}
+
+function pickFromSlot(scored, slot, selectedKeys, offset = 0) {
+  const matches = scored.filter(item => (
+    item.strategySlot === slot &&
+    !selectedKeys.has(tagKey(item.tag)) &&
+    item.scoreBand !== 'too-broad'
+  ));
+  if (!matches.length) return null;
+  return matches[offset % matches.length];
+}
+
+function buildSetFromSlots({ scored, baseItems, slots, offset = 0, settings }) {
+  const selected = [];
+  const selectedKeys = new Set();
+  const targetCount = strategyTargetCount(settings);
+  const add = (item) => {
+    if (!item || selectedKeys.has(tagKey(item.tag)) || selected.length >= targetCount) return;
+    selected.push(item);
+    selectedKeys.add(tagKey(item.tag));
+  };
+
+  for (const slot of slots) add(pickFromSlot(scored, slot, selectedKeys, offset));
+  for (const item of baseItems) add(item);
+  for (const item of scored) {
+    if (item.scoreBand === 'too-broad') continue;
+    add(item);
+  }
+  return orderedForCopy(selected).slice(0, targetCount);
+}
+
+function buildHashtagSets({ selected, candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags, aiCandidates, variantSeed = 0 }) {
+  const scored = rankCandidates({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags });
+  const baseItems = orderedForCopy(selected);
+  const configs = [
+    {
+      key: 'balanced',
+      title: '균형 세트',
+      description: '지역, 메뉴/목적, 브랜드를 고르게 섞은 기본안',
+      slots: ['large_region', 'sub_region', 'menu', 'category', 'brand']
+    },
+    {
+      key: 'visit_intent',
+      title: '방문 목적 세트',
+      description: '데이트, 카페투어, 모임처럼 방문 동기를 더 강하게 잡은 안',
+      slots: ['large_region', 'sub_region', 'intent', 'category', 'brand']
+    },
+    {
+      key: 'menu_search',
+      title: '메뉴 검색 세트',
+      description: '메뉴명과 디저트 검색 의도를 더 앞세운 안',
+      slots: ['large_region', 'sub_region', 'menu', 'intent', 'brand']
+    }
+  ];
+  const seen = new Set();
+  return configs.map((config, index) => {
+    const items = buildSetFromSlots({
+      scored,
+      baseItems,
+      slots: config.slots,
+      offset: Number(variantSeed || 0) + index,
+      settings
+    });
+    const key = uniqueSetKey(items);
+    if (!items.length || seen.has(key)) return null;
+    seen.add(key);
+    const groups = groupSelectedTags(items);
+    return {
+      id: config.key,
+      title: config.title,
+      description: config.description,
+      tags: items.map(item => item.tag),
+      groups,
+      copyText: formatCopyText(groups),
+      research: researchPayload(items, settings),
+      simulation: estimateWeeklyImpact(items, index),
+      rationale: rationaleForSet({
+        title: config.title,
+        items,
+        memo,
+        aiIntent: aiCandidates?.intent
+      })
+    };
+  }).filter(Boolean);
+}
+
 function formatCopyText(groups) {
   return groups.flatMap(group => group.tags).join(' ');
 }
@@ -681,6 +833,7 @@ async function handler(req, res) {
 
     const includeLocalTags = body.includeLocalTags !== false;
     const includeBrandTags = body.includeBrandTags !== false;
+    const variantSeed = Math.max(0, Math.min(20, Number(body.variantSeed) || 0));
     const [context, settings] = await Promise.all([loadCafeContext(), loadHashtagSettings()]);
     const aiCandidates = await callGeminiForCandidates({ memo, context });
     const candidates = buildCandidatePool({
@@ -723,14 +876,28 @@ async function handler(req, res) {
     }
 
     const tags = groupSelectedTags(selected);
+    const sets = buildHashtagSets({
+      selected,
+      candidates,
+      researchCache,
+      memo,
+      context,
+      settings,
+      includeLocalTags,
+      includeBrandTags,
+      aiCandidates,
+      variantSeed
+    });
     await logGeneration({ requestId: id, postType, memo, selected, criteriaVersion: settings.criteriaVersion });
     sendJson(res, 200, {
       tags,
+      sets,
       extraTags,
       copyText: formatCopyText(tags),
-      reasonSummary: `본문과 TUZ 맥락에 맞춰 해시태그 ${selected.length}개를 골랐고, 바꿔볼 후보도 함께 준비했어요.`,
+      reasonSummary: `본문과 TUZ 맥락에 맞춰 해시태그 세트 ${sets.length || 1}개를 준비했어요.`,
       criteriaVersion: settings.criteriaVersion,
       research: researchPayload(selected, settings),
+      simulationDisclaimer: '예상 파급력은 AI/규칙 기반 참고용 시뮬레이션이며 실제 인스타그램 성과와 다를 수 있습니다.',
       requestId: id
     });
   } catch (err) {
@@ -760,6 +927,7 @@ module.exports._test = {
   rankCandidates,
   selectRankedTags,
   selectAlternativeTags,
+  buildHashtagSets,
   groupSelectedTags,
   groupAlternativeTags,
   researchPayload,

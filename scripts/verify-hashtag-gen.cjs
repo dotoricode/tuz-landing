@@ -1,8 +1,19 @@
 const assert = require('assert/strict');
+const fs = require('fs');
+const path = require('path');
 const handler = require('../api/hashtag-gen.js');
 const api = handler._test;
 const researchHandler = require('../api/hashtag-research.js');
 const researchApi = researchHandler._test;
+
+const hashtagHtml = fs.readFileSync(path.join(__dirname, '..', 'hashtag-gen', 'index.html'), 'utf8');
+assert.ok(hashtagHtml.includes('생성하기'));
+assert.ok(hashtagHtml.includes('id="setList"'));
+assert.ok(hashtagHtml.includes('id="impactChart"'));
+assert.ok(hashtagHtml.includes('id="basisDialog"'));
+assert.ok(hashtagHtml.includes('id="retrySetsBtn"'));
+assert.ok(!hashtagHtml.includes('/api/hashtag-research'));
+assert.ok(!hashtagHtml.includes('Tune'));
 
 function cache(rows) {
   return new Map(rows.map(row => [api.tagKey(row.tag), {
@@ -103,6 +114,24 @@ const extraGroups = api.selectAlternativeTags({
   selected
 });
 assert.ok(extraGroups.flatMap(group => group.tags).length >= 1);
+const hashtagSets = api.buildHashtagSets({
+  selected,
+  candidates,
+  researchCache,
+  memo,
+  context,
+  settings,
+  includeLocalTags: true,
+  includeBrandTags: true,
+  aiCandidates: { intent: 'quiet_cafe_menu_post' },
+  variantSeed: 0
+});
+assert.ok(hashtagSets.length >= 3);
+assert.ok(hashtagSets.every(set => set.copyText.split(' ').length === 5));
+assert.ok(hashtagSets.every(set => set.simulation.length === 7));
+assert.ok(hashtagSets.every(set => set.simulation.every(point => Number.isInteger(point.day) && Number.isInteger(point.impact))));
+assert.ok(hashtagSets.every(set => set.rationale.evidence.length >= 4));
+assert.equal(new Set(hashtagSets.map(set => set.copyText)).size, hashtagSets.length);
 
 const researchContext = {
   brandTags: ['#카페튜즈', '#TUZ'],
@@ -267,6 +296,11 @@ assert.equal(comparisonMetrics.previousPolicy.broadDiscoverySlotRatePercent - co
 
 async function callHandlerWithFetch(fetchImpl, body) {
   const originalFetch = global.fetch;
+  const originalEnv = {};
+  for (const key of ['GEMINI_API_KEY', 'GOOGLE_AI_API_KEY', 'GOOGLE_API_KEY']) {
+    originalEnv[key] = process.env[key];
+    delete process.env[key];
+  }
   global.fetch = fetchImpl;
   try {
     const req = {
@@ -292,6 +326,10 @@ async function callHandlerWithFetch(fetchImpl, body) {
     };
   } finally {
     global.fetch = originalFetch;
+    for (const [key, value] of Object.entries(originalEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 }
 
@@ -414,6 +452,11 @@ function researchFetchMock({ apifyItems = [] } = {}) {
   assert.equal(ok.body.copyText.split(' ').length, 5);
   assert.equal(ok.body.research.length, 5);
   assert.ok(Array.isArray(ok.body.extraTags));
+  assert.ok(Array.isArray(ok.body.sets));
+  assert.ok(ok.body.sets.length >= 3);
+  assert.ok(ok.body.sets.every(set => set.simulation.length === 7));
+  assert.ok(ok.body.sets.every(set => set.rationale?.evidence?.length >= 4));
+  assert.match(ok.body.simulationDisclaimer, /실제 인스타그램 성과와 다를 수 있습니다/);
 
   const missing = await callHandlerWithFetch(supabaseMock({ includeResearch: false }), {
     postType: 'post_body',

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<meta name="theme-color" content="#f7f5f2"/>
+<meta name="theme-color" content="#f3f3f3"/>
 <meta name="robots" content="noindex,nofollow"/>
 <title>TUZ · 해시태그 만들기</title>
 <meta name="description" content="TUZ 인스타그램 게시글 본문 기반 해시태그 생성기"/>
@@ -11,18 +11,18 @@
 <link rel="stylesheet" href="../styles.css?v=55"/>
 <style>
   :root {
-    --hash-bg: #f6f5f3;
+    --hash-bg: #f3f3f3;
     --hash-card: #ffffff;
-    --hash-cream: #fbfaf8;
-    --hash-mint: #eef3ef;
-    --hash-coral: #f8f4f1;
-    --hash-lime: #f3f2ea;
+    --hash-cream: #f7f7f7;
+    --hash-mint: #ededed;
+    --hash-coral: #f5f5f5;
+    --hash-lime: #e9e9e9;
     --hash-red: #a52a1a;
     --hash-red-deep: #7a1d10;
     --hash-red-soft: rgba(165, 42, 26, 0.07);
     --hash-red-line: rgba(165, 42, 26, 0.16);
     --hash-ink: #171412;
-    --hash-muted: #8c8178;
+    --hash-muted: #747474;
     --hash-soft-line: rgba(26, 22, 18, 0.12);
   }
 
@@ -50,7 +50,7 @@
     display: grid;
     place-items: center;
     overflow: hidden;
-    background: #f5f4f1;
+    background: #f4f4f4;
     color: #fff;
     transition: opacity 520ms ease, visibility 520ms ease;
     pointer-events: none;
@@ -157,12 +157,12 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #d6cec3;
+    background: #d7d7d7;
     transition: background-color .12s ease, transform .1s ease;
   }
 
   .pg-dot.filled {
-    background: #3a9e5f;
+    background: var(--hash-red-deep);
     transform: scale(1.06);
   }
 
@@ -190,7 +190,7 @@
     justify-content: center;
   }
 
-  .pg-key:active { background: #e2e0db; }
+  .pg-key:active { background: #e0e0e0; }
 
   .pg-key.pg-empty {
     background: none;
@@ -204,12 +204,12 @@
     font-size: 1rem;
   }
 
-  .pg-key.pg-delete:active { background: #f0eeeb; }
+  .pg-key.pg-delete:active { background: #eeeeee; }
 
   #pg-error {
     margin-top: 26px;
     font-size: .88rem;
-    color: #c0392b;
+    color: var(--hash-red-deep);
     font-weight: 600;
     min-height: 1.2em;
     text-align: center;
@@ -229,7 +229,8 @@
     min-height: 100dvh;
     background: var(--hash-card);
     color: var(--hash-ink);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   @media (min-width: 520px) {
@@ -326,10 +327,7 @@
     resize: vertical;
     padding: 18px;
     color: var(--hash-ink);
-    background:
-      radial-gradient(circle at 36% 26%, rgba(165, 42, 26, 0.025), transparent 22%),
-      radial-gradient(circle at 64% 58%, rgba(26, 22, 18, 0.025), transparent 26%),
-      var(--hash-cream);
+    background: var(--hash-cream);
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.6;
@@ -342,7 +340,7 @@
   }
 
   .post-body::placeholder {
-    color: #9e9389;
+    color: #8a8a8a;
   }
 
   .caption-copy {
@@ -360,7 +358,7 @@
 
   .caption-copy p {
     margin: 0;
-    color: #30251f;
+    color: #303030;
     font-size: 17px;
     line-height: 1.42;
     font-weight: 650;
@@ -375,10 +373,10 @@
 
   .result-panel {
     display: grid;
-    gap: 10px;
+    gap: 12px;
     padding: 14px;
     border: 1px solid rgba(26, 22, 18, 0.12);
-    border-radius: 17px;
+    border-radius: 10px;
     background: var(--hash-coral);
   }
 
@@ -405,6 +403,124 @@
     font-size: 13px;
     line-height: 1.55;
     overflow-wrap: anywhere;
+  }
+
+  .set-list {
+    display: grid;
+    gap: 9px;
+  }
+
+  .set-card {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(23, 20, 18, 0.14);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--hash-ink);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .set-card.is-selected {
+    border-color: var(--hash-red-deep);
+    box-shadow: inset 0 0 0 1px var(--hash-red-deep);
+  }
+
+  .set-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .set-card strong {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .set-card small {
+    color: var(--hash-muted);
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .set-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .set-tag {
+    display: inline-flex;
+    padding: 4px 7px;
+    border: 1px solid rgba(23, 20, 18, 0.12);
+    border-radius: 999px;
+    background: #f6f6f6;
+    color: #232323;
+    font-size: 11px;
+  }
+
+  .set-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .secondary-button {
+    min-height: 36px;
+    border: 1px solid rgba(23, 20, 18, 0.18);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--hash-ink);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+  }
+
+  .secondary-button--accent {
+    border-color: var(--hash-red-deep);
+    color: var(--hash-red-deep);
+  }
+
+  .impact-panel {
+    display: grid;
+    gap: 7px;
+    padding-top: 4px;
+  }
+
+  .impact-chart {
+    width: 100%;
+    height: 128px;
+    border: 1px solid rgba(23, 20, 18, 0.12);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .impact-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    color: var(--hash-muted);
+    font-size: 11px;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 18px;
+    height: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+    background: currentColor;
+  }
+
+  .disclaimer {
+    margin: 0;
+    color: var(--hash-muted);
+    font-size: 11px;
+    line-height: 1.4;
   }
 
   .tag-groups {
@@ -477,112 +593,13 @@
     display: none;
   }
 
-  /* ── TUNE PANEL ─────────────────────────────────────────────── */
-  .tune-panel {
-    border: 1px solid var(--hash-soft-line);
-    border-radius: 14px;
-    padding: 14px 16px;
-    background: rgba(255, 252, 248, 0.9);
-    display: grid;
-    gap: 10px;
-  }
-
-  .tune-panel[hidden] { display: none; }
-
-  .tune-steps {
-    display: grid;
-    gap: 8px;
-  }
-
-  .tune-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 13px;
-    line-height: 1.35;
-    color: var(--hash-ink);
-  }
-
-  .tune-step-icon {
-    flex: 0 0 18px;
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .tune-step.ts-pending .tune-step-icon::before { content: '⏳'; }
-  .tune-step.ts-done    .tune-step-icon::before { content: '✓'; }
-  .tune-step.ts-error   .tune-step-icon::before { content: '✕'; }
-
-  .tune-step.ts-done  { color: #2a8c4a; }
-  .tune-step.ts-error { color: #c0392b; }
-
-  .tune-diff[hidden] { display: none; }
-
-  .tune-diff {
-    display: grid;
-    gap: 8px;
-    padding-top: 10px;
-    border-top: 1px solid var(--hash-soft-line);
-  }
-
-  .tune-diff-label {
-    margin: 0;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--hash-muted);
-    text-transform: uppercase;
-    letter-spacing: .06em;
-  }
-
-  .tune-ba {
-    display: grid;
-    grid-template-columns: 1fr 18px 1fr;
-    gap: 6px 2px;
-    align-items: start;
-  }
-
-  .tune-ba-col {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .tune-ba-header {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--hash-muted);
-    margin-bottom: 2px;
-  }
-
-  .tune-ba-arrow {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 22px;
-    color: var(--hash-muted);
-    font-size: 12px;
-  }
-
-  .tune-tag {
-    display: inline-block;
-    font-size: 12px;
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: rgba(26, 22, 18, .07);
-    color: var(--hash-ink);
-    word-break: break-all;
-  }
-
-  .tune-tag.t-added   { background: rgba(42, 140, 74, .14); color: #1b6b3a; }
-  .tune-tag.t-removed { background: rgba(192, 57, 43, .09); color: #a52a1a; text-decoration: line-through; }
-
   .admin-field {
     display: grid;
     gap: 6px;
   }
 
   .admin-field span {
-    color: #322821;
+    color: #333333;
     font-size: 12px;
     font-weight: 700;
   }
@@ -645,7 +662,7 @@
     border: 1px solid var(--hash-ink);
     border-radius: 999px;
     background: var(--hash-ink);
-    color: #fffdf9;
+    color: #ffffff;
     font-family: var(--font-sans);
     font-size: 16px;
     font-weight: 750;
@@ -668,36 +685,48 @@
     justify-self: center;
   }
 
-  .tune-button {
-    min-width: 76px;
-    height: 40px;
-    border: 1px solid rgba(26, 22, 18, 0.18);
-    border-radius: 999px;
-    background: rgba(255, 253, 249, 0.92);
-    color: var(--hash-ink);
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 760;
-    cursor: pointer;
-    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
-  }
-
-  .tune-button:active {
-    transform: scale(0.97);
-    background: rgba(208, 95, 69, 0.12);
-    border-color: rgba(122, 29, 16, 0.22);
-  }
-
-  .tune-button[hidden] {
-    display: none;
-  }
-
   .status {
     min-height: 18px;
     color: var(--hash-red-deep);
     font-size: 12px;
     text-align: center;
   }
+
+  .basis-dialog {
+    width: min(330px, calc(100vw - 40px));
+    border: 1px solid rgba(23, 20, 18, 0.18);
+    border-radius: 12px;
+    padding: 0;
+    color: var(--hash-ink);
+    background: #fff;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.26);
+  }
+
+  .basis-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.44);
+  }
+
+  .basis-inner {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .basis-inner h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  .basis-inner p,
+  .basis-inner li {
+    color: #4c4c4c;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .basis-inner p { margin: 0; }
+  .basis-inner ul { margin: 0; padding-left: 18px; }
 
   .home-indicator {
     width: 128px;
@@ -761,29 +790,27 @@
         <section class="result-panel" id="resultState" hidden>
           <div class="result-head">
             <div>
-              <strong>복사할 태그</strong>
-              <span id="summary">인스타그램에 붙여넣을 태그를 골랐어요.</span>
+              <strong>해시태그 세트 선택</strong>
+              <span id="summary">마음에 드는 세트를 골라 복사하세요.</span>
             </div>
             <button class="icon-button" id="copyBtn" type="button" aria-label="전체 복사">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>
             </button>
           </div>
           <div class="copy-text" id="copyText"></div>
-          <div class="tag-groups" id="tagGroups"></div>
-          <div class="extra-panel" id="extraState" hidden>
+          <div class="set-list" id="setList"></div>
+          <div class="impact-panel">
             <div class="result-subhead">
-              <strong>바꿔볼 후보</strong>
-              <span id="extraSummary">눌러서 바로 교체돼요.</span>
+              <strong>7일 예상 파급력</strong>
+              <span id="impactSummary">선택 세트 기준</span>
             </div>
-            <div class="tag-groups" id="extraTagGroups"></div>
+            <svg class="impact-chart" id="impactChart" viewBox="0 0 320 128" role="img" aria-label="세트별 7일 예상 파급력 꺾은선 차트"></svg>
+            <div class="impact-legend" id="impactLegend"></div>
+            <p class="disclaimer" id="simulationDisclaimer">예상 파급력은 AI/규칙 기반 참고용 시뮬레이션이며 실제 인스타그램 성과와 다를 수 있습니다.</p>
           </div>
-        </section>
-
-        <section class="tune-panel" id="tunePanel" hidden aria-live="polite">
-          <div class="tune-steps" id="tuneSteps"></div>
-          <div class="tune-diff" id="tuneDiff" hidden>
-            <p class="tune-diff-label">태그 변경 내역</p>
-            <div class="tune-ba" id="tuneBaWrap"></div>
+          <div class="set-actions">
+            <button class="secondary-button secondary-button--accent" id="basisBtn" type="button">근거 보기</button>
+            <button class="secondary-button" id="retrySetsBtn" type="button">전부 마음에 들지 않음</button>
           </div>
         </section>
 
@@ -795,8 +822,7 @@
             <span id="memoCount">0자</span>
           </span>
           <div class="action-cluster">
-            <button class="tune-button" id="tuneBtn" type="button" hidden>Tune</button>
-            <button class="answer-button" id="generateBtn" type="button">Generate</button>
+            <button class="answer-button" id="generateBtn" type="button">생성하기</button>
           </div>
           <button class="info-button" id="resetBtn" type="button" aria-label="초기화">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
@@ -807,33 +833,43 @@
     </section>
   </main>
 
+  <dialog class="basis-dialog" id="basisDialog">
+    <div class="basis-inner">
+      <h2 id="basisTitle">생성 근거</h2>
+      <p id="basisSummary"></p>
+      <ul id="basisList"></ul>
+      <button class="answer-button" id="basisCloseBtn" type="button">닫기</button>
+    </div>
+  </dialog>
+
 <script type="module">
 const POST_TYPES = {
-  post_body: { label: '본문 기반', tags: ['#인스타그램', '#카페게시물', '#오늘의카페'] }
+  post_body: { label: '본문 기반', tags: ['#울산카페투어', '#울산데이트'] }
 };
 
 const GROUP_LABELS = {
   brand: 'TUZ',
   local: '지역',
-  content: '본문',
+  content: '메뉴/목적',
   discovery: '탐색'
 };
 
 const FALLBACK_CONTEXT = {
-  brandTags: ['#카페튜즈', '#TUZ', '#tuzz2026'],
-  localTags: ['#울산카페', '#반구동카페', '#울산중구카페', '#울산카페추천'],
-  baseTags: ['#카페', '#카페스타그램', '#커피', '#디저트', '#카페투어', '#일상', '#맛집추천']
+  brandTags: ['#카페튜즈', '#TUZ'],
+  localTags: ['#울산카페', '#울산중구카페', '#반구동카페'],
+  baseTags: ['#울산디저트', '#울산카페투어', '#울산데이트']
 };
 
 const SUPABASE_URL = 'https://lwgissxdvemamuybxmxz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z2lzc3hkdmVtYW11eWJ4bXh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MjMxNjgsImV4cCI6MjA5MjA5OTE2OH0.bslx3DGC2KPKleWo9KejERD10e92OeBEUoQHg2_jPOo';
 const state = {
   postType: 'post_body',
-  groups: [],
-  extraGroups: [],
+  sets: [],
+  selectedSetIndex: 0,
+  variantSeed: 0,
   context: FALLBACK_CONTEXT,
-  researchKey: '',
-  resultSummary: ''
+  resultSummary: '',
+  simulationDisclaimer: '예상 파급력은 AI/규칙 기반 참고용 시뮬레이션이며 실제 인스타그램 성과와 다를 수 있습니다.'
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -842,17 +878,23 @@ const memo = $('#memo');
 const memoCount = $('#memoCount');
 const status = $('#status');
 const generateBtn = $('#generateBtn');
-const tuneBtn = $('#tuneBtn');
 const resetBtn = $('#resetBtn');
 const resultState = $('#resultState');
 const copyText = $('#copyText');
-const tagGroups = $('#tagGroups');
-const extraState = $('#extraState');
-const extraTagGroups = $('#extraTagGroups');
-const extraSummary = $('#extraSummary');
+const setList = $('#setList');
+const impactChart = $('#impactChart');
+const impactLegend = $('#impactLegend');
+const impactSummary = $('#impactSummary');
+const simulationDisclaimer = $('#simulationDisclaimer');
+const basisBtn = $('#basisBtn');
+const retrySetsBtn = $('#retrySetsBtn');
+const basisDialog = $('#basisDialog');
+const basisTitle = $('#basisTitle');
+const basisSummary = $('#basisSummary');
+const basisList = $('#basisList');
+const basisCloseBtn = $('#basisCloseBtn');
 const summary = $('#summary');
 const copyBtn = $('#copyBtn');
-if (tuneBtn) tuneBtn.hidden = true;
 
 function normalizeTag(value) {
   const cleaned = String(value || '')
@@ -945,15 +987,6 @@ function formatCopyText(groups) {
   return groups.flatMap(group => group.tags).join(' ');
 }
 
-function buildResearchTags(memoText) {
-  return uniqTags([
-    ...keywordTags(memoText),
-    ...menuTagsFromMemo(memoText, state.context),
-    ...((state.context.localTags || []).slice(0, 2)),
-    ...((state.context.brandTags || []).slice(0, 2))
-  ]).slice(0, 12);
-}
-
 function buildFallbackTags({ memoText, context }) {
   const memoTags = keywordTags(memoText);
   const menuTags = Array.isArray(context.menuTags) ? context.menuTags.slice(0, 5) : [];
@@ -964,6 +997,15 @@ function buildFallbackTags({ memoText, context }) {
     { key: 'brand', label: 'TUZ', tags: uniqTags(context.brandTags || FALLBACK_CONTEXT.brandTags).slice(0, 5) }
   ];
   return limitGroups(dedupeGroups(groups.filter(group => group.tags.length)));
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
 async function loadCafeContext() {
@@ -992,32 +1034,14 @@ async function loadCafeContext() {
   }
 }
 
-function renderGroups(groups, extraGroups = [], reasonSummary = '') {
-  state.groups = limitGroups(dedupeGroups(groups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length)), 5);
-  state.extraGroups = limitGroups(dedupeGroups(extraGroups.map(group => ({ ...group, tags: uniqTags(group.tags) })).filter(group => group.tags.length)), 12);
-  state.resultSummary = reasonSummary || state.resultSummary;
-  const total = state.groups.flatMap(group => group.tags).length;
-  const extraTotal = state.extraGroups.flatMap(group => group.tags).length;
-  copyText.textContent = formatCopyText(state.groups);
-  tagGroups.innerHTML = state.groups.flatMap(group => group.tags).map(tag => `
-    <span class="tag-chip">${tag}<button type="button" aria-label="${tag} 제거" data-remove-tag="${tag}">×</button></span>
-  `).join('');
-  extraTagGroups.innerHTML = state.extraGroups.flatMap(group =>
-    group.tags.map(tag => `<button class="tag-chip tag-chip--alt" type="button" data-extra-tag="${tag}" data-extra-category="${group.key}" aria-label="${tag}로 교체">${tag}</button>`)
-  ).join('');
-  extraSummary.textContent = extraTotal ? `${extraTotal}개 후보를 눌러 교체할 수 있어요.` : '';
-  extraState.hidden = !extraTotal;
-  summary.textContent = state.resultSummary || `${total}개 추천`;
-  resultState.hidden = false;
-}
-
 async function requestTags() {
   const memoText = memo.value.trim();
   const payload = {
     postType: state.postType,
     memo: memoText,
     includeLocalTags: true,
-    includeBrandTags: true
+    includeBrandTags: true,
+    variantSeed: state.variantSeed
   };
 
   try {
@@ -1038,32 +1062,110 @@ async function requestTags() {
   }
 }
 
-function ensureResearchKey() {
-  const key = String(state.researchKey || '').trim();
-  if (!key) throw new Error('PIN 인증이 필요해요.');
-  return key;
+function fallbackSetFromLegacy(data) {
+  const groups = Array.isArray(data.tags) ? data.tags : [];
+  const copy = data.copyText || formatCopyText(groups);
+  return [{
+    id: 'legacy',
+    title: '추천 세트',
+    description: '본문 기준으로 생성한 기본 세트',
+    tags: copy.split(/\s+/).filter(Boolean),
+    groups,
+    copyText: copy,
+    simulation: Array.from({ length: 7 }, (_, index) => ({
+      day: index + 1,
+      impact: 120 + index * 18,
+      reach: 90 + index * 14,
+      saves: 8 + index,
+      profileVisits: 7 + index
+    })),
+    rationale: {
+      title: '추천 세트',
+      summary: data.reasonSummary || '본문과 TUZ 맥락을 기준으로 생성했습니다.',
+      evidence: ['지역 태그', '본문 키워드', '브랜드 태그'],
+      memoBasis: memo.value.trim().slice(0, 160)
+    }
+  }];
 }
 
-async function requestResearchRefresh() {
-  const response = await fetch('/api/hashtag-research', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-hashtag-research-key': ensureResearchKey()
-    },
-    body: JSON.stringify({
-      tags: buildResearchTags(memo.value.trim()),
-      includeBrandTags: true,
-      includeLocalTags: true,
-      includeMenuTags: true
-    })
-  });
-  const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      if (response.status === 401) state.researchKey = '';
-      throw new Error(data.error || '튜닝 호출에 실패했어요.');
-    }
-  return data;
+function normalizeSets(data) {
+  const sets = Array.isArray(data.sets) && data.sets.length ? data.sets : fallbackSetFromLegacy(data);
+  return sets.map((set, index) => ({
+    ...set,
+    id: set.id || `set_${index}`,
+    title: set.title || `세트 ${index + 1}`,
+    description: set.description || '',
+    tags: uniqTags(set.tags || String(set.copyText || '').split(/\s+/)),
+    copyText: set.copyText || uniqTags(set.tags || []).join(' '),
+    simulation: Array.isArray(set.simulation) ? set.simulation.slice(0, 7) : []
+  })).filter(set => set.tags.length);
+}
+
+function selectedSet() {
+  return state.sets[state.selectedSetIndex] || state.sets[0] || null;
+}
+
+function renderSetCards() {
+  setList.innerHTML = state.sets.map((set, index) => `
+    <button class="set-card${index === state.selectedSetIndex ? ' is-selected' : ''}" type="button" data-set-index="${index}" aria-pressed="${index === state.selectedSetIndex}">
+      <span class="set-card__top">
+        <strong>${escapeHtml(set.title)}</strong>
+        <small>${escapeHtml(set.description)}</small>
+      </span>
+      <span class="set-tags">
+        ${set.tags.map(tag => `<span class="set-tag">${escapeHtml(tag)}</span>`).join('')}
+      </span>
+    </button>
+  `).join('');
+}
+
+function renderImpactChart() {
+  const width = 320;
+  const height = 128;
+  const pad = 18;
+  const values = state.sets.flatMap(set => (set.simulation || []).map(point => Number(point.impact) || 0));
+  const max = Math.max(1, ...values);
+  const min = Math.min(...values, max);
+  const range = Math.max(1, max - min);
+  const colors = ['#7a1d10', '#171717', '#888888', '#4d4d4d'];
+  const grid = [0.25, 0.5, 0.75].map(ratio => {
+    const y = pad + (height - pad * 2) * ratio;
+    return `<line x1="${pad}" y1="${y}" x2="${width - pad}" y2="${y}" stroke="#e1e1e1" stroke-width="1"/>`;
+  }).join('');
+  const lines = state.sets.map((set, index) => {
+    const points = (set.simulation || []).map((point, pointIndex) => {
+      const x = pad + pointIndex * ((width - pad * 2) / 6);
+      const y = height - pad - (((Number(point.impact) || min) - min) / range) * (height - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const selected = index === state.selectedSetIndex;
+    return `<polyline points="${points}" fill="none" stroke="${colors[index % colors.length]}" stroke-width="${selected ? 3 : 2}" opacity="${selected ? 1 : 0.55}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }).join('');
+  impactChart.innerHTML = `${grid}${lines}`;
+  impactLegend.innerHTML = state.sets.map((set, index) => `
+    <span style="color:${colors[index % colors.length]}"><span class="legend-dot"></span>${escapeHtml(set.title)}</span>
+  `).join('');
+  const current = selectedSet();
+  const last = current?.simulation?.[current.simulation.length - 1];
+  impactSummary.textContent = last ? `7일차 예상 ${last.impact.toLocaleString('ko-KR')}` : '선택 세트 기준';
+}
+
+function renderSelectedSet() {
+  const current = selectedSet();
+  copyText.textContent = current?.copyText || '';
+  renderSetCards();
+  renderImpactChart();
+  summary.textContent = state.resultSummary || `${state.sets.length}개 세트 제공`;
+  resultState.hidden = !state.sets.length;
+}
+
+function renderResult(data) {
+  state.sets = normalizeSets(data);
+  state.selectedSetIndex = 0;
+  state.resultSummary = data.reasonSummary || '';
+  state.simulationDisclaimer = data.simulationDisclaimer || state.simulationDisclaimer;
+  simulationDisclaimer.textContent = state.simulationDisclaimer;
+  renderSelectedSet();
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -1136,8 +1238,6 @@ async function validatePgPin() {
     const buf   = await crypto.subtle.digest('SHA-256', bytes);
     const hash  = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     if (hash === PIN_GATE_HASH) {
-      state.researchKey = pgValue;
-      if (tuneBtn) tuneBtn.hidden = false;
       pgEl.hidden = true;
       memo.focus({ preventScroll: true });
     } else {
@@ -1196,8 +1296,8 @@ generateBtn.addEventListener('click', async () => {
   generateBtn.disabled = true;
   try {
     const result = await requestTags();
-    renderGroups(result.tags, result.extraTags || [], result.reasonSummary);
-    status.textContent = '복사해서 인스타그램에 붙여넣어 주세요.';
+    renderResult(result);
+    status.textContent = '세트를 선택한 뒤 복사해서 인스타그램에 붙여넣어 주세요.';
   } catch (err) {
     status.textContent = err?.message || '해시태그 데이터 연결이 필요해요. 잠시 후 다시 눌러주세요.';
   } finally {
@@ -1205,166 +1305,70 @@ generateBtn.addEventListener('click', async () => {
   }
 });
 
-const tunePanelEl = document.getElementById('tunePanel');
-const tuneStepsEl = document.getElementById('tuneSteps');
-const tuneDiffEl  = document.getElementById('tuneDiff');
-const tuneBaWrap  = document.getElementById('tuneBaWrap');
-
-function setTuneStep(id, state, text) {
-  let el = tuneStepsEl.querySelector(`[data-step="${id}"]`);
-  if (!el) {
-    el = document.createElement('div');
-    el.className = 'tune-step';
-    el.dataset.step = id;
-    el.innerHTML = '<span class="tune-step-icon" aria-hidden="true"></span><span></span>';
-    tuneStepsEl.appendChild(el);
-  }
-  el.className = `tune-step ts-${state}`;
-  el.querySelector('span:last-child').textContent = text;
-}
-
-function renderTuneDiff(beforeTags, afterTags) {
-  const bSet = new Set(beforeTags);
-  const aSet = new Set(afterTags);
-  const hasChange = afterTags.some(t => !bSet.has(t)) || beforeTags.some(t => !aSet.has(t));
-  if (!hasChange) { tuneDiffEl.hidden = true; return; }
-
-  const beforeItems = beforeTags.map(t => ({ tag: t, cls: aSet.has(t) ? '' : 't-removed' }));
-  const afterItems  = afterTags.map(t  => ({ tag: t, cls: bSet.has(t) ? '' : 't-added'   }));
-
-  const mkCol = (header, items) => {
-    const col = document.createElement('div');
-    col.className = 'tune-ba-col';
-    col.innerHTML = `<span class="tune-ba-header">${header}</span>` +
-      items.map(({ tag, cls }) => `<span class="tune-tag ${cls}">${tag}</span>`).join('');
-    return col;
-  };
-
-  tuneBaWrap.innerHTML = '';
-  tuneBaWrap.appendChild(mkCol('Before', beforeItems));
-  const arrow = document.createElement('div');
-  arrow.className = 'tune-ba-arrow';
-  arrow.textContent = '→';
-  tuneBaWrap.appendChild(arrow);
-  tuneBaWrap.appendChild(mkCol('After', afterItems));
-  tuneDiffEl.hidden = false;
-}
-
-if (tuneBtn) {
-  tuneBtn.addEventListener('click', async () => {
-    const beforeTags = state.groups.flatMap(g => g.tags);
-    tunePanelEl.hidden = false;
-    tuneDiffEl.hidden  = true;
-    tuneStepsEl.innerHTML = '';
-    status.textContent = '';
-    tuneBtn.disabled = true;
-    generateBtn.disabled = true;
-
-    setTuneStep('collect', 'pending', 'Instagram 게시글 수 수집 중...');
-    try {
-      const refreshResult = await requestResearchRefresh();
-      const count = refreshResult?.refreshedCount ?? '?';
-      setTuneStep('collect', 'done', `데이터 수집 완료 — ${count}개 태그 갱신`);
-
-      if (memo.value.trim()) {
-        setTuneStep('regen', 'pending', '추천 태그 재계산 중...');
-        const result = await requestTags();
-        renderGroups(result.tags, result.extraTags || [], `${result.reasonSummary} 리서치 캐시도 갱신했어요.`);
-        setTuneStep('regen', 'done', '추천 태그 재구성 완료');
-        renderTuneDiff(beforeTags, state.groups.flatMap(g => g.tags));
-        status.textContent = '튜닝 완료';
-      } else {
-        status.textContent = '리서치 캐시를 갱신했어요. 이제 본문을 넣고 Generate를 눌러 주세요.';
-      }
-    } catch (err) {
-      setTuneStep('error', 'error', err?.message || '튜닝 중 오류가 발생했습니다.');
-    } finally {
-      tuneBtn.disabled = false;
-      generateBtn.disabled = false;
-    }
-  });
-}
-
 resetBtn.addEventListener('click', () => {
-  state.groups = [];
-  state.extraGroups = [];
+  state.sets = [];
+  state.selectedSetIndex = 0;
+  state.variantSeed = 0;
   state.resultSummary = '';
   memo.value = '';
   memoCount.textContent = '0자';
   status.textContent = '';
-  tagGroups.innerHTML = '';
-  extraTagGroups.innerHTML = '';
+  setList.innerHTML = '';
+  impactChart.innerHTML = '';
+  impactLegend.innerHTML = '';
   copyText.textContent = '';
-  extraState.hidden = true;
   resultState.hidden = true;
-  if (tunePanelEl) tunePanelEl.hidden = true;
   memo.focus();
 });
 
-tagGroups.addEventListener('click', (event) => {
-  const remove = event.target.closest('[data-remove-tag]');
-  if (!remove) return;
-  const tag = remove.dataset.removeTag;
-  const nextGroups = state.groups.map(group => ({
-    ...group,
-    tags: group.tags.filter(item => item !== tag)
-  })).filter(group => group.tags.length);
-  renderGroups(nextGroups, state.extraGroups);
+setList.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-set-index]');
+  if (!button) return;
+  state.selectedSetIndex = Number(button.dataset.setIndex) || 0;
+  renderSelectedSet();
+  status.textContent = `${selectedSet()?.title || '선택한 세트'}를 선택했어요.`;
 });
 
-function cloneGroups(groups) {
-  return groups.map(group => ({ ...group, tags: [...group.tags] }));
-}
+basisBtn.addEventListener('click', () => {
+  const current = selectedSet();
+  if (!current) return;
+  const rationale = current.rationale || {};
+  basisTitle.textContent = rationale.title || current.title || '생성 근거';
+  basisSummary.textContent = rationale.summary || '본문과 TUZ 맥락을 기준으로 생성했습니다.';
+  basisList.innerHTML = (rationale.evidence || []).map(item => `<li>${escapeHtml(item)}</li>`).join('');
+  if (typeof basisDialog.showModal === 'function') basisDialog.showModal();
+  else basisDialog.setAttribute('open', '');
+});
 
-function addTagToGroup(groups, key, tag) {
-  const group = groups.find(item => item.key === key);
-  if (group) {
-    group.tags = uniqTags([tag, ...group.tags]);
+basisCloseBtn.addEventListener('click', () => {
+  if (typeof basisDialog.close === 'function') basisDialog.close();
+  else basisDialog.removeAttribute('open');
+});
+
+retrySetsBtn.addEventListener('click', async () => {
+  if (!memo.value.trim()) {
+    status.textContent = '본문을 먼저 입력해 주세요.';
+    memo.focus();
     return;
   }
-  groups.push({ key, label: GROUP_LABELS[key] || key, tags: [tag] });
-}
-
-extraTagGroups.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-extra-tag]');
-  if (!button) return;
-  const incomingTag = button.dataset.extraTag;
-  const incomingCategory = button.dataset.extraCategory;
-  const nextGroups = cloneGroups(state.groups);
-  const nextExtraGroups = cloneGroups(state.extraGroups);
-  const selectedGroup = nextGroups.find(group => group.key === incomingCategory && group.tags.length);
-  let outgoingTag = '';
-  let outgoingCategory = '';
-
-  if (selectedGroup) {
-    outgoingCategory = selectedGroup.key;
-    outgoingTag = selectedGroup.tags[selectedGroup.tags.length - 1];
-    selectedGroup.tags[selectedGroup.tags.length - 1] = incomingTag;
-  } else {
-    const fallbackGroup = nextGroups[nextGroups.length - 1];
-    if (fallbackGroup?.tags?.length) {
-      outgoingCategory = fallbackGroup.key;
-      outgoingTag = fallbackGroup.tags.pop();
-      if (!fallbackGroup.tags.length) {
-        nextGroups.splice(nextGroups.indexOf(fallbackGroup), 1);
-      }
-    }
-    addTagToGroup(nextGroups, incomingCategory, incomingTag);
+  state.variantSeed += 1;
+  status.textContent = '새 조합으로 다시 조정 중입니다.';
+  retrySetsBtn.disabled = true;
+  generateBtn.disabled = true;
+  try {
+    const result = await requestTags();
+    renderResult(result);
+    status.textContent = '새 세트를 준비했어요.';
+  } catch (err) {
+    status.textContent = err?.message || '새 세트 생성에 실패했어요.';
+  } finally {
+    retrySetsBtn.disabled = false;
+    generateBtn.disabled = false;
   }
-
-  for (const group of nextExtraGroups) {
-    group.tags = group.tags.filter(tag => tag !== incomingTag);
-  }
-  if (outgoingTag) {
-    addTagToGroup(nextExtraGroups, outgoingCategory || incomingCategory, outgoingTag);
-  }
-
-  renderGroups(nextGroups, nextExtraGroups);
-  status.textContent = `${incomingTag}로 바꿨어요.`;
 });
 
 copyBtn.addEventListener('click', async () => {
-  const text = formatCopyText(state.groups);
+  const text = selectedSet()?.copyText || '';
   if (!text) return;
   try {
     await navigator.clipboard.writeText(text);
