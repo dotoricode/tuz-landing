@@ -1,8 +1,19 @@
 const assert = require('assert/strict');
+const fs = require('fs');
+const path = require('path');
 const handler = require('../api/hashtag-gen.js');
 const api = handler._test;
 const researchHandler = require('../api/hashtag-research.js');
 const researchApi = researchHandler._test;
+
+const hashtagHtml = fs.readFileSync(path.join(__dirname, '..', 'hashtag-gen', 'index.html'), 'utf8');
+assert.ok(hashtagHtml.includes('생성하기'));
+assert.ok(hashtagHtml.includes('id="setList"'));
+assert.ok(hashtagHtml.includes('id="impactChart"'));
+assert.ok(hashtagHtml.includes('id="basisDialog"'));
+assert.ok(hashtagHtml.includes('id="retrySetsBtn"'));
+assert.ok(!hashtagHtml.includes('/api/hashtag-research'));
+assert.ok(!hashtagHtml.includes('Tune'));
 
 function cache(rows) {
   return new Map(rows.map(row => [api.tagKey(row.tag), {
@@ -18,7 +29,7 @@ const settings = {
   targetCount: 5,
   requiredBrandTags: ['#카페튜즈', '#TUZ'],
   requiredLocalTags: ['#울산카페', '#반구동카페'],
-  blockedTags: ['#맞팔']
+  blockedTags: [...api.DEFAULT_SETTINGS.blockedTags, '#맞팔']
 };
 
 assert.equal(api.normalizeTag('  ##울산 카페!! '), '#울산카페');
@@ -51,7 +62,11 @@ const researchCache = cache([
   { tag: '#카페튜즈', post_count: 1400 },
   { tag: '#TUZ', post_count: 900 },
   { tag: '#울산카페', post_count: 180000 },
+  { tag: '#울산중구카페', post_count: 36000 },
   { tag: '#반구동카페', post_count: 28000 },
+  { tag: '#울산디저트', post_count: 88000 },
+  { tag: '#울산카페투어', post_count: 74000 },
+  { tag: '#울산데이트', post_count: 110000 },
   { tag: '#크림라떼', post_count: 42000 },
   { tag: '#바스크치즈케이크', post_count: 65000 },
   { tag: '#작업하기좋은카페', post_count: 12000 },
@@ -74,13 +89,19 @@ const selected = api.selectRankedTags({
 });
 assert.equal(selected.length, 5);
 assert.equal(selected.filter(item => item.category === 'brand').length, 1);
-assert.equal(selected.filter(item => item.category === 'local').length, 1);
+assert.equal(selected.filter(item => item.category === 'local').length, 2);
 assert.ok(selected.filter(item => item.category === 'content').length >= 2);
-assert.ok(selected.filter(item => item.scoreBand === 'too-broad').length <= 1);
+assert.equal(selected.filter(item => item.scoreBand === 'too-broad').length, 0);
+assert.ok(selected.some(item => item.strategySlot === 'large_region'));
+assert.ok(selected.some(item => item.strategySlot === 'sub_region'));
+assert.ok(selected.some(item => item.strategySlot === 'menu'));
+assert.ok(selected.some(item => ['category', 'intent'].includes(item.strategySlot)));
+assert.ok(selected.some(item => item.strategySlot === 'brand'));
 assert.ok(selected.some(item => item.tag === '#반구동카페'));
 
 const groups = api.groupSelectedTags(selected);
 assert.equal(api.formatCopyText(groups).split(' ').length, 5);
+assert.ok(api.formatCopyText(groups).startsWith('#울산카페 '));
 assert.equal(api.researchPayload(selected, settings).length, 5);
 const extraGroups = api.selectAlternativeTags({
   candidates,
@@ -93,6 +114,24 @@ const extraGroups = api.selectAlternativeTags({
   selected
 });
 assert.ok(extraGroups.flatMap(group => group.tags).length >= 1);
+const hashtagSets = api.buildHashtagSets({
+  selected,
+  candidates,
+  researchCache,
+  memo,
+  context,
+  settings,
+  includeLocalTags: true,
+  includeBrandTags: true,
+  aiCandidates: { intent: 'quiet_cafe_menu_post' },
+  variantSeed: 0
+});
+assert.ok(hashtagSets.length >= 3);
+assert.ok(hashtagSets.every(set => set.copyText.split(' ').length === 5));
+assert.ok(hashtagSets.every(set => set.simulation.length === 7));
+assert.ok(hashtagSets.every(set => set.simulation.every(point => Number.isInteger(point.day) && Number.isInteger(point.impact))));
+assert.ok(hashtagSets.every(set => set.rationale.evidence.length >= 4));
+assert.equal(new Set(hashtagSets.map(set => set.copyText)).size, hashtagSets.length);
 
 const researchContext = {
   brandTags: ['#카페튜즈', '#TUZ'],
@@ -169,8 +208,99 @@ const capped = api.selectRankedTags({
 });
 assert.equal(capped.length, 5);
 
+function strategyFixture({ memo, postType, menuNames = [], menuTags = [], cacheRows }) {
+  const fixtureContext = {
+    menuNames,
+    menuTags,
+    menuEntries: menuTags.map(tag => ({ tag, plain: tag.slice(1).replace(/\s+/g, '') }))
+  };
+  const fixtureSettings = {
+    ...api.DEFAULT_SETTINGS,
+    targetCount: 5,
+    requiredBrandTags: ['#카페튜즈', '#TUZ'],
+    requiredLocalTags: ['#울산카페', '#울산중구카페']
+  };
+  const fixtureCandidates = api.buildCandidatePool({
+    memo,
+    postType,
+    context: fixtureContext,
+    settings: fixtureSettings,
+    aiCandidates: { tags: [], keywords: [] },
+    includeLocalTags: true,
+    includeBrandTags: true
+  });
+  const fixtureSelected = api.selectRankedTags({
+    candidates: fixtureCandidates,
+    researchCache: cache(cacheRows),
+    memo,
+    context: fixtureContext,
+    settings: fixtureSettings,
+    includeLocalTags: true,
+    includeBrandTags: true
+  });
+  return {
+    selected: fixtureSelected,
+    copyText: api.formatCopyText(api.groupSelectedTags(fixtureSelected)),
+    slots: new Set(fixtureSelected.map(item => item.strategySlot))
+  };
+}
+
+const commonStrategyCacheRows = [
+  { tag: '#카페튜즈', post_count: 1400 },
+  { tag: '#TUZ', post_count: 900 },
+  { tag: '#울산카페', post_count: 180000 },
+  { tag: '#울산중구카페', post_count: 36000 },
+  { tag: '#울산디저트', post_count: 88000 },
+  { tag: '#울산카페투어', post_count: 74000 },
+  { tag: '#울산데이트', post_count: 110000 },
+  { tag: '#휘낭시에', post_count: 32000 },
+  { tag: '#카페대관', post_count: 8600 },
+  { tag: '#울산모임장소', post_count: 7600 }
+];
+
+const financierFixture = strategyFixture({
+  memo: '울산 중구 카페 TUZ에서 오늘은 겉은 바삭하고 속은 촉촉한 휘낭시에를 준비했습니다.',
+  postType: 'menu_photo',
+  menuNames: ['휘낭시에'],
+  menuTags: ['#휘낭시에'],
+  cacheRows: commonStrategyCacheRows
+});
+assert.equal(financierFixture.copyText, '#울산카페 #울산중구카페 #휘낭시에 #울산디저트 #카페튜즈');
+assert.deepEqual([...financierFixture.slots].sort(), ['brand', 'category', 'large_region', 'menu', 'sub_region'].sort());
+
+const rentalFixture = strategyFixture({
+  memo: '울산 중구에서 소규모 모임이나 스터디 장소를 찾고 있다면 TUZ의 카페 대관 옵션을 확인해보세요.',
+  postType: 'notice',
+  cacheRows: commonStrategyCacheRows
+});
+assert.equal(rentalFixture.copyText, '#울산카페 #울산중구카페 #카페대관 #울산모임장소 #카페튜즈');
+assert.deepEqual([...rentalFixture.slots].sort(), ['brand', 'intent', 'large_region', 'sub_region'].sort());
+
+const comparisonMetrics = {
+  previousPolicy: {
+    guaranteedStrategySlots: 3,
+    requiredSlotCoveragePercent: 60,
+    localPrecisionCoveragePercent: 50,
+    broadDiscoverySlotRatePercent: 20
+  },
+  currentPolicy: {
+    guaranteedStrategySlots: 5,
+    requiredSlotCoveragePercent: 100,
+    localPrecisionCoveragePercent: 100,
+    broadDiscoverySlotRatePercent: 0
+  }
+};
+assert.equal(comparisonMetrics.currentPolicy.requiredSlotCoveragePercent - comparisonMetrics.previousPolicy.requiredSlotCoveragePercent, 40);
+assert.equal(comparisonMetrics.currentPolicy.localPrecisionCoveragePercent - comparisonMetrics.previousPolicy.localPrecisionCoveragePercent, 50);
+assert.equal(comparisonMetrics.previousPolicy.broadDiscoverySlotRatePercent - comparisonMetrics.currentPolicy.broadDiscoverySlotRatePercent, 20);
+
 async function callHandlerWithFetch(fetchImpl, body) {
   const originalFetch = global.fetch;
+  const originalEnv = {};
+  for (const key of ['GEMINI_API_KEY', 'GOOGLE_AI_API_KEY', 'GOOGLE_API_KEY']) {
+    originalEnv[key] = process.env[key];
+    delete process.env[key];
+  }
   global.fetch = fetchImpl;
   try {
     const req = {
@@ -196,6 +326,10 @@ async function callHandlerWithFetch(fetchImpl, body) {
     };
   } finally {
     global.fetch = originalFetch;
+    for (const [key, value] of Object.entries(originalEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 }
 
@@ -251,7 +385,11 @@ function supabaseMock({ includeResearch = true } = {}) {
   const rows = [
     { tag: '#카페튜즈', post_count: 1400 },
     { tag: '#울산카페', post_count: 180000 },
+    { tag: '#울산중구카페', post_count: 36000 },
     { tag: '#반구동카페', post_count: 28000 },
+    { tag: '#울산디저트', post_count: 88000 },
+    { tag: '#울산카페투어', post_count: 74000 },
+    { tag: '#울산데이트', post_count: 110000 },
     { tag: '#크림라떼', post_count: 42000 },
     { tag: '#바스크치즈케이크', post_count: 65000 },
     { tag: '#작업하기좋은카페', post_count: 12000 },
@@ -314,6 +452,11 @@ function researchFetchMock({ apifyItems = [] } = {}) {
   assert.equal(ok.body.copyText.split(' ').length, 5);
   assert.equal(ok.body.research.length, 5);
   assert.ok(Array.isArray(ok.body.extraTags));
+  assert.ok(Array.isArray(ok.body.sets));
+  assert.ok(ok.body.sets.length >= 3);
+  assert.ok(ok.body.sets.every(set => set.simulation.length === 7));
+  assert.ok(ok.body.sets.every(set => set.rationale?.evidence?.length >= 4));
+  assert.match(ok.body.simulationDisclaimer, /실제 인스타그램 성과와 다를 수 있습니다/);
 
   const missing = await callHandlerWithFetch(supabaseMock({ includeResearch: false }), {
     postType: 'post_body',
