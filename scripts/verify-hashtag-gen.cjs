@@ -458,14 +458,15 @@ function researchFetchMock({ apifyItems = [] } = {}) {
   assert.ok(ok.body.sets.every(set => set.rationale?.evidence?.length >= 4));
   assert.match(ok.body.simulationDisclaimer, /실제 인스타그램 성과와 다를 수 있습니다/);
 
-  const missing = await callHandlerWithFetch(supabaseMock({ includeResearch: false }), {
+  const fallback = await callHandlerWithFetch(supabaseMock({ includeResearch: false }), {
     postType: 'post_body',
     memo,
     includeLocalTags: true,
     includeBrandTags: true
   });
-  assert.equal(missing.statusCode, 503);
-  assert.equal(missing.body.code, 'HASHTAG_RESEARCH_REQUIRED');
+  assert.equal(fallback.statusCode, 200);
+  assert.ok(fallback.body.sets.length >= 3);
+  assert.ok(fallback.body.research.some(item => item.qualityFlags.includes('estimated_strategy_fallback')));
 
   const noAdminKey = await callResearchHandlerWithFetch(researchFetchMock(), {
     tags: ['#울산라떼'],

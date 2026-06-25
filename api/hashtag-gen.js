@@ -435,6 +435,39 @@ async function loadResearchCache(tags) {
   return new Map((rows || []).map(row => [tagKey(row.tag), row]));
 }
 
+function estimatedPostCountForSlot(slot) {
+  const estimates = {
+    large_region: 180000,
+    sub_region: 36000,
+    menu: 32000,
+    category: 88000,
+    intent: 42000,
+    brand: 1400,
+    content: 28000,
+    discovery: 120000
+  };
+  return estimates[slot] || 25000;
+}
+
+function withEstimatedResearchCoverage(candidates, researchCache) {
+  const covered = new Map(researchCache);
+  for (const item of candidates) {
+    const key = tagKey(item.tag);
+    if (covered.has(key)) continue;
+    covered.set(key, {
+      tag: item.tag,
+      post_count: estimatedPostCountForSlot(item.strategySlot),
+      sampled_at: new Date().toISOString(),
+      source: 'strategy_estimate',
+      related_terms: [],
+      quality_flags: ['estimated_strategy_fallback'],
+      sample_size: 0,
+      engagement_score: null
+    });
+  }
+  return covered;
+}
+
 function competitionScore(postCount, settings) {
   if (!Number.isFinite(postCount)) return 0;
   if (postCount < settings.minPostCount) return 8;
@@ -845,7 +878,10 @@ async function handler(req, res) {
       includeLocalTags,
       includeBrandTags
     });
-    const researchCache = await loadResearchCache(candidates.map(item => item.tag));
+    const researchCache = withEstimatedResearchCoverage(
+      candidates,
+      await loadResearchCache(candidates.map(item => item.tag))
+    );
     const selected = selectRankedTags({
       candidates,
       researchCache,
@@ -927,6 +963,7 @@ module.exports._test = {
   rankCandidates,
   selectRankedTags,
   selectAlternativeTags,
+  withEstimatedResearchCoverage,
   buildHashtagSets,
   groupSelectedTags,
   groupAlternativeTags,
