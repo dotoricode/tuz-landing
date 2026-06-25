@@ -18,7 +18,7 @@ const settings = {
   targetCount: 5,
   requiredBrandTags: ['#카페튜즈', '#TUZ'],
   requiredLocalTags: ['#울산카페', '#반구동카페'],
-  blockedTags: ['#맞팔']
+  blockedTags: [...api.DEFAULT_SETTINGS.blockedTags, '#맞팔']
 };
 
 assert.equal(api.normalizeTag('  ##울산 카페!! '), '#울산카페');
@@ -51,7 +51,11 @@ const researchCache = cache([
   { tag: '#카페튜즈', post_count: 1400 },
   { tag: '#TUZ', post_count: 900 },
   { tag: '#울산카페', post_count: 180000 },
+  { tag: '#울산중구카페', post_count: 36000 },
   { tag: '#반구동카페', post_count: 28000 },
+  { tag: '#울산디저트', post_count: 88000 },
+  { tag: '#울산카페투어', post_count: 74000 },
+  { tag: '#울산데이트', post_count: 110000 },
   { tag: '#크림라떼', post_count: 42000 },
   { tag: '#바스크치즈케이크', post_count: 65000 },
   { tag: '#작업하기좋은카페', post_count: 12000 },
@@ -74,13 +78,19 @@ const selected = api.selectRankedTags({
 });
 assert.equal(selected.length, 5);
 assert.equal(selected.filter(item => item.category === 'brand').length, 1);
-assert.equal(selected.filter(item => item.category === 'local').length, 1);
+assert.equal(selected.filter(item => item.category === 'local').length, 2);
 assert.ok(selected.filter(item => item.category === 'content').length >= 2);
-assert.ok(selected.filter(item => item.scoreBand === 'too-broad').length <= 1);
+assert.equal(selected.filter(item => item.scoreBand === 'too-broad').length, 0);
+assert.ok(selected.some(item => item.strategySlot === 'large_region'));
+assert.ok(selected.some(item => item.strategySlot === 'sub_region'));
+assert.ok(selected.some(item => item.strategySlot === 'menu'));
+assert.ok(selected.some(item => ['category', 'intent'].includes(item.strategySlot)));
+assert.ok(selected.some(item => item.strategySlot === 'brand'));
 assert.ok(selected.some(item => item.tag === '#반구동카페'));
 
 const groups = api.groupSelectedTags(selected);
 assert.equal(api.formatCopyText(groups).split(' ').length, 5);
+assert.ok(api.formatCopyText(groups).startsWith('#울산카페 '));
 assert.equal(api.researchPayload(selected, settings).length, 5);
 const extraGroups = api.selectAlternativeTags({
   candidates,
@@ -169,6 +179,92 @@ const capped = api.selectRankedTags({
 });
 assert.equal(capped.length, 5);
 
+function strategyFixture({ memo, postType, menuNames = [], menuTags = [], cacheRows }) {
+  const fixtureContext = {
+    menuNames,
+    menuTags,
+    menuEntries: menuTags.map(tag => ({ tag, plain: tag.slice(1).replace(/\s+/g, '') }))
+  };
+  const fixtureSettings = {
+    ...api.DEFAULT_SETTINGS,
+    targetCount: 5,
+    requiredBrandTags: ['#카페튜즈', '#TUZ'],
+    requiredLocalTags: ['#울산카페', '#울산중구카페']
+  };
+  const fixtureCandidates = api.buildCandidatePool({
+    memo,
+    postType,
+    context: fixtureContext,
+    settings: fixtureSettings,
+    aiCandidates: { tags: [], keywords: [] },
+    includeLocalTags: true,
+    includeBrandTags: true
+  });
+  const fixtureSelected = api.selectRankedTags({
+    candidates: fixtureCandidates,
+    researchCache: cache(cacheRows),
+    memo,
+    context: fixtureContext,
+    settings: fixtureSettings,
+    includeLocalTags: true,
+    includeBrandTags: true
+  });
+  return {
+    selected: fixtureSelected,
+    copyText: api.formatCopyText(api.groupSelectedTags(fixtureSelected)),
+    slots: new Set(fixtureSelected.map(item => item.strategySlot))
+  };
+}
+
+const commonStrategyCacheRows = [
+  { tag: '#카페튜즈', post_count: 1400 },
+  { tag: '#TUZ', post_count: 900 },
+  { tag: '#울산카페', post_count: 180000 },
+  { tag: '#울산중구카페', post_count: 36000 },
+  { tag: '#울산디저트', post_count: 88000 },
+  { tag: '#울산카페투어', post_count: 74000 },
+  { tag: '#울산데이트', post_count: 110000 },
+  { tag: '#휘낭시에', post_count: 32000 },
+  { tag: '#카페대관', post_count: 8600 },
+  { tag: '#울산모임장소', post_count: 7600 }
+];
+
+const financierFixture = strategyFixture({
+  memo: '울산 중구 카페 TUZ에서 오늘은 겉은 바삭하고 속은 촉촉한 휘낭시에를 준비했습니다.',
+  postType: 'menu_photo',
+  menuNames: ['휘낭시에'],
+  menuTags: ['#휘낭시에'],
+  cacheRows: commonStrategyCacheRows
+});
+assert.equal(financierFixture.copyText, '#울산카페 #울산중구카페 #휘낭시에 #울산디저트 #카페튜즈');
+assert.deepEqual([...financierFixture.slots].sort(), ['brand', 'category', 'large_region', 'menu', 'sub_region'].sort());
+
+const rentalFixture = strategyFixture({
+  memo: '울산 중구에서 소규모 모임이나 스터디 장소를 찾고 있다면 TUZ의 카페 대관 옵션을 확인해보세요.',
+  postType: 'notice',
+  cacheRows: commonStrategyCacheRows
+});
+assert.equal(rentalFixture.copyText, '#울산카페 #울산중구카페 #카페대관 #울산모임장소 #카페튜즈');
+assert.deepEqual([...rentalFixture.slots].sort(), ['brand', 'intent', 'large_region', 'sub_region'].sort());
+
+const comparisonMetrics = {
+  previousPolicy: {
+    guaranteedStrategySlots: 3,
+    requiredSlotCoveragePercent: 60,
+    localPrecisionCoveragePercent: 50,
+    broadDiscoverySlotRatePercent: 20
+  },
+  currentPolicy: {
+    guaranteedStrategySlots: 5,
+    requiredSlotCoveragePercent: 100,
+    localPrecisionCoveragePercent: 100,
+    broadDiscoverySlotRatePercent: 0
+  }
+};
+assert.equal(comparisonMetrics.currentPolicy.requiredSlotCoveragePercent - comparisonMetrics.previousPolicy.requiredSlotCoveragePercent, 40);
+assert.equal(comparisonMetrics.currentPolicy.localPrecisionCoveragePercent - comparisonMetrics.previousPolicy.localPrecisionCoveragePercent, 50);
+assert.equal(comparisonMetrics.previousPolicy.broadDiscoverySlotRatePercent - comparisonMetrics.currentPolicy.broadDiscoverySlotRatePercent, 20);
+
 async function callHandlerWithFetch(fetchImpl, body) {
   const originalFetch = global.fetch;
   global.fetch = fetchImpl;
@@ -251,7 +347,11 @@ function supabaseMock({ includeResearch = true } = {}) {
   const rows = [
     { tag: '#카페튜즈', post_count: 1400 },
     { tag: '#울산카페', post_count: 180000 },
+    { tag: '#울산중구카페', post_count: 36000 },
     { tag: '#반구동카페', post_count: 28000 },
+    { tag: '#울산디저트', post_count: 88000 },
+    { tag: '#울산카페투어', post_count: 74000 },
+    { tag: '#울산데이트', post_count: 110000 },
     { tag: '#크림라떼', post_count: 42000 },
     { tag: '#바스크치즈케이크', post_count: 65000 },
     { tag: '#작업하기좋은카페', post_count: 12000 },

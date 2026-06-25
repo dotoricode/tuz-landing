@@ -6,7 +6,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const MAX_MEMO_CHARS = 500;
 const MAX_BODY_BYTES = 5000;
-const CRITERIA_VERSION = 'hashtag-ranking-2026-06-24';
+const CRITERIA_VERSION = 'cafe-hashtag-strategy-2026-06-25';
 
 const ALLOWED_ORIGINS = [
   /^https:\/\/(www\.)?tuz\.kr$/,
@@ -16,20 +16,26 @@ const ALLOWED_ORIGINS = [
 ];
 
 const POST_TYPES = {
-  post_body: { label: '본문 기반', tags: ['#카페게시물', '#오늘의카페'] },
-  new_menu: { label: '신메뉴', tags: ['#신메뉴', '#카페신메뉴', '#신메뉴출시'] },
-  today_pick: { label: '오늘의 추천', tags: ['#오늘의추천', '#카페추천'] },
-  notice: { label: '이벤트/공지', tags: ['#카페이벤트', '#카페공지', '#이벤트'] },
-  mood: { label: '매장 분위기', tags: ['#카페분위기', '#조용한카페', '#감성카페'] },
-  menu_photo: { label: '메뉴 사진', tags: ['#카페메뉴', '#디저트사진', '#커피사진'] },
-  drink_dessert: { label: '디저트/음료', tags: ['#디저트카페', '#커피스타그램', '#음료추천'] }
+  post_body: { label: '본문 기반', tags: ['#울산카페투어', '#울산데이트'] },
+  new_menu: { label: '신메뉴', tags: ['#신메뉴', '#울산디저트'] },
+  today_pick: { label: '오늘의 추천', tags: ['#울산디저트', '#울산카페투어'] },
+  notice: { label: '이벤트/공지', tags: ['#카페이벤트', '#울산카페투어'] },
+  mood: { label: '매장 분위기', tags: ['#울산카페투어', '#울산데이트'] },
+  menu_photo: { label: '메뉴 사진', tags: ['#울산디저트'] },
+  drink_dessert: { label: '디저트/음료', tags: ['#울산디저트'] }
 };
 
-const TUZ_BRAND_TAGS = ['#카페튜즈', '#TUZ', '#tuzz2026'];
-const TUZ_LOCAL_TAGS = ['#울산카페', '#반구동카페', '#울산중구카페'];
-const TUZ_LOCAL_CONTEXT_TAGS = [...TUZ_LOCAL_TAGS, '#울산카페추천'];
+const TUZ_BRAND_TAGS = ['#카페튜즈', '#TUZ'];
+const TUZ_LOCAL_TAGS = ['#울산카페', '#울산중구카페', '#반구동카페'];
+const TUZ_LOCAL_CONTEXT_TAGS = [...TUZ_LOCAL_TAGS];
 const LEGACY_BRAND_TAGS = ['#tuzz2026', '#투즈', '#TUZ'];
 const LEGACY_LOCAL_TAGS = ['#울산카페', '#성남동카페', '#울산중구카페'];
+const STRATEGY_LARGE_REGION_TAGS = ['#울산카페'];
+const STRATEGY_SUB_REGION_TAGS = ['#울산중구카페', '#반구동카페', '#성안동카페', '#달동카페'];
+const STRATEGY_MENU_TAGS = ['#휘낭시에', '#쑥라떼', '#스콘맛집', '#에그타르트', '#르뱅쿠키'];
+const STRATEGY_CATEGORY_TAGS = ['#울산디저트', '#디저트카페', '#신메뉴'];
+const STRATEGY_INTENT_TAGS = ['#울산데이트', '#울산카페투어', '#울산혼카페', '#울산모임장소', '#카페대관', '#비오는날카페', '#작업하기좋은카페'];
+const STRATEGY_AVOID_TAGS = ['#카페', '#맛집', '#일상', '#데일리', '#좋아요', '#좋아요반사', '#선팔', '#맞팔', '#소통', '#인친', '#팔로우', '#followforfollow', '#likeforlikes'];
 
 const DEFAULT_SETTINGS = {
   targetCount: 5,
@@ -37,7 +43,7 @@ const DEFAULT_SETTINGS = {
   maxPostCount: 500000,
   broadPostCount: 500000,
   staleAfterDays: 14,
-  blockedTags: ['#맞팔', '#선팔', '#좋아요반사', '#팔로우', '#followforfollow', '#likeforlikes'],
+  blockedTags: STRATEGY_AVOID_TAGS,
   requiredBrandTags: TUZ_BRAND_TAGS,
   requiredLocalTags: TUZ_LOCAL_TAGS,
   criteriaVersion: CRITERIA_VERSION
@@ -46,7 +52,7 @@ const DEFAULT_SETTINGS = {
 const DEFAULT_CONTEXT = {
   brandTags: TUZ_BRAND_TAGS,
   localTags: TUZ_LOCAL_CONTEXT_TAGS,
-  baseTags: ['#카페', '#카페스타그램', '#커피', '#디저트', '#카페투어']
+  baseTags: ['#울산디저트', '#울산카페투어', '#울산데이트']
 };
 
 function requestId() {
@@ -133,6 +139,38 @@ function replaceLegacyTagList(tags, legacy, nextTags) {
   return sameTagList(tags, legacy) ? [...nextTags] : uniqTags(tags);
 }
 
+function tagSet(tags) {
+  return new Set(uniqTags(tags).map(tagKey));
+}
+
+const LARGE_REGION_KEYS = tagSet(STRATEGY_LARGE_REGION_TAGS);
+const SUB_REGION_KEYS = tagSet(STRATEGY_SUB_REGION_TAGS);
+const MENU_KEYS = tagSet(STRATEGY_MENU_TAGS);
+const CATEGORY_KEYS = tagSet(STRATEGY_CATEGORY_TAGS);
+const INTENT_KEYS = tagSet(STRATEGY_INTENT_TAGS);
+
+function inferStrategySlot(tag, category = '') {
+  const normalized = normalizeTag(tag);
+  const key = tagKey(normalized);
+  if (!normalized) return 'other';
+  if (category === 'brand') return 'brand';
+  if (LARGE_REGION_KEYS.has(key)) return 'large_region';
+  if (SUB_REGION_KEYS.has(key)) return 'sub_region';
+  if (MENU_KEYS.has(key)) return 'menu';
+  if (CATEGORY_KEYS.has(key)) return 'category';
+  if (INTENT_KEYS.has(key)) return 'intent';
+  if (/대관|모임|데이트|혼카페|카페투어|비오는날|작업하기/.test(normalized)) return 'intent';
+  if (/디저트|신메뉴/.test(normalized)) return 'category';
+  if (category === 'local') return normalized === '#울산카페' ? 'large_region' : 'sub_region';
+  if (category === 'content') return 'content';
+  return category || 'other';
+}
+
+function strategyTargetCount(settings) {
+  const raw = Number(settings?.targetCount) || DEFAULT_SETTINGS.targetCount;
+  return Math.min(5, Math.max(3, raw));
+}
+
 function daysSince(value, now = new Date()) {
   if (!value) return Infinity;
   const sampledAt = new Date(value);
@@ -205,7 +243,7 @@ function mapSettings(row) {
     maxPostCount: Number(row.max_post_count) || DEFAULT_SETTINGS.maxPostCount,
     broadPostCount: Number(row.max_post_count) || DEFAULT_SETTINGS.broadPostCount,
     staleAfterDays: Number(row.stale_after_days) || DEFAULT_SETTINGS.staleAfterDays,
-    blockedTags: uniqTags(toArray(row.blocked_tags, DEFAULT_SETTINGS.blockedTags)),
+    blockedTags: uniqTags([...DEFAULT_SETTINGS.blockedTags, ...toArray(row.blocked_tags, [])]),
     requiredBrandTags,
     requiredLocalTags,
     criteriaVersion: row.criteria_version || CRITERIA_VERSION
@@ -239,10 +277,22 @@ function keywordTags(text) {
     ['초코', '#초코디저트'],
     ['딸기', '#딸기디저트'],
     ['케이크', '#케이크맛집'],
+    ['휘낭시에', '#휘낭시에'],
+    ['쑥라떼', '#쑥라떼'],
+    ['스콘', '#스콘맛집'],
+    ['에그타르트', '#에그타르트'],
+    ['르뱅', '#르뱅쿠키'],
     ['반구동', '#반구동카페'],
+    ['중구', '#울산중구카페'],
     ['울산', '#울산카페'],
+    ['데이트', '#울산데이트'],
+    ['카페투어', '#울산카페투어'],
+    ['대관', '#카페대관'],
+    ['모임', '#울산모임장소'],
+    ['비 오는', '#비오는날카페'],
+    ['비오는', '#비오는날카페'],
     ['작업', '#작업하기좋은카페'],
-    ['혼자', '#혼카페']
+    ['혼자', '#울산혼카페']
   ];
   return pairs.filter(([keyword]) => source.includes(keyword)).map(([, tag]) => tag);
 }
@@ -337,10 +387,10 @@ async function callGeminiForCandidates({ memo, context }) {
   };
 }
 
-function candidate(tag, category, source, weight = 1) {
+function candidate(tag, category, source, weight = 1, strategySlot = '') {
   const normalized = normalizeTag(tag);
   if (!normalized) return null;
-  return { tag: normalized, category, source, weight };
+  return { tag: normalized, category, source, weight, strategySlot: strategySlot || inferStrategySlot(normalized, category) };
 }
 
 function buildCandidatePool({ memo, postType, context, settings, aiCandidates, includeLocalTags, includeBrandTags }) {
@@ -349,10 +399,10 @@ function buildCandidatePool({ memo, postType, context, settings, aiCandidates, i
   const groundedAiTags = toArray(aiCandidates.tags, []).filter(tag => memoHasEvidence(tag, memo, context, aiCandidates.keywords));
   const pool = [
     ...keywordTags(memo).map(tag => candidate(tag, 'content', 'keyword', 1.2)),
-    ...typeTags.map(tag => candidate(tag, 'content', 'post_type', 0.8)),
-    ...groundedMenuTags.map(tag => candidate(tag, 'content', 'menu', 1.15)),
+    ...typeTags.map(tag => candidate(tag, 'content', 'post_type', 0.95)),
+    ...groundedMenuTags.map(tag => candidate(tag, 'content', 'menu', 1.2, 'menu')),
     ...groundedAiTags.map(tag => candidate(tag, 'content', 'gemini', 1)),
-    ...DEFAULT_CONTEXT.baseTags.map(tag => candidate(tag, 'discovery', 'base', 0.65))
+    ...DEFAULT_CONTEXT.baseTags.map(tag => candidate(tag, 'content', 'strategy_base', 0.85))
   ];
   if (includeBrandTags) {
     pool.push(...settings.requiredBrandTags.map(tag => candidate(tag, 'brand', 'settings', 1.2)));
@@ -412,6 +462,12 @@ function scoreCandidate(item, research, { memo, context, settings }) {
   if (menuNames.some(name => name && (compactText(plain).includes(name) || compactMemo.includes(name)))) relevance += 10;
   if (item.source === 'gemini') relevance += 8;
   if (item.source === 'menu') relevance += 8;
+  if (item.strategySlot === 'large_region') relevance += 12;
+  if (item.strategySlot === 'sub_region') relevance += item.tag === '#울산중구카페' ? 16 : 13;
+  if (item.strategySlot === 'menu') relevance += 14;
+  if (item.strategySlot === 'category') relevance += 10;
+  if (item.strategySlot === 'intent') relevance += 12;
+  if (item.strategySlot === 'brand' && item.tag === '#카페튜즈') relevance += 8;
   relevance = Math.min(40, Math.round(relevance * item.weight));
 
   const postCount = Number(research?.post_count);
@@ -420,9 +476,11 @@ function scoreCandidate(item, research, { memo, context, settings }) {
   const engagementBoost = Number.isFinite(engagementScore) ? Math.min(5, Math.log10(engagementScore + 1)) : 0;
   const localIntent = item.category === 'local' || /울산|반구동|중구/.test(item.tag) ? 20 : 0;
   const brandSafety = item.category === 'brand' || /tuz|카페튜즈|tuzz2026/i.test(item.tag) ? 10 : 5;
+  const brandPreference = item.tag === '#카페튜즈' ? 14 : 0;
+  const intentSpecificity = item.tag === '#카페대관' ? 24 : 0;
   const diversity = 5;
   const freshnessPenalty = daysSince(research?.sampled_at) > settings.staleAfterDays ? 4 : 0;
-  return Math.max(0, relevance + competition + engagementBoost + localIntent + brandSafety + diversity - freshnessPenalty);
+  return Math.max(0, relevance + competition + engagementBoost + localIntent + brandSafety + brandPreference + intentSpecificity + diversity - freshnessPenalty);
 }
 
 function rankCandidates({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags }) {
@@ -455,41 +513,55 @@ function pickBest(scored, category, selectedKeys, maxBroad = 1) {
   ));
 }
 
+function pickBestBySlot(scored, slots, selectedKeys, { allowBroad = false } = {}) {
+  const allowed = new Set(Array.isArray(slots) ? slots : [slots]);
+  return scored.find(item => (
+    allowed.has(item.strategySlot) &&
+    !selectedKeys.has(tagKey(item.tag)) &&
+    (allowBroad || item.scoreBand !== 'too-broad')
+  ));
+}
+
 function selectRankedTags({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags }) {
   const scored = rankCandidates({ candidates, researchCache, memo, context, settings, includeLocalTags, includeBrandTags });
   const selected = [];
   const selectedKeys = new Set();
+  const targetCount = strategyTargetCount(settings);
   const add = (item) => {
     if (!item || selectedKeys.has(tagKey(item.tag))) return;
     selected.push(item);
     selectedKeys.add(tagKey(item.tag));
   };
 
-  if (includeBrandTags) add(pickBest(scored, 'brand', selectedKeys));
-  if (includeLocalTags) add(pickBest(scored, 'local', selectedKeys));
-  add(pickBest(scored, 'content', selectedKeys));
-  add(pickBest(scored, 'content', selectedKeys));
-  add(pickBest(scored, 'discovery', selectedKeys));
+  if (includeLocalTags) {
+    add(pickBestBySlot(scored, 'large_region', selectedKeys));
+    add(pickBestBySlot(scored, 'sub_region', selectedKeys));
+  }
+  if (includeBrandTags && targetCount <= 3) add(pickBestBySlot(scored, 'brand', selectedKeys));
+  add(pickBestBySlot(scored, 'menu', selectedKeys));
+  add(pickBestBySlot(scored, ['category', 'intent'], selectedKeys));
+  if (includeBrandTags) add(pickBestBySlot(scored, 'brand', selectedKeys));
 
   for (const item of scored) {
     const broadCount = selected.filter(tag => tag.scoreBand === 'too-broad').length;
-    if (selected.length >= settings.targetCount) break;
+    if (selected.length >= targetCount) break;
     if (selectedKeys.has(tagKey(item.tag))) continue;
     if (item.scoreBand === 'too-broad' && broadCount >= 1) continue;
+    if (item.category === 'discovery' && selected.some(tag => ['menu', 'category', 'intent'].includes(tag.strategySlot))) continue;
     add(item);
   }
 
-  return selected.slice(0, settings.targetCount);
+  return selected.slice(0, targetCount);
 }
 
 function groupAlternativeTags(items) {
   const labels = {
     brand: '브랜드 교체',
     local: '지역 교체',
-    content: '본문 교체',
+    content: '메뉴/목적 교체',
     discovery: '탐색 교체'
   };
-  return ['brand', 'local', 'content', 'discovery'].map(key => ({
+  return ['local', 'content', 'brand', 'discovery'].map(key => ({
     key,
     label: labels[key],
     tags: items.filter(item => item.category === key).map(item => item.tag)
@@ -520,10 +592,10 @@ function groupSelectedTags(selected) {
   const labels = {
     brand: 'TUZ',
     local: '지역',
-    content: '본문',
+    content: '메뉴/목적',
     discovery: '탐색'
   };
-  return ['brand', 'local', 'content', 'discovery'].map(key => ({
+  return ['local', 'content', 'brand', 'discovery'].map(key => ({
     key,
     label: labels[key],
     tags: selected.filter(item => item.category === key).map(item => item.tag)
@@ -641,7 +713,7 @@ async function handler(req, res) {
       selected
     });
 
-    if (selected.length < settings.targetCount) {
+    if (selected.length < strategyTargetCount(settings)) {
       const missingTags = candidates
         .filter(item => !researchCache.has(tagKey(item.tag)))
         .map(item => item.tag);
@@ -682,6 +754,8 @@ module.exports._test = {
   normalizeTag,
   uniqTags,
   keywordTags,
+  inferStrategySlot,
+  strategyTargetCount,
   buildCandidatePool,
   rankCandidates,
   selectRankedTags,
