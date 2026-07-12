@@ -12,7 +12,7 @@
   <meta property="og:image" content="/landing/assets/generated/hero-financier-wide-v2.jpg"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <link rel="preload" as="image" href="/landing/assets/generated/hero-financier-wide-v2.jpg"/>
-  <link rel="stylesheet" href="/landing/styles.css?v=14"/>
+  <link rel="stylesheet" href="/landing/styles.css?v=16"/>
 </head>
 <body>
   <div class="page-shell">
@@ -172,7 +172,8 @@
         </header>
         <div class="order__body">
           <p class="order__lead">용도와 수량, 날짜를 남겨주시면 가능한 구성과 일정을 확인해드립니다.</p>
-          <form class="order-form" id="orderForm">
+          <p class="order-form__required" id="requiredNote"><span aria-hidden="true">*</span> 필수 입력 항목</p>
+          <form class="order-form" id="orderForm" aria-describedby="requiredNote">
             <div class="field">
               <label for="purpose">주문 종류</label>
               <select id="purpose" name="purpose">
@@ -183,12 +184,12 @@
               </select>
             </div>
             <div class="field">
-              <label for="quantity">예상 수량</label>
-              <input id="quantity" name="quantity" inputmode="numeric" placeholder="예: 30개"/>
+              <label for="quantity">예상 수량 <span class="required-mark" aria-label="필수">*</span></label>
+              <input id="quantity" name="quantity" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="예: 30" required/>
             </div>
             <div class="field">
-              <label for="date">희망 날짜</label>
-              <input id="date" name="date" type="date"/>
+              <label for="date">희망 날짜 <span class="required-mark" aria-label="필수">*</span></label>
+              <input id="date" name="date" type="date" required/>
             </div>
             <div class="field">
               <label for="budget">예산</label>
@@ -204,12 +205,12 @@
               </select>
             </div>
             <div class="field">
-              <label for="name">성함</label>
-              <input id="name" name="name" autocomplete="name" placeholder="주문자명"/>
+              <label for="name">성함 <span class="required-mark" aria-label="필수">*</span></label>
+              <input id="name" name="name" autocomplete="name" placeholder="주문자명" required/>
             </div>
             <div class="field">
-              <label for="phone">연락처</label>
-              <input id="phone" name="phone" autocomplete="tel" inputmode="tel" placeholder="010-0000-0000"/>
+              <label for="phone">연락처 <span class="required-mark" aria-label="필수">*</span></label>
+              <input id="phone" name="phone" autocomplete="tel" inputmode="tel" placeholder="010-0000-0000" required/>
             </div>
             <div class="field field--wide">
               <label for="memo">추가 요청</label>
@@ -224,8 +225,6 @@
             <h3>문의 내용</h3>
             <pre id="requestText"></pre>
             <div class="request__actions">
-              <a class="button" id="sendSms" href="sms:01053433407">문자로 문의</a>
-              <a class="button button--light" id="sendEmail" href="mailto:high048@gmail.com">이메일로 문의</a>
               <a class="button button--light" id="sendInstagram" href="https://www.instagram.com/tuzz2026/" target="_blank" rel="noopener">Instagram DM 문의</a>
             </div>
             <p class="request__notice" id="requestNotice" aria-live="polite"></p>
@@ -263,6 +262,6 @@
 
   <a class="floating-cta" href="#order">주문 상담</a>
   <script src="/landing/instagram.js?v=1" defer></script>
-  <script src="/landing/order.js?v=4" defer></script>
+  <script src="/landing/order.js?v=9" defer></script>
 </body>
 </html>

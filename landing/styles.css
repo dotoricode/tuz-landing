@@ -522,6 +522,17 @@ textarea:focus { border-color: var(--ink); }
   margin-top: 14px;
 }
 
+.order-form__required {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.required-mark,
+.order-form__required span {
+  color: #9f3327;
+}
+
 .request__actions {
   display: flex;
   flex-wrap: wrap;
