@@ -2,6 +2,12 @@ const form = document.getElementById('orderForm');
 const requestBox = document.getElementById('requestBox');
 const requestText = document.getElementById('requestText');
 const copyButton = document.getElementById('copyRequest');
+const smsLink = document.getElementById('sendSms');
+const emailLink = document.getElementById('sendEmail');
+
+const SMS_RECIPIENT = '01053433407';
+const EMAIL_RECIPIENT = 'high048@gmail.com';
+const EMAIL_SUBJECT = 'Tuz 답례품/선물세트 주문 상담 요청';
 
 function valueOf(name) {
   const field = form.elements[name];
@@ -28,6 +34,11 @@ function buildRequest() {
   return lines.join('\n');
 }
 
+function updateContactLinks(request) {
+  smsLink.href = `sms:${SMS_RECIPIENT}?body=${encodeURIComponent(request)}`;
+  emailLink.href = `mailto:${EMAIL_RECIPIENT}?subject=${encodeURIComponent(EMAIL_SUBJECT)}&body=${encodeURIComponent(request)}`;
+}
+
 async function copyRequestText() {
   if (!requestText.textContent) return;
   try {
@@ -44,7 +55,9 @@ async function copyRequestText() {
 if (form) {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    requestText.textContent = buildRequest();
+    const request = buildRequest();
+    requestText.textContent = request;
+    updateContactLinks(request);
     requestBox.hidden = false;
     requestBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });

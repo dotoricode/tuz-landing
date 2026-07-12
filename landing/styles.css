@@ -522,6 +522,12 @@ textarea:focus { border-color: var(--ink); }
   margin-top: 14px;
 }
 
+.request__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .button {
   display: inline-flex;
   min-height: 46px;
