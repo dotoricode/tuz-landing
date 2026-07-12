@@ -12,7 +12,7 @@
   <meta property="og:image" content="/landing/assets/generated/hero-financier-wide-v2.jpg"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <link rel="preload" as="image" href="/landing/assets/generated/hero-financier-wide-v2.jpg"/>
-  <link rel="stylesheet" href="/landing/styles.css?v=13"/>
+  <link rel="stylesheet" href="/landing/styles.css?v=14"/>
 </head>
 <body>
   <div class="page-shell">
@@ -216,8 +216,7 @@
               <textarea id="memo" name="memo" rows="4" placeholder="포장, 카드 문구, 알레르기 참고사항 등을 적어주세요."></textarea>
             </div>
             <div class="order-form__actions">
-              <button class="button" type="submit">문의 내용 만들기</button>
-              <a class="button button--light" href="https://www.instagram.com/tuzz2026/" target="_blank" rel="noopener">Instagram 문의</a>
+              <button class="button" type="submit">문의하기</button>
             </div>
           </form>
 
@@ -227,8 +226,9 @@
             <div class="request__actions">
               <a class="button" id="sendSms" href="sms:01053433407">문자로 문의</a>
               <a class="button button--light" id="sendEmail" href="mailto:high048@gmail.com">이메일로 문의</a>
-              <button class="button button--light" id="copyRequest" type="button">문의 내용 복사</button>
+              <a class="button button--light" id="sendInstagram" href="https://www.instagram.com/tuzz2026/" target="_blank" rel="noopener">Instagram DM 문의</a>
             </div>
+            <p class="request__notice" id="requestNotice" aria-live="polite"></p>
           </aside>
         </div>
       </section>
@@ -263,6 +263,6 @@
 
   <a class="floating-cta" href="#order">주문 상담</a>
   <script src="/landing/instagram.js?v=1" defer></script>
-  <script src="/landing/order.js?v=3" defer></script>
+  <script src="/landing/order.js?v=4" defer></script>
 </body>
 </html>

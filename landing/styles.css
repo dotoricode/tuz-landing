@@ -528,6 +528,13 @@ textarea:focus { border-color: var(--ink); }
   gap: 10px;
 }
 
+.request__notice {
+  min-height: 1.5em;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 .button {
   display: inline-flex;
   min-height: 46px;

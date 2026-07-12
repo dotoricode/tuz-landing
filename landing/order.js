@@ -1,9 +1,10 @@
 const form = document.getElementById('orderForm');
 const requestBox = document.getElementById('requestBox');
 const requestText = document.getElementById('requestText');
-const copyButton = document.getElementById('copyRequest');
 const smsLink = document.getElementById('sendSms');
 const emailLink = document.getElementById('sendEmail');
+const instagramLink = document.getElementById('sendInstagram');
+const requestNotice = document.getElementById('requestNotice');
 
 const SMS_RECIPIENT = '01053433407';
 const EMAIL_RECIPIENT = 'high048@gmail.com';
@@ -39,17 +40,14 @@ function updateContactLinks(request) {
   emailLink.href = `mailto:${EMAIL_RECIPIENT}?subject=${encodeURIComponent(EMAIL_SUBJECT)}&body=${encodeURIComponent(request)}`;
 }
 
-async function copyRequestText() {
+async function copyRequestForInstagram() {
   if (!requestText.textContent) return;
   try {
     await navigator.clipboard.writeText(requestText.textContent);
-    copyButton.textContent = '복사됨';
+    requestNotice.textContent = 'DM 문의 내용이 복사되었습니다. Instagram에서 붙여넣어 주세요.';
   } catch (_) {
-    copyButton.textContent = '직접 선택해 복사해주세요';
+    requestNotice.textContent = '위 문의 내용을 직접 복사해 Instagram DM에 붙여넣어 주세요.';
   }
-  window.setTimeout(() => {
-    copyButton.textContent = '문의 내용 복사';
-  }, 1600);
 }
 
 if (form) {
@@ -63,6 +61,6 @@ if (form) {
   });
 }
 
-if (copyButton) {
-  copyButton.addEventListener('click', copyRequestText);
+if (instagramLink) {
+  instagramLink.addEventListener('click', copyRequestForInstagram);
 }
