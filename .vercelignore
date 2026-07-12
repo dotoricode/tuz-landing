@@ -1,0 +1,24 @@
+.agents/
+.playwright-mcp/
+.tink/
+design-qa.md
+img/
+
+# Local visual QA and comparison artifacts
+landing/font-compare.html
+landing/font-layout-compare.html
+landing/assets/qa-*
+landing/assets/font-comparison-*
+landing/assets/font-layout-comparison-*
+landing/assets/reference-design.png
+
+# Superseded and unused generated assets
+landing/assets/generated/hero-gift-studio-v1.jpg
+landing/assets/generated/pound-studio-v1.jpg
+landing/assets/instagram/butter-post-v1.jpg
+landing/assets/instagram/seating-post-v1.jpg
+landing/assets/instagram/tuz-financier-lineup.jpg
+landing/assets/instagram/tuz-minari-breeze.jpg
+landing/assets/instagram/tuz-seating.jpg
+landing/assets/instagram/tuz-sunset-breeze.jpg
+landing/assets/instagram/tuz-violet-breeze.jpg
