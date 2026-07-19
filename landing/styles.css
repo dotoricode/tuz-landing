@@ -411,11 +411,33 @@ button, input, select, textarea { font: inherit; }
   border-top: 1px solid var(--line);
 }
 
-.instagram__copy h2 {
-  min-height: 172px;
-  margin-bottom: 30px;
+.instagram__copy {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  column-gap: 13px;
+  align-content: start;
+}
+
+.instagram__copy .section-en {
+  grid-column: 1;
+  grid-row: 1;
   writing-mode: vertical-rl;
 }
+
+.instagram__copy h2 {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 172px;
+  margin: 0 0 30px;
+  writing-mode: vertical-rl;
+}
+
+.instagram__copy > p:not(.section-en),
+.instagram__copy > .text-link {
+  grid-column: 1 / -1;
+}
+
+.instagram__copy > .text-link { justify-self: start; }
 
 .instagram__images {
   display: grid;
@@ -761,6 +783,20 @@ textarea:focus { border-color: var(--ink); }
   .menu-item h3 { font-size: 16px; }
 
   .gift__content { gap: 34px; }
+
+  .instagram__copy { grid-template-columns: 1fr; }
+
+  .instagram__copy .section-en,
+  .instagram__copy h2 {
+    grid-column: 1;
+    grid-row: auto;
+    writing-mode: horizontal-tb;
+  }
+
+  .instagram__copy h2 {
+    min-height: 0;
+    margin: 18px 0 30px;
+  }
 
   .instagram__images {
     grid-template-columns: 1fr;
